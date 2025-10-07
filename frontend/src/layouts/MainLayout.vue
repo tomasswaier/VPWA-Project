@@ -1,11 +1,15 @@
 <template>
 
   <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
+    <q-header elevated >
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
         <q-toolbar-title> Chat Appus </q-toolbar-title>
+
+        <q-btn class="" to="/login" flat dense round icon="login" aria-label="Meow" />
+        <q-btn class="" flat dense round icon="logout" aria-label=""  />
+        <q-btn class="" flat dense round icon="person" aria-label=""  />
 
       </q-toolbar>
     </q-header>
@@ -20,7 +24,7 @@
 
     <q-page-container>
         <div class="q-pa-md row justify-center">
-          <div style="width: 100%;">
+          <div id="spravySem" style="width: 100%;">
             <!--<q-infinite-scroll  :offset="250">-->
               <q-chat-message
                 name="me"
