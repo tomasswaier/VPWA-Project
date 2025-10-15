@@ -23,9 +23,21 @@
     </q-drawer>
 
     <q-page-container>
+        <q-dialog v-model="confirmGroupLeave" persistent>
+          <q-card>
+            <q-card-section class="row items-center">
+              <span class="q-ml-sm">Are you sure you want to leave this group?</span>
+            </q-card-section>
+
+            <q-card-actions align="right">
+              <q-btn flat label="No" color="primary" v-close-popup />
+              <q-btn flat label="Yes" color="primary"  v-close-popup />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
         <div class="q-pa-md row justify-center">
           <div id="spravySem" style="width: 100%;">
-            <q-infinite-scroll  :offset="250" reverse @load="loadMessages">
+            <q-infinite-scroll :offset="250" reverse @load="loadMessages">
               <div v-for="(message,index) in messages" :key="index" >
                 <q-chat-message name="me"
                                 :text="['I will be counting down from X']"
@@ -96,7 +108,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import EssentialLink, { type EssentialLinkProps } from 'components/EssentialLink.vue';
-import { messages, loadMessages } from '../store/interactions';
+import { messages, loadMessages,sendMessage,text,confirmGroupLeave } from '../store/interactions';
+
 const groupLinks: EssentialLinkProps[] = [
   {
     title: 'Group#1',
@@ -120,33 +133,13 @@ const groupLinks: EssentialLinkProps[] = [
   }
 ];
 
-const text = ref('');
 
 const leftDrawerOpen = ref(false);
 
-function sendMessage() {
-  const inputText:string=text.value.trim();
-  if (inputText) {
-    const firstArg:string=inputText.split(' ')[0] as string;
-    switch (firstArg) {
-      case "/leave":
-        console.log('LEAVING');
-        //make a thing which forces user to confirm his choice
-        break;
-      case "/invite":
-        console.log('inviting');
-        //make a thing which forces user to confirm his choice
-        break;
-      default:
-        console.log('Message sent:', text.value)
-        break;
-    }
-    text.value = ''
-  }
-}
 
 function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
 }
+
 
 </script>
