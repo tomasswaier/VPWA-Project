@@ -4,6 +4,8 @@ import {ref} from 'vue'
 const messages = ref<Record<string, unknown>[]>([ {}, {}, {} ])
 const text = ref('');
 const confirmGroupLeave = ref(false);
+const displayGroupList = ref(false);
+const maximizedToggle = ref(true);
 
 function loadMessages(index: number, done: () => void): void {
   setTimeout(() => {
@@ -19,13 +21,12 @@ function sendMessage() {
     switch (firstArg) {
     case "/leave":
       console.log('LEAVING');
-      // Notify.create('Danger, Will Robinson! Danger!');
       confirmGroupLeave.value = true
-      // make a thing which forces user to confirm his choice
       break;
     case "/invite":
-      console.log('inviting');
-      // make a thing which forces user to confirm his choice
+      break;
+    case "/list":
+      displayGroupList.value = true
       break;
     default:
       console.log('Message sent:', text.value)
@@ -36,5 +37,6 @@ function sendMessage() {
 }
 
 export {
-      messages, loadMessages, sendMessage, text, confirmGroupLeave
+      messages, loadMessages, sendMessage, text, confirmGroupLeave,
+          displayGroupList, maximizedToggle
     }
