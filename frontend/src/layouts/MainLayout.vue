@@ -36,6 +36,8 @@
             </q-card-actions>
           </q-card>
         </q-dialog>
+        
+        <!-- Dialog pre /list príkaz - zoznam členov -->
         <q-dialog
           v-model="displayGroupList"
           persistent
@@ -57,12 +59,32 @@
               </q-btn>
             </q-bar>
 
-            <q-card-section>
-              <div class="text-h6">Alert</div>
+            <q-card-section class="text-center">
+              <div class="text-h5 text-white text-weight-bold">{{ currentGroupName }}</div>
             </q-card-section>
 
-            <q-card-section class="q-pt-none">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Rerum repellendus sit voluptate voluptas eveniet porro. Rerum blanditiis perferendis totam, ea at omnis vel numquam exercitationem aut, natus minima, porro labore.
+            <q-separator color="white" />
+
+            <q-card-section class="q-pt-md" style="max-height: 60vh; overflow-y: auto;">
+              <q-infinite-scroll @load="loadGroupMembers" :offset="250">
+                <q-list class="text-white">
+                  <q-item 
+                    v-for="(member, index) in displayedMembers" 
+                    :key="index"
+                    class="q-mb-sm"
+                  >
+                    <q-item-section avatar>
+                      <q-avatar>
+                        <img :src="member.avatar" :alt="member.name">
+                      </q-avatar>
+                    </q-item-section>
+
+                    <q-item-section>
+                      <q-item-label class="text-white text-weight-medium">{{ member.name }}</q-item-label>
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+              </q-infinite-scroll>
             </q-card-section>
           </q-card>
         </q-dialog>
@@ -138,9 +160,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch} from 'vue';
 import EssentialLink, { type EssentialLinkProps } from 'components/EssentialLink.vue';
-import { messages, loadMessages,sendMessage,text,confirmGroupLeave,displayGroupList,maximizedToggle } from '../store/interactions';
+import { messages, loadMessages, sendMessage, text, confirmGroupLeave, 
+        displayGroupList, maximizedToggle, currentGroupName, displayedMembers, loadGroupMembers, resetGroupMembers} from '../store/interactions';
 
 const groupLinks: EssentialLinkProps[] = [
   {
@@ -173,5 +196,11 @@ function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
 }
 
+watch(displayGroupList, (opened) => {
+  if (opened) {
+    resetGroupMembers();
+    loadGroupMembers(1, () => {});
+  }
+});
 
 </script>
