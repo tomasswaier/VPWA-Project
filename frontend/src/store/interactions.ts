@@ -7,24 +7,33 @@ const confirmGroupLeave = ref(false);
 const displayGroupList = ref(false);
 const maximizedToggle = ref(true);
 
-
-//vsetko pre /list function - meno, def formatu pre members list a vsetci usery 
+//skupinové konštanty
 const currentGroupName = ref('Trumans Group');
 const displayedMembers = ref<Array<{name: string, avatar: string}>>([]);
-const allGroupMembers = ([
+
+// Zoznam base memberov
+const baseMemberTemplates = [
   { name: 'Johnka', avatar: 'https://cdn.quasar.dev/img/avatar2.jpg' },
   { name: 'Marian Emanual Chornandez Pelko De La Muerto', avatar: 'https://cdn.quasar.dev/img/avatar3.jpg' },
   { name: 'Tomas Truman', avatar: 'https://cdn.quasar.dev/img/avatar4.jpg' },
-].sort((a, b) => a.name.localeCompare(b.name)));
+];
 
 function loadGroupMembers(index: number, done: () => void): void {
   setTimeout(() => {
-    //shows only all members, but the infinity scrolls doesnt work yet
+    const batchSize = 5;
     const newMembers = [];
-    for (let i = 0; i < 3; i++) {
-      const memberIndex = (displayedMembers.value.length + i ) % allGroupMembers.length;
-      newMembers.push(allGroupMembers[memberIndex]!);
+    
+    for (let i = 0; i < batchSize; i++) {
+      const templateIX = (displayedMembers.value.length + i) % baseMemberTemplates.length;
+      const template = baseMemberTemplates[templateIX]!;
+      
+      //pri kazdom znovunačítaní som pridal číslo, nech vidno, že sú to "nový" členovia skupiny
+      newMembers.push({
+        name: `${template.name} #${displayedMembers.value.length + i + 1}`,
+        avatar: template.avatar
+      });
     }
+    
     displayedMembers.value.push(...newMembers);
     done();
   }, 300);
@@ -33,7 +42,6 @@ function loadGroupMembers(index: number, done: () => void): void {
 function resetGroupMembers(): void {
   displayedMembers.value = [];
 }
-
 
 function loadMessages(index: number, done: () => void): void {
   setTimeout(() => {
@@ -54,6 +62,7 @@ function sendMessage() {
     case "/invite":
       break;
     case "/list":
+      resetGroupMembers();
       displayGroupList.value = true
       break;
     default:
@@ -65,6 +74,7 @@ function sendMessage() {
 }
 
 export {
-      messages, loadMessages, sendMessage, text, confirmGroupLeave,
-          displayGroupList, maximizedToggle, currentGroupName, displayedMembers, loadGroupMembers, resetGroupMembers
-    }
+  messages, loadMessages, sendMessage, text, confirmGroupLeave,
+  displayGroupList, maximizedToggle, currentGroupName, displayedMembers, 
+  loadGroupMembers, resetGroupMembers
+}
