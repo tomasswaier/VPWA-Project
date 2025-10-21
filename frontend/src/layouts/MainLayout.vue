@@ -9,7 +9,10 @@
         <q-item-label header> Groups </q-item-label>
         <GroupLink :dialogs="dialogs" v-for="link in groupLinks" :key="link.title" v-bind="link" />
       </q-list>
-      <q-btn class="absolute-bottom"  flat dense round icon="add" aria-label="Meow" />
+      <div class="q-pa-md fixed-bottom">
+        <q-btn class="col bottom" @click="joinGroup"  flat dense round icon="add" aria-label="Meow" />
+        <q-btn class="col-auto bottom" @click="listGroups"  flat dense round icon="list" aria-label="Meow" />
+       </div>
     </q-drawer>
     <q-page-container>
         <router-view :dialogs="dialogs"
@@ -20,12 +23,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref} from 'vue';
+import {ref} from 'vue';
 import GroupLink  from 'components/GroupLink.vue';
 import  type{ GroupLinkProps}  from 'components/GroupLink.vue';
 import HeaderToolbar from 'components/HeaderToolbar.vue';
 
-import {dialogs} from '../store/interactions';
+import {dialogs,joinGroup,listGroups} from '../store/interactions';
 import type {Dialogs} from '../store/interactions';
 
 

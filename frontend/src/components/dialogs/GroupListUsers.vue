@@ -13,15 +13,26 @@
           <q-tooltip class="bg-white text-primary">Close</q-tooltip>
         </q-btn>
       </q-bar>
+
+      <q-card-section class="text-center">
+        <div class="text-h5 text-white text-weight-bold">{{ currentGroupName }}</div>
+      </q-card-section>
+
       <q-separator color="white" />
+
       <q-card-section class="q-pt-md" style="padding: 0;">
         <q-scroll-area style="height: 60vh; width: 100%;">
-          <q-infinite-scroll :offset="250" @load="loadPublicGroups">
+          <q-infinite-scroll :offset="250" @load="loadGroupMembers">
             <q-list>
-              <q-item v-for="(group, index) in publicGroups" :key="index" class="q-mb-sm">
+              <q-item v-for="(member, index) in displayedMembers" :key="index" class="q-mb-sm">
+                <q-item-section avatar>
+                  <q-avatar>
+                    <img :src="member.avatar" :alt="member.name">
+                  </q-avatar>
+                </q-item-section>
+
                 <q-item-section>
-                  <q-item-label class="text-white text-weight-medium">{{ group.name }}</q-item-label>
-                  <q-item-label caption class="">{{ group.caption}}</q-item-label>
+                  <q-item-label class="text-white text-weight-medium">{{ member.name }}</q-item-label>
                 </q-item-section>
               </q-item>
             </q-list>
@@ -39,7 +50,7 @@
 </template>
 <script setup lang="ts">
 import { watch } from 'vue'
-import {  publicGroups, loadPublicGroups } from '../../store/interactions'
+import { currentGroupName, displayedMembers, loadGroupMembers } from '../../store/interactions'
 interface Props {
   modelValue: boolean
 }
@@ -55,8 +66,8 @@ watch(()=>props.modelValue, (isOpen) => {
   if (isOpen) {
     //po otvorení (pop-upu) sa načítajú členovia skupiny
     setTimeout(() => {
-      if (publicGroups.value.length === 0) {
-        loadPublicGroups(0, () => {});
+      if (displayedMembers.value.length === 0) {
+        loadGroupMembers(0, () => {});
       }
     }, 100);
   }

@@ -82,8 +82,11 @@ import { messages, loadMessages, sendMessage, text,
 interface Props {
   dialogs: {
     groupList: boolean
+    groupUserList: boolean
     groupLeave: boolean
     groupCreate: boolean
+    groupDelete: boolean
+    groupInvite: boolean
   }
 }
 

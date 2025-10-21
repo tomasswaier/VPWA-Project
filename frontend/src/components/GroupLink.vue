@@ -16,7 +16,7 @@
               <q-item-label>Leave Group</q-item-label>
             </q-item-section>
           </q-item>
-          <q-item clickable v-close-popup>
+          <q-item clickable @click="inviteGroup" v-close-popup>
             <q-item-section>
               <q-item-label>Invite to</q-item-label>
             </q-item-section>
@@ -26,7 +26,7 @@
               <q-item-label>Some Other option</q-item-label>
             </q-item-section>
           </q-item>
-          <q-item v-if="isOwner" clickable @click="leaveGroup" v-close-popup >
+          <q-item v-if="isOwner" clickable @click="deleteGroup" v-close-popup >
             <q-item-section>
               <q-item-label>Delete Group</q-item-label>
             </q-item-section>
@@ -40,7 +40,7 @@
 
 import
 <script setup lang="ts">
-import {leaveGroup} from '../store/interactions';
+import {leaveGroup,deleteGroup,inviteGroup} from '../store/interactions';
 
 export interface GroupLinkProps {
   title: string
@@ -55,6 +55,8 @@ interface FullProps extends GroupLinkProps {
     groupList: boolean
     groupLeave: boolean
     groupCreate: boolean
+    groupDelete: boolean
+    groupInvite: boolean
   }
 }
 
