@@ -31,4 +31,5 @@ const emit = defineEmits<Emits>()
 function closeDialog() {
   emit('update:modelValue', false)
 }
+
 </script>

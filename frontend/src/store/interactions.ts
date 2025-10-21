@@ -3,7 +3,6 @@ import {reactive, ref} from 'vue'
 
 const messages = ref<Record<string, unknown>[]>([ {}, {}, {} ])
 const text = ref('');
-const confirmGroupLeave = ref(false);
 
 // skupinové konštanty
 const currentGroupName = ref('Trumans Group');
@@ -11,10 +10,12 @@ const displayedMembers = ref<Array<{name : string, avatar : string}>>([]);
 export interface Dialogs {
   groupLeave: boolean
   groupList: boolean
+  groupCreate: boolean
 }
 const dialogs: Dialogs = reactive({
   groupLeave : false,
   groupList : false,
+  groupCreate : false,
 })
 
 // Zoznam base memberov
@@ -66,13 +67,16 @@ function sendMessage() {
     switch (firstArg) {
     case "/leave":
       console.log('LEAVING');
-      confirmGroupLeave.value = true
+      dialogs.groupLeave = true
       break;
     case "/invite":
       break;
     case "/list":
       resetGroupMembers();
       dialogs.groupList = true
+      break;
+    case "/join":
+      dialogs.groupCreate = true
       break;
     default:
       console.log('Message sent:', text.value)
@@ -84,7 +88,6 @@ function sendMessage() {
 
 
 export {
-      messages, loadMessages, sendMessage, text, confirmGroupLeave, dialogs,
-          currentGroupName, displayedMembers, loadGroupMembers,
-          resetGroupMembers
+      messages, loadMessages, sendMessage, text, dialogs, currentGroupName,
+          displayedMembers, loadGroupMembers, resetGroupMembers
     }

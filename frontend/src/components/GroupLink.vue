@@ -1,14 +1,36 @@
 <template>
-  <q-item clickable tag="a" target="_blank" :href="link">
-    <q-item-section v-if="icon" avatar>
-      <q-icon :name="icon" />
-    </q-item-section>
+<q-item :class="{'bg-primary text-white':isPrivate}" class="q-pa-md">
+  <div class="row items-center full-width no-wrap">
+    <div class="col" clickable tag="a" :href="link">
+      <q-item-section class="ellipsis">
+        <q-item-label class="ellipsis">{{ title }}</q-item-label>
+        <q-item-label caption class="ellipsis">{{ caption }}</q-item-label>
+      </q-item-section>
+    </div>
 
-    <q-item-section>
-      <q-item-label>{{ title }}</q-item-label>
-      <q-item-label caption>{{ caption }}</q-item-label>
-    </q-item-section>
-  </q-item>
+    <div class="col-auto q-pl-md">
+      <q-btn-dropdown color="primary" @click.stop dense>
+        <q-list>
+          <q-item clickable v-close-popup>
+            <q-item-section>
+              <q-item-label>Leave Server</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item clickable v-close-popup>
+            <q-item-section>
+              <q-item-label>Invite to</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item clickable v-close-popup>
+            <q-item-section>
+              <q-item-label>Some Other option</q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-btn-dropdown>
+    </div>
+  </div>
+</q-item>
 </template>
 
 <script setup lang="ts">
@@ -16,12 +38,12 @@ export interface GroupLinkProps {
   title: string;
   caption?: string;
   link?: string;
-  icon?: string;
+  isPrivate?:boolean;
 }
 
 withDefaults(defineProps<GroupLinkProps>(), {
   caption: '',
   link: '#',
-  icon: '',
+  isPrivate:false
 });
 </script>

@@ -84,13 +84,11 @@
     </q-btn>
 
   </q-toolbar>
-
 </template>
 
 
 <script setup lang="ts">
   import {ref} from 'vue';
-  //import { displayGroupList, maximizedToggle, currentGroupName, displayedMembers, loadGroupMembers} from '../store/interactions';
 
 
   const emit = defineEmits<{

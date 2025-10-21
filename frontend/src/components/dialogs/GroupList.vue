@@ -51,12 +51,9 @@
 <script setup lang="ts">
 import { watch } from 'vue'
 import { currentGroupName, displayedMembers, loadGroupMembers } from '../../store/interactions'
-
-
 interface Props {
   modelValue: boolean
 }
-
 const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
@@ -65,9 +62,6 @@ const emit = defineEmits<{
 function closeDialog() {
   emit('update:modelValue', false)
 }
-
-
-
 watch(()=>props.modelValue, (isOpen) => {
   if (isOpen) {
     //po otvorení (pop-upu) sa načítajú členovia skupiny

@@ -1,6 +1,6 @@
 <template>
   <DialogManager
-    :dialogs="dialogs"
+    :dialogs="props.dialogs"
     :current-group-name="currentGroupName"
     :displayed-members="displayedMembers"
     :load-group-members="loadGroupMembers"
@@ -77,9 +77,25 @@
 import DialogManager from 'components/DialogManager.vue';
 import type {Dialogs} from '../store/interactions';
 import { messages, loadMessages, sendMessage, text,
-         dialogs, currentGroupName, displayedMembers, loadGroupMembers} from '../store/interactions';
-function updateDialog(dialogName: keyof Dialogs,value:boolean){
-  dialogs[dialogName] = value
+          currentGroupName, displayedMembers, loadGroupMembers} from '../store/interactions';
+
+interface Props {
+  dialogs: {
+    groupList: boolean
+    groupLeave: boolean
+    groupCreate: boolean
+  }
+}
+
+const props = defineProps<Props>()
+interface Emits {
+  (e: 'update-dialog', dialogName: keyof Dialogs, value: boolean): void
+}
+
+const emit = defineEmits<Emits>()
+
+function updateDialog(dialogName: keyof Dialogs, value: boolean) {
+  emit('update-dialog', dialogName, value)
 }
 
 </script>
