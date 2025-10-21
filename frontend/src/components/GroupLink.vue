@@ -12,14 +12,14 @@
 </template>
 
 <script setup lang="ts">
-export interface EssentialLinkProps {
+export interface GroupLinkProps {
   title: string;
   caption?: string;
   link?: string;
   icon?: string;
 }
 
-withDefaults(defineProps<EssentialLinkProps>(), {
+withDefaults(defineProps<GroupLinkProps>(), {
   caption: '',
   link: '#',
   icon: '',

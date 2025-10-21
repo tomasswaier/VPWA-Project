@@ -2,170 +2,26 @@
 
   <q-layout view="lHh Lpr lFf">
     <q-header elevated >
-      <q-toolbar>
-        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
-
-        <q-toolbar-title>Mickeys Clubhouse</q-toolbar-title>
-
-        <q-btn class="" to="/login" flat dense round icon="login" aria-label="Meow" />
-        <q-btn class="" flat dense round icon="logout" aria-label=""  />
-        
-        <q-btn class="relative-position" flat dense round icon="person" aria-label="Profile">
-          <q-badge 
-            v-if="userStatus === 'online'" 
-            color="light-green" 
-            floating 
-            rounded 
-            style="top: 3px; right: 3px;"
-          />
-          <q-badge 
-            v-if="userStatus === 'dnd'" 
-            color="red" 
-            floating 
-            rounded 
-            style="top: 3px; right: 3px;"
-          />
-          <q-badge 
-            v-if="userStatus === 'offline'" 
-            color="grey" 
-            floating 
-            rounded 
-            style="top: 3px; right: 3px;"
-          />
-          
-          <q-menu 
-            transition-show="slide-down" 
-            transition-hide="slide-up"
-            :offset="[0, 10]"
-          >
-            <q-card style="min-width: 250px;">
-              <!-- profil časť -->
-              <q-card-section class="text-center q-pb-none">
-                <q-avatar size="80px">
-                  <img src="https://cdn.quasar.dev/img/avatar4.jpg" alt="User Avatar">
-                </q-avatar>
-                <div class="text-h6 q-mt-sm">Tomáško Truman</div>
-              </q-card-section>
-
-              <q-separator class="q-my-md" />
-
-              <!-- status časť -->
-              <q-card-section class="q-pt-none">
-                <div class="text-caption text-grey-7 q-mb-sm">Status</div>
-                
-                <q-list dense>
-                  <q-item clickable v-ripple @click="userStatus = 'online'" :active="userStatus === 'online'">
-                    <q-item-section avatar>
-                      <q-icon name="circle" color="light-green" size="xs" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>Online</q-item-label>
-                    </q-item-section>
-                  </q-item>
-
-                  <q-item clickable v-ripple @click="userStatus = 'dnd'" :active="userStatus === 'dnd'">
-                    <q-item-section avatar>
-                      <q-icon name="do_not_disturb" color="red" size="xs" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>Do Not Disturb</q-item-label>
-                    </q-item-section>
-                  </q-item>
-
-                  <q-item clickable v-ripple @click="userStatus = 'offline'" :active="userStatus === 'offline'">
-                    <q-item-section avatar>
-                      <q-icon name="circle" color="grey" size="xs" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>Offline</q-item-label>
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </q-card-section>
-            </q-card>
-          </q-menu>
-        </q-btn>
-
-      </q-toolbar>
+      <HeaderToolbar @toggle-drawer="toggleDrawer()" />
     </q-header>
     <q-drawer class="bg-accent text-bold" v-model="leftDrawerOpen" show-if-above bordered>
       <q-list>
         <q-item-label header> Groups </q-item-label>
 
-        <EssentialLink v-for="link in groupLinks" :key="link.title" v-bind="link" />
+        <GroupLink v-for="link in groupLinks" :key="link.title" v-bind="link" />
       </q-list>
     </q-drawer>
 
     <q-page-container>
       <!-- start of popups-->
-        <q-dialog v-model="confirmGroupLeave" persistent>
-          <q-card>
-            <q-card-section class="row items-center">
-              <span class="q-ml-sm">Are you sure you want to leave this group?</span>
-            </q-card-section>
 
-            <q-card-actions align="right">
-              <q-btn flat label="No" color="primary" v-close-popup />
-              <q-btn flat label="Yes" color="primary"  v-close-popup />
-            </q-card-actions>
-          </q-card>
-        </q-dialog>
-        
-        <!--/list príkaz - zoznam členov -->
-        <q-dialog
-          v-model="displayGroupList"
-          persistent
-          :maximized="maximizedToggle"
-          transition-show="slide-up"
-          transition-hide="slide-down"
-        >
-          <q-card class="bg-primary text-white" style="min-width: 500px;">
-            <q-bar>
-              <q-space />
-              <q-btn dense flat icon="minimize" @click="maximizedToggle = false" :disable="!maximizedToggle">
-                <q-tooltip v-if="maximizedToggle" class="bg-white text-primary">Minimize</q-tooltip>
-              </q-btn>
-              <q-btn dense flat icon="crop_square" @click="maximizedToggle = true" :disable="maximizedToggle">
-                <q-tooltip v-if="!maximizedToggle" class="bg-white text-primary">Maximize</q-tooltip>
-              </q-btn>
-              <q-btn dense flat icon="close" v-close-popup>
-                <q-tooltip class="bg-white text-primary">Close</q-tooltip>
-              </q-btn>
-            </q-bar>
-
-            <q-card-section class="text-center">
-              <div class="text-h5 text-white text-weight-bold">{{ currentGroupName }}</div>
-            </q-card-section>
-
-            <q-separator color="white" />
-
-            <q-card-section class="q-pt-md" style="padding: 0;">
-              <q-scroll-area style="height: 60vh; width: 100%;">
-                <q-infinite-scroll :offset="250" @load="loadGroupMembers">
-                  <q-list>
-                    <q-item v-for="(member, index) in displayedMembers" :key="index" class="q-mb-sm">
-                      <q-item-section avatar>
-                        <q-avatar>
-                          <img :src="member.avatar" :alt="member.name">
-                        </q-avatar>
-                      </q-item-section>
-
-                      <q-item-section>
-                        <q-item-label class="text-white text-weight-medium">{{ member.name }}</q-item-label>
-                      </q-item-section>
-                    </q-item>
-                  </q-list>
-
-                  <template v-slot:loading>
-                    <div class="row justify-center q-my-md">
-                      <q-spinner-dots color="white" size="40px" />
-                    </div>
-                  </template>
-                </q-infinite-scroll>
-              </q-scroll-area>
-            </q-card-section>
-          </q-card>
-        </q-dialog>
+        <DialogManager
+          :dialogs="dialogs"
+          :current-group-name="currentGroupName"
+          :displayed-members="displayedMembers"
+          :load-group-members="loadGroupMembers"
+            @update-dialog="updateDialog"
+        />
         <!--end of popups-->
         <div class="q-pa-md row justify-center">
           <div id="spravySem" style="width: 100%;">
@@ -238,51 +94,47 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch} from 'vue';
-import EssentialLink, { type EssentialLinkProps } from 'components/EssentialLink.vue';
-import { messages, loadMessages, sendMessage, text, confirmGroupLeave, 
-        displayGroupList, maximizedToggle, currentGroupName, displayedMembers, loadGroupMembers} from '../store/interactions';
+import { ref} from 'vue';
+import GroupLink, { type GroupLinkProps } from 'components/GroupLink.vue';
+import HeaderToolbar from 'components/HeaderToolbar.vue';
+import DialogManager from 'components/DialogManager.vue';
+import { messages, loadMessages, sendMessage, text, confirmGroupLeave,
+         dialogs, currentGroupName, displayedMembers, loadGroupMembers} from '../store/interactions';
+         import type {Dialogs} from '../store/interactions';
 
-const groupLinks: EssentialLinkProps[] = [
+
+const groupLinks: GroupLinkProps[] = [
   {
     title: 'Group#1',
-    caption: 'Gooner group',
+    caption: 'Gaming group',
     link: 'https://quasar.dev',
   },
   {
     title: 'SuperGroup',
-    caption: 'Gooner group',
+    caption: 'Omega good groupgroup',
     link: 'https://quasar.dev',
   },
   {
     title: 'Minecraft Group',
-    caption: 'Gooner group',
+    caption: 'group for minecraft fans',
     link: 'https://quasar.dev',
   },
   {
     title: 'Disabled group',
-    caption: 'Gooner group',
+    caption: 'group for people who like to game disabled',
     link: 'https://quasar.dev',
   }
 ];
 
 const leftDrawerOpen = ref(false);
-const userStatus = ref<'online' | 'dnd' | 'offline'>('online');
 
 
-function toggleLeftDrawer() {
+function toggleDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
+}//keep it a function for better readability no ?
+function updateDialog(dialogName: keyof Dialogs,value:boolean){
+  dialogs[dialogName] = value
 }
 
-watch(displayGroupList, (isOpen) => {
-  if (isOpen) {
-    //po otvorení (pop-upu) sa načítajú členovia skupiny
-    setTimeout(() => {
-      if (displayedMembers.value.length === 0) {
-        loadGroupMembers(0, () => {});
-      }
-    }, 100);
-  }
-});
 
 </script>
