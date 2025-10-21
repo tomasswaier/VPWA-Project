@@ -1,47 +1,56 @@
 // import {Notify} from 'quasar'
-import {ref} from 'vue'
+import {reactive, ref} from 'vue'
 
 const messages = ref<Record<string, unknown>[]>([ {}, {}, {} ])
 const text = ref('');
 const confirmGroupLeave = ref(false);
-const displayGroupList = ref(false);
-const maximizedToggle = ref(true);
 
-//skupinové konštanty
+// skupinové konštanty
 const currentGroupName = ref('Trumans Group');
-const displayedMembers = ref<Array<{name: string, avatar: string}>>([]);
+const displayedMembers = ref<Array<{name : string, avatar : string}>>([]);
+export interface Dialogs {
+  groupLeave: boolean
+  groupList: boolean
+}
+const dialogs: Dialogs = reactive({
+  groupLeave : false,
+  groupList : false,
+})
 
 // Zoznam base memberov
 const baseMemberTemplates = [
-  { name: 'Johnka', avatar: 'https://cdn.quasar.dev/img/avatar2.jpg' },
-  { name: 'Marian Emanual Chornandez Pelko De La Muerto', avatar: 'https://cdn.quasar.dev/img/avatar3.jpg' },
-  { name: 'Tomas Truman', avatar: 'https://cdn.quasar.dev/img/avatar4.jpg' },
+  {name : 'Johnka', avatar : 'https://cdn.quasar.dev/img/avatar2.jpg'},
+  {
+    name : 'Marian Emanual Chornandez Pelko De La Muerto',
+    avatar : 'https://cdn.quasar.dev/img/avatar3.jpg'
+  },
+  {name : 'Tomas Truman', avatar : 'https://cdn.quasar.dev/img/avatar4.jpg'},
 ];
 
 function loadGroupMembers(index: number, done: () => void): void {
   setTimeout(() => {
     const batchSize = 5;
     const newMembers = [];
-    
+
     for (let i = 0; i < batchSize; i++) {
-      const templateIX = (displayedMembers.value.length + i) % baseMemberTemplates.length;
+      const templateIX =
+          (displayedMembers.value.length + i) % baseMemberTemplates.length;
       const template = baseMemberTemplates[templateIX]!;
-      
-      //pri kazdom znovunačítaní som pridal číslo, nech vidno, že sú to "nový" členovia skupiny
+
+      // pri kazdom znovunačítaní som pridal číslo, nech vidno, že sú to "nový"
+      // členovia skupiny
       newMembers.push({
-        name: `${template.name} #${displayedMembers.value.length + i + 1}`,
-        avatar: template.avatar
+        name : `${template.name} #${displayedMembers.value.length + i + 1}`,
+        avatar : template.avatar
       });
     }
-    
+
     displayedMembers.value.push(...newMembers);
     done();
   }, 300);
 }
 
-function resetGroupMembers(): void {
-  displayedMembers.value = [];
-}
+function resetGroupMembers(): void { displayedMembers.value = []; }
 
 function loadMessages(index: number, done: () => void): void {
   setTimeout(() => {
@@ -63,7 +72,7 @@ function sendMessage() {
       break;
     case "/list":
       resetGroupMembers();
-      displayGroupList.value = true
+      dialogs.groupList = true
       break;
     default:
       console.log('Message sent:', text.value)
@@ -73,8 +82,9 @@ function sendMessage() {
   }
 }
 
+
 export {
-  messages, loadMessages, sendMessage, text, confirmGroupLeave,
-  displayGroupList, maximizedToggle, currentGroupName, displayedMembers, 
-  loadGroupMembers, resetGroupMembers
-}
+      messages, loadMessages, sendMessage, text, confirmGroupLeave, dialogs,
+          currentGroupName, displayedMembers, loadGroupMembers,
+          resetGroupMembers
+    }
