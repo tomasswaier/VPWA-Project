@@ -1,3 +1,4 @@
+
 <template>
   <q-dialog
     :model-value="modelValue"
@@ -5,7 +6,7 @@
     persistent>
     <q-card>
       <q-card-section class="row items-center">
-        <span class="q-ml-sm">Are you sure you want to leave this group?</span>
+        <span class="q-ml-sm">Are you sure you want to DELETE this group?</span>
       </q-card-section>
 
       <q-card-actions align="right">

@@ -1,27 +1,70 @@
 <template>
-  <q-item clickable tag="a" target="_blank" :href="link">
-    <q-item-section v-if="icon" avatar>
-      <q-icon :name="icon" />
-    </q-item-section>
+<q-item :class="{'bg-primary text-white':isPrivate}" class="q-pa-md">
+  <div class="row items-center full-width no-wrap">
+    <div class="col" clickable tag="a" :href="link">
+      <q-item-section class="ellipsis">
+        <q-item-label class="ellipsis">{{ title }}</q-item-label>
+        <q-item-label caption class="ellipsis">{{ caption }}</q-item-label>
+      </q-item-section>
+    </div>
 
-    <q-item-section>
-      <q-item-label>{{ title }}</q-item-label>
-      <q-item-label caption>{{ caption }}</q-item-label>
-    </q-item-section>
-  </q-item>
+    <div class="col-auto q-pl-md">
+      <q-btn-dropdown color="primary" @click.stop dense>
+        <q-list>
+          <q-item clickable @click="leaveGroup" v-close-popup >
+            <q-item-section>
+              <q-item-label>Leave Group</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item clickable @click="inviteGroup" v-close-popup>
+            <q-item-section>
+              <q-item-label>Invite to</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item clickable v-close-popup>
+            <q-item-section>
+              <q-item-label>Some Other option</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item v-if="isOwner" clickable @click="deleteGroup" v-close-popup >
+            <q-item-section>
+              <q-item-label>Delete Group</q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-btn-dropdown>
+    </div>
+  </div>
+</q-item>
 </template>
 
+import
 <script setup lang="ts">
+import {leaveGroup,deleteGroup,inviteGroup} from '../store/interactions';
+
 export interface GroupLinkProps {
-  title: string;
-  caption?: string;
-  link?: string;
-  icon?: string;
+  title: string
+  caption?: string
+  link?: string
+  isPrivate?: boolean
+  isOwner?:boolean
 }
 
-withDefaults(defineProps<GroupLinkProps>(), {
+interface FullProps extends GroupLinkProps {
+  dialogs: {
+    groupList: boolean
+    groupLeave: boolean
+    groupCreate: boolean
+    groupDelete: boolean
+    groupInvite: boolean
+  }
+}
+
+withDefaults(defineProps<FullProps>(), {
   caption: '',
   link: '#',
-  icon: '',
+  isPrivate: false,
+  isOwner: false,
 });
+
 </script>
