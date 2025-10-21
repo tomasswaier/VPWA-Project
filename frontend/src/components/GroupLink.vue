@@ -11,9 +11,9 @@
     <div class="col-auto q-pl-md">
       <q-btn-dropdown color="primary" @click.stop dense>
         <q-list>
-          <q-item clickable v-close-popup>
+          <q-item clickable @click="leaveGroup" v-close-popup >
             <q-item-section>
-              <q-item-label>Leave Server</q-item-label>
+              <q-item-label>Leave Group</q-item-label>
             </q-item-section>
           </q-item>
           <q-item clickable v-close-popup>
@@ -26,6 +26,11 @@
               <q-item-label>Some Other option</q-item-label>
             </q-item-section>
           </q-item>
+          <q-item v-if="isOwner" clickable @click="leaveGroup" v-close-popup >
+            <q-item-section>
+              <q-item-label>Delete Group</q-item-label>
+            </q-item-section>
+          </q-item>
         </q-list>
       </q-btn-dropdown>
     </div>
@@ -33,17 +38,31 @@
 </q-item>
 </template>
 
+import
 <script setup lang="ts">
+import {leaveGroup} from '../store/interactions';
+
 export interface GroupLinkProps {
-  title: string;
-  caption?: string;
-  link?: string;
-  isPrivate?:boolean;
+  title: string
+  caption?: string
+  link?: string
+  isPrivate?: boolean
+  isOwner?:boolean
 }
 
-withDefaults(defineProps<GroupLinkProps>(), {
+interface FullProps extends GroupLinkProps {
+  dialogs: {
+    groupList: boolean
+    groupLeave: boolean
+    groupCreate: boolean
+  }
+}
+
+withDefaults(defineProps<FullProps>(), {
   caption: '',
   link: '#',
-  isPrivate:false
+  isPrivate: false,
+  isOwner: false,
 });
+
 </script>

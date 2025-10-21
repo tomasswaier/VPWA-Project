@@ -7,7 +7,7 @@
     <q-drawer class="bg-accent text-bold" v-model="leftDrawerOpen" show-if-above bordered>
       <q-list>
         <q-item-label header> Groups </q-item-label>
-        <GroupLink v-for="link in groupLinks" :key="link.title" v-bind="link" />
+        <GroupLink :dialogs="dialogs" v-for="link in groupLinks" :key="link.title" v-bind="link" />
       </q-list>
       <q-btn class="absolute-bottom"  flat dense round icon="add" aria-label="Meow" />
     </q-drawer>
@@ -21,7 +21,8 @@
 
 <script setup lang="ts">
 import { ref} from 'vue';
-import GroupLink, { type GroupLinkProps } from 'components/GroupLink.vue';
+import GroupLink  from 'components/GroupLink.vue';
+import  type{ GroupLinkProps}  from 'components/GroupLink.vue';
 import HeaderToolbar from 'components/HeaderToolbar.vue';
 
 import {dialogs} from '../store/interactions';
@@ -39,6 +40,7 @@ const groupLinks: GroupLinkProps[] = [
     title: 'SuperGroup',
     caption: 'Omega good groupgroup',
     link: '',
+    isOwner:true,
   },
   {
     title: 'Minecraft Group',

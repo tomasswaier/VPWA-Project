@@ -66,8 +66,7 @@ function sendMessage() {
     const firstArg: string = inputText.split(' ')[0] as string;
     switch (firstArg) {
     case "/leave":
-      console.log('LEAVING');
-      dialogs.groupLeave = true
+      leaveGroup();
       break;
     case "/invite":
       break;
@@ -76,7 +75,7 @@ function sendMessage() {
       dialogs.groupList = true
       break;
     case "/join":
-      dialogs.groupCreate = true
+      joinGroup();
       break;
     default:
       console.log('Message sent:', text.value)
@@ -85,9 +84,15 @@ function sendMessage() {
     text.value = ''
   }
 }
+function joinGroup(){
+  dialogs.groupCreate = true
+}
+function leaveGroup(){
+  dialogs.groupLeave = true
+}
 
 
 export {
       messages, loadMessages, sendMessage, text, dialogs, currentGroupName,
-          displayedMembers, loadGroupMembers, resetGroupMembers
+          displayedMembers, leaveGroup, loadGroupMembers, resetGroupMembers
     }
