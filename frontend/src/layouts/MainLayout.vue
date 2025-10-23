@@ -5,7 +5,8 @@
       <HeaderToolbar @toggle-drawer="toggleDrawer()" />
     </q-header>
     <q-drawer class="bg-accent text-bold" v-model="leftDrawerOpen" show-if-above bordered>
-      <q-list>
+      <q-list style="height: 90vh; overflow-y: auto;">
+        <!--the user will NOT be part of thousands of groups-->
         <q-item-label header> Groups </q-item-label>
         <GroupLink :dialogs="dialogs" v-for="link in groupLinks" :key="link.title" v-bind="link" />
       </q-list>
@@ -25,38 +26,12 @@
 <script setup lang="ts">
 import {ref} from 'vue';
 import GroupLink  from 'components/GroupLink.vue';
-import  type{ GroupLinkProps}  from 'components/GroupLink.vue';
 import HeaderToolbar from 'components/HeaderToolbar.vue';
 
-import {dialogs,joinGroup,listGroups} from '../store/interactions';
+import {dialogs,joinGroup,listGroups,groupLinks,sortGroupLinksByInvites} from '../store/interactions';
 import type {Dialogs} from '../store/interactions';
 
 
-const groupLinks: GroupLinkProps[] = [
-  {
-    title: 'Group#1',
-    caption: 'Gaming group',
-    link: '',
-    isPrivate:true,
-  },
-  {
-    title: 'SuperGroup',
-    caption: 'Omega good groupgroup',
-    link: '',
-    isOwner:true,
-  },
-  {
-    title: 'Minecraft Group',
-    caption: 'group for minecraft fans',
-    link: '',
-    isPrivate:true,
-  },
-  {
-    title: 'Disabled group',
-    caption: 'group for people who like to game disabled',
-    link: '',
-  }
-];
 const leftDrawerOpen = ref(false);
 function toggleDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
@@ -65,5 +40,6 @@ function toggleDrawer() {
 function updateDialog(dialogName: keyof Dialogs,value:boolean){
   dialogs[dialogName] = value
 }
+sortGroupLinksByInvites(groupLinks);
 
 </script>
