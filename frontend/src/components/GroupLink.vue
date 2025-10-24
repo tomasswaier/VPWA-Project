@@ -1,10 +1,11 @@
 <template>
-<q-item :class="{'bg-primary text-white':isPrivate}" class="q-pa-md">
+<q-item :class="{'bg-primary text-white':isPrivate,'rounded-borders':isInvite}" class="q-pa-md">
   <div class="row items-center full-width no-wrap">
     <div class="col" clickable tag="a" :href="link">
       <q-item-section class="ellipsis">
         <q-item-label class="ellipsis">{{ title }}</q-item-label>
         <q-item-label caption class="ellipsis">{{ caption }}</q-item-label>
+        <q-item-tag v-if="isInvite">Invitation</q-item-tag>
       </q-item-section>
     </div>
 
@@ -15,6 +16,7 @@
             <q-item-section>
               <q-item-label>Leave Group</q-item-label>
             </q-item-section>
+
           </q-item>
           <q-item clickable @click="inviteGroup" v-close-popup>
             <q-item-section>
@@ -41,14 +43,9 @@
 import
 <script setup lang="ts">
 import {leaveGroup,deleteGroup,inviteGroup} from '../store/interactions';
+import type {GroupLinkProps} from '../store/interactions';
 
-export interface GroupLinkProps {
-  title: string
-  caption?: string
-  link?: string
-  isPrivate?: boolean
-  isOwner?:boolean
-}
+export
 
 interface FullProps extends GroupLinkProps {
   dialogs: {
@@ -65,6 +62,7 @@ withDefaults(defineProps<FullProps>(), {
   link: '#',
   isPrivate: false,
   isOwner: false,
+  isInvite: false,
 });
 
 </script>

@@ -4,16 +4,17 @@
     :current-group-name="currentGroupName"
     :displayed-members="displayedMembers"
     :load-group-members="loadGroupMembers"
-      @update-dialog="updateDialog"
+    @update-dialog="updateDialog"
   />
-  <div class="q-pa-md row justify-center">
-    <div id="chatMessages" style="width: 100%;">
+  <q-page class="flex column">
+    <div class="col overflow-auto q-pa-md" id="chatMessages" ref="chatContainer" style="max-height: calc(100vh - 120px);">
       <q-infinite-scroll :offset="250" reverse @load="loadMessages">
-        <div v-for="(message,index) in messages" :key="index" >
-          <q-chat-message name="me"
-                          :text="['I will be counting down from X']"
-          bg-color="orange-1"
-          sent
+        <div v-for="(message, index) in messages" :key="index">
+          <q-chat-message 
+            name="me"
+            :text="['I will be counting down from X']"
+            bg-color="orange-1"
+            sent
           />
         </div>
         <q-chat-message
@@ -61,23 +62,46 @@
           bg-color="secondary"
           size="8"
         />
+        <template v-slot:loading>
+          <div class="row justify-center q-my-md">
+            <q-spinner-dots color="primary" size="40px" />
+          </div>
+        </template>
       </q-infinite-scroll>
-
     </div>
-  </div>
-  <q-footer class="bg-white text-black q-pa-sm">
-      <q-input rounded outlined v-model="text" label="Napíš správu..." class="full-width" @keyup.enter="sendMessage">
+    
+    <q-separator />
+    
+    <div class="col-auto q-pa-sm bg-white">
+      <q-input 
+        rounded 
+        outlined 
+        v-model="text" 
+        label="Napíš správu..." 
+        @keyup.enter="sendMessage"
+        dense
+      >
         <template v-slot:append>
-          <q-btn flat round icon="send" @click="sendMessage" />
+          <q-btn flat round dense icon="send" @click="sendMessage" />
         </template>
       </q-input>
-  </q-footer>
+    </div>
+  </q-page>
 </template>
+
 <script setup lang="ts">
+import { ref } from 'vue';
 import DialogManager from 'components/DialogManager.vue';
-import type {Dialogs} from '../store/interactions';
-import { messages, loadMessages, sendMessage, text,
-          currentGroupName, displayedMembers, loadGroupMembers} from '../store/interactions';
+import type { Dialogs } from '../store/interactions';
+import { 
+  messages, 
+  loadMessages, 
+  sendMessage, 
+  text,
+  currentGroupName, 
+  displayedMembers, 
+  loadGroupMembers
+} from '../store/interactions';
 
 interface Props {
   dialogs: {
@@ -90,15 +114,25 @@ interface Props {
   }
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
+
 interface Emits {
   (e: 'update-dialog', dialogName: keyof Dialogs, value: boolean): void
 }
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
+
+const chatContainer = ref<HTMLElement | null>(null);
 
 function updateDialog(dialogName: keyof Dialogs, value: boolean) {
-  emit('update-dialog', dialogName, value)
+  emit('update-dialog', dialogName, value);
 }
-
 </script>
+
+<style scoped>
+/*tymto osetrime to ten infinity scroll nech sa nedava furt vyssie*/
+#chatMessages {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+</style>

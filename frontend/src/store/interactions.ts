@@ -1,4 +1,4 @@
-// import {Notify} from 'quasar'
+import {Notify} from 'quasar'
 import {reactive, ref} from 'vue'
 
 const messages = ref<Record<string, unknown>[]>([ {}, {}, {} ])
@@ -9,7 +9,16 @@ const currentGroupName = ref('Trumans Group');
 const displayedMembers = ref<Array<{name : string, avatar : string}>>([]);
 const publicGroups = ref<Array<{name : string, caption : string}>>([]);
 
-export interface Dialogs {
+interface GroupLinkProps {
+  title: string
+  caption?: string
+  link?: string
+  isPrivate?: boolean
+  isOwner?: boolean
+  isInvite?: boolean
+}
+
+interface Dialogs {
   groupLeave: boolean
   groupList: boolean
   groupCreate: boolean
@@ -25,6 +34,195 @@ const dialogs: Dialogs = reactive({
   groupInvite : false,
   groupUserList : false,
 })
+
+const groupLinks: GroupLinkProps[] = [
+  {
+    title : 'Group#1',
+    caption : 'Gaming group',
+    link : '',
+    isPrivate : true,
+  },
+  {
+    title : 'SuperGroup',
+    caption : 'Omega good groupgroup',
+    link : '',
+    isOwner : true,
+  },
+  {
+    title : 'Minecraft Group',
+    caption : 'group for minecraft fans',
+    link : '',
+    isPrivate : true,
+  },
+  {
+    title : 'Disabled group',
+    caption : 'group for people who like to game disabled',
+    link : '',
+    isInvite : true
+  },
+  {
+    title : 'SuperGroup',
+    caption : 'Omega good groupgroup',
+    link : '',
+    isOwner : true,
+  },
+  {
+    title : 'Minecraft Group',
+    caption : 'group for minecraft fans',
+    link : '',
+    isPrivate : true,
+  },
+  {
+    title : 'Disabled group',
+    caption : 'group for people who like to game disabled',
+    link : '',
+    isInvite : true
+  },
+  {
+    title : 'SuperGroup',
+    caption : 'Omega good groupgroup',
+    link : '',
+    isOwner : true,
+  },
+  {
+    title : 'Minecraft Group',
+    caption : 'group for minecraft fans',
+    link : '',
+    isPrivate : true,
+  },
+  {
+    title : 'Disabled group',
+    caption : 'group for people who like to game disabled',
+    link : '',
+    isInvite : true
+  },
+  {
+    title : 'SuperGroup',
+    caption : 'Omega good groupgroup',
+    link : '',
+    isOwner : true,
+  },
+  {
+    title : 'Minecraft Group',
+    caption : 'group for minecraft fans',
+    link : '',
+    isPrivate : true,
+  },
+  {
+    title : 'Disabled group',
+    caption : 'group for people who like to game disabled',
+    link : '',
+    isInvite : true
+  },
+  {
+    title : 'SuperGroup',
+    caption : 'Omega good groupgroup',
+    link : '',
+    isOwner : true,
+  },
+  {
+    title : 'Minecraft Group',
+    caption : 'group for minecraft fans',
+    link : '',
+    isPrivate : true,
+  },
+  {
+    title : 'Disabled group',
+    caption : 'group for people who like to game disabled',
+    link : '',
+    isInvite : true
+  },
+  {
+    title : 'SuperGroup',
+    caption : 'Omega good groupgroup',
+    link : '',
+    isOwner : true,
+  },
+  {
+    title : 'Minecraft Group',
+    caption : 'group for minecraft fans',
+    link : '',
+    isPrivate : true,
+  },
+  {
+    title : 'Disabled group',
+    caption : 'group for people who like to game disabled',
+    link : '',
+    isInvite : true
+  },
+  {
+    title : 'SuperGroup',
+    caption : 'Omega good groupgroup',
+    link : '',
+    isOwner : true,
+  },
+  {
+    title : 'Minecraft Group',
+    caption : 'group for minecraft fans',
+    link : '',
+    isPrivate : true,
+  },
+  {
+    title : 'Disabled group',
+    caption : 'group for people who like to game disabled',
+    link : '',
+    isInvite : true
+  },
+  {
+    title : 'SuperGroup',
+    caption : 'Omega good groupgroup',
+    link : '',
+    isOwner : true,
+  },
+  {
+    title : 'Minecraft Group',
+    caption : 'group for minecraft fans',
+    link : '',
+    isPrivate : true,
+  },
+  {
+    title : 'Disabled group',
+    caption : 'group for people who like to game disabled',
+    link : '',
+    isInvite : true
+  },
+  {
+    title : 'SuperGroup',
+    caption : 'Omega good groupgroup',
+    link : '',
+    isOwner : true,
+  },
+  {
+    title : 'Minecraft Group',
+    caption : 'group for minecraft fans',
+    link : '',
+    isPrivate : true,
+  },
+  {
+    title : 'Disabled group',
+    caption : 'group for people who like to game disabled',
+    link : '',
+    isInvite : true
+  },
+  {
+    title : 'SuperGroup',
+    caption : 'Omega good groupgroup',
+    link : '',
+    isOwner : true,
+  },
+  {
+    title : 'Minecraft Group',
+    caption : 'group for minecraft fans',
+    link : '',
+    isPrivate : true,
+  },
+  {
+    title : 'Disabled group',
+    caption : 'group for people who like to game disabled',
+    link : '',
+    isInvite : true
+  },
+];
 
 // Zoznam base memberov
 const baseMemberTemplates = [
@@ -93,6 +291,24 @@ function loadPublicGroups(index: number, done: () => void): void {
     done();
   }, 300);
 }
+
+function sortGroupLinksByInvites(groupLinks: GroupLinkProps[]) {
+  let firstAvailablePosition = 0;
+  let walkingPointer = 0;
+  console.log(groupLinks);
+  while (walkingPointer < groupLinks.length) {
+    console.log(groupLinks[walkingPointer]);
+    if (groupLinks[walkingPointer]?.isInvite) {
+      console.log('meow');
+      const temp: GroupLinkProps = groupLinks[firstAvailablePosition]!;
+      groupLinks[firstAvailablePosition] = groupLinks[walkingPointer]!;
+      groupLinks[walkingPointer] = temp;
+      firstAvailablePosition++;
+    }
+    walkingPointer++;
+  }
+}
+
 function resetGroupMembers(): void { displayedMembers.value = []; }
 
 function loadMessages(index: number, done: () => void): void {
@@ -151,10 +367,54 @@ function deleteGroup(){
 function inviteGroup(){
   dialogs.groupInvite = true
 }
+    export type {GroupLinkProps, Dialogs};
 
-export {
-      messages, loadMessages, sendMessage, text, dialogs, currentGroupName,
-          displayedMembers, leaveGroup, listGroups, deleteGroup, inviteGroup,
-          joinGroup, loadGroupMembers, resetGroupMembers, loadPublicGroups,
-          publicGroups
-    }
+    export {
+      messages,
+      loadMessages,
+      sendMessage,
+      text,
+      dialogs,
+      currentGroupName,
+      displayedMembers,
+      leaveGroup,
+      listGroups,
+      deleteGroup,
+      inviteGroup,
+      joinGroup,
+      loadGroupMembers,
+      resetGroupMembers,
+      loadPublicGroups,
+      publicGroups,
+      groupLinks,
+      sortGroupLinksByInvites
+
+    };
+
+
+
+function simulateIncomingInvite(userName: string, groupName: string) {
+  Notify.create({
+    message: `${userName} has invited you to ${groupName}`,
+    color: 'primary',
+    icon: 'group_add',
+    position: 'top-right',
+    timeout: 5000,
+    actions: [
+      {label: 'Accept',color: 'white',
+        handler: () => {
+          Notify.create({message: `You joined ${groupName}!`,color: 'positive',icon: 'check_circle',position: 'top',timeout: 2000});
+        }
+      },
+      {
+        label: 'Decline',color: 'white',
+        handler: () => {
+          Notify.create({message: 'Invitation declined',color: 'red',icon: 'cancel',position: 'top',timeout: 2000});
+        }
+      }
+    ]
+  });
+}
+
+export { simulateIncomingInvite };
+//simulateIncomingInvite('Tomas Truman', 'Gaming Group')
