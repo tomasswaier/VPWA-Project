@@ -1,4 +1,4 @@
-// import {Notify} from 'quasar'
+import {Notify} from 'quasar'
 import {reactive, ref} from 'vue'
 
 const messages = ref<Record<string, unknown>[]>([ {}, {}, {} ])
@@ -338,3 +338,31 @@ function inviteGroup(){
       sortGroupLinksByInvites
 
     };
+
+
+
+function simulateIncomingInvite(userName: string, groupName: string) {
+  Notify.create({
+    message: `${userName} has invited you to ${groupName}`,
+    color: 'primary',
+    icon: 'group_add',
+    position: 'top-right',
+    timeout: 5000,
+    actions: [
+      {label: 'Accept',color: 'white',
+        handler: () => {
+          Notify.create({message: `You joined ${groupName}!`,color: 'positive',icon: 'check_circle',position: 'top',timeout: 2000});
+        }
+      },
+      {
+        label: 'Decline',color: 'white',
+        handler: () => {
+          Notify.create({message: 'Invitation declined',color: 'red',icon: 'cancel',position: 'top',timeout: 2000});
+        }
+      }
+    ]
+  });
+}
+
+export { simulateIncomingInvite };
+//simulateIncomingInvite('Tomas Truman', 'Gaming Group')

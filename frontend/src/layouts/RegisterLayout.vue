@@ -11,12 +11,28 @@
       <q-page class="flex flex-center bg-accent">
         <q-card style="width: 400px; max-width: 90vw;">
           <q-card-section class="text-center">
-            <div class="text-h4 text-weight-bold text-primary">Login</div>
-            <div class="text-subtitle2 text-grey-7">Welcome back!</div>
+            <div class="text-h4 text-weight-bold text-primary">Register</div>
+            <div class="text-subtitle2 text-grey-7">Create your account</div>
           </q-card-section>
 
           <q-card-section>
-            <q-form @submit="handleLogin" class="q-gutter-md">
+            <q-form @submit="handleRegister" class="q-gutter-md">
+              <q-input
+                filled
+                v-model="username"
+                label="Username *"
+                hint="Choose your username"
+                lazy-rules
+                :rules="[
+                  (val:string) => val && val.length > 0 || 'Please enter your username',
+                  (val:string) => val && val.length >= 3 || 'Username must be at least 3 characters'
+                ]"
+              >
+                <template v-slot:prepend>
+                  <q-icon name="person" />
+                </template>
+              </q-input>
+
               <q-input
                 filled
                 v-model="email"
@@ -39,7 +55,7 @@
                 v-model="password"
                 :type="isPwd ? 'password' : 'text'"
                 label="Password *"
-                hint="Enter your password"
+                hint="Enter your password (min. 6 characters)"
                 lazy-rules
                 :rules="[
                   (val:string) => val && val.length > 0 || 'Please enter your password',
@@ -58,12 +74,36 @@
                 </template>
               </q-input>
 
+              <q-input
+                filled
+                v-model="confirmPassword"
+                :type="isConfirmPwd ? 'password' : 'text'"
+                label="Confirm Password *"
+                hint="Re-enter your password"
+                lazy-rules
+                :rules="[
+                  (val:string) => val && val.length > 0 || 'Please confirm your password',
+                  (val:string) => val === password || 'Passwords do not match'
+                ]"
+              >
+                <template v-slot:prepend>
+                  <q-icon name="lock" />
+                </template>
+                <template v-slot:append>
+                  <q-icon
+                    :name="isConfirmPwd ? 'visibility_off' : 'visibility'"
+                    class="cursor-pointer"
+                    @click="isConfirmPwd = !isConfirmPwd"
+                  />
+                </template>
+              </q-input>
+
               <div class="q-mt-md">
                 <q-btn
                   unelevated
                   type="submit"
                   color="primary"
-                  label="Login"
+                  label="Register"
                   class="full-width"
                   size="md"
                 />
@@ -73,9 +113,9 @@
 
           <q-card-section class="text-center q-pt-none">
             <div class="text-grey-7">
-              Not registered yet?
-              <router-link to="/register" class="text-primary text-weight-bold" style="text-decoration: none;">
-                Register here!
+              Already have an account?
+              <router-link to="/login" class="text-primary text-weight-bold" style="text-decoration: none;">
+                Login here!
               </router-link>
             </div>
           </q-card-section>
@@ -90,15 +130,22 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
+const username = ref('');
 const email = ref('');
 const password = ref('');
+const confirmPassword = ref('');
 const isPwd = ref(true);
+const isConfirmPwd = ref(true);
 
-function handleLogin() {
-  // Zatiaľ len simulácia prihlásenia
-  console.log('Login attempt:', { email: email.value, password: password.value });
+function handleRegister() {
+  // Zatiaľ len simulácia registrácie
+  console.log('Register attempt:', {
+    username: username.value,
+    email: email.value,
+    password: password.value
+  });
   
-  // Po úspešnom prihlásení presmerovanie na hlavnú stránku
-  void router.push('/');
+  // Po úspešnej registrácii presmerovanie na login
+  void router.push('/login');
 }
 </script>
