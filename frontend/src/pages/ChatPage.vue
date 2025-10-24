@@ -7,10 +7,10 @@
     @update-dialog="updateDialog"
   />
   <q-page class="flex column">
-    <div class="col overflow-auto q-pa-md" id="chatMessages" ref="chatContainer" style="max-height: calc(100vh - 120px);">
+    <div class="col overflow-auto q-pa-md" id="chatMessages" ref="chatContainer" style="max-height: calc(100vh - 160px);">
       <q-infinite-scroll :offset="250" reverse @load="loadMessages">
         <div v-for="(message, index) in messages" :key="index">
-          <q-chat-message 
+          <q-chat-message
             name="me"
             :text="['I will be counting down from X']"
             bg-color="orange-1"
@@ -69,15 +69,41 @@
         </template>
       </q-infinite-scroll>
     </div>
-    
-    <q-separator />
-    
     <div class="col-auto q-pa-sm bg-white">
-      <q-input 
-        rounded 
-        outlined 
-        v-model="text" 
-        label="Napíš správu..." 
+      <div v-if="someoneTyping" >
+          <q-btn-dropdown color="primary" cover label="someone is typing...">
+            <q-list>
+              <q-item clickable  >
+                <q-item-section>
+                  <q-expansion-item caption="Johnka">
+                    <q-card>
+                      <q-card-section>
+                        Ja som Johnka.Nemala som čas sa predstaviť. Som 22 ročná občanka Slovenskej Republiky a som an fiitke lebo som girlpop. Cat Ipsum Meow meow meow purr moew meow meow
+                      </q-card-section>
+                    </q-card>
+                  </q-expansion-item>
+                </q-item-section>
+              </q-item>
+
+              <q-item clickable >
+                <q-item-section>
+                  <q-expansion-item caption="Emanuel">
+                    <q-card>
+                      <q-card-section>
+                        Ja som Emanuel.Nemal som čas sa predstaviť. Nie som 22 ročná občanka Slovenskej Republiky lebo som muž asi idk pišem lorem ipsum. Na fiitke niesom lebo to je ta spravna voľba. PPI je ****** ******* ***** by som **********
+                      </q-card-section>
+                    </q-card>
+                  </q-expansion-item>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-btn-dropdown>
+      </div>
+      <q-input
+        rounded
+        outlined
+        v-model="text"
+        label="Napíš správu..."
         @keyup.enter="sendMessage"
         dense
       >
@@ -93,13 +119,13 @@
 import { ref } from 'vue';
 import DialogManager from 'components/DialogManager.vue';
 import type { Dialogs } from '../store/interactions';
-import { 
-  messages, 
-  loadMessages, 
-  sendMessage, 
+import {
+  messages,
+  loadMessages,
+  sendMessage,
   text,
-  currentGroupName, 
-  displayedMembers, 
+  currentGroupName,
+  displayedMembers,
   loadGroupMembers
 } from '../store/interactions';
 
@@ -115,6 +141,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const someoneTyping=true;
 
 interface Emits {
   (e: 'update-dialog', dialogName: keyof Dialogs, value: boolean): void

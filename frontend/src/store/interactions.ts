@@ -61,14 +61,70 @@ const groupLinks: GroupLinkProps[] = [
     isInvite : true
   },
   {
-    title : 'SuperGroup',
-    caption : 'Omega good groupgroup',
+    title : 'Chat group ',
+    caption : '',
     link : '',
     isOwner : true,
   },
   {
-    title : 'Minecraft Group',
-    caption : 'group for minecraft fans',
+    title : 'League of lengeds Group',
+    caption : 'group for league fans',
+    link : '',
+    isPrivate : true,
+  },
+  {
+    title : 'group Group',
+    caption : 'group for group',
+    link : '',
+    isPrivate : true,
+    isInvite : true
+  },
+  {
+    title : 'SuperGroupGroup',
+    caption : 'Omega good groupgroupgrougroup',
+    link : '',
+    isPrivate : true,
+    isOwner : true,
+  },
+  {
+    title : 'Minecraft Group pvp',
+    caption : 'group for minecraft pvp fans',
+    link : '',
+    isPrivate : true,
+  },
+  {
+    title : 'groupgrougroup',
+    caption : 'group for people who groupgroup',
+    link : '',
+    isInvite : true
+  },
+  {
+    title : 'League group aram',
+    caption : 'aram group group',
+    link : '',
+    isOwner : true,
+  },
+  {
+    title : 'Minecraft Group skyublock',
+    caption : 'group for minecraft skyblock fans',
+    link : '',
+    isPrivate : true,
+  },
+  {
+    title : 'CoolChatgroup',
+    caption : 'group for people who are cool',
+    link : '',
+    isInvite : true
+  },
+  {
+    title : 'Meow Cats Meow',
+    caption : 'Meow moew meow',
+    link : '',
+    isOwner : true,
+  },
+  {
+    title : 'Minecraft Cats group',
+    caption : 'group for minecraft cat fans',
     link : '',
     isPrivate : true,
   },
@@ -85,26 +141,27 @@ const groupLinks: GroupLinkProps[] = [
     isOwner : true,
   },
   {
-    title : 'Minecraft Group',
+    title : 'Minecraft hate Group  ',
     caption : 'group for minecraft fans',
     link : '',
     isPrivate : true,
   },
   {
-    title : 'Disabled group',
-    caption : 'group for people who like to game disabled',
+    title : 'not Disabled group',
+    caption : 'group for people who dont like to game disabled',
     link : '',
     isInvite : true
   },
   {
-    title : 'SuperGroup',
-    caption : 'Omega good groupgroup',
+    title : 'penguin gruop',
+    caption : 'pengu',
     link : '',
     isOwner : true,
+    isPrivate : true,
   },
   {
-    title : 'Minecraft Group',
-    caption : 'group for minecraft fans',
+    title : 'baseball',
+    caption : 'baseball fans',
     link : '',
     isPrivate : true,
   },
@@ -112,115 +169,6 @@ const groupLinks: GroupLinkProps[] = [
     title : 'Disabled group',
     caption : 'group for people who like to game disabled',
     link : '',
-    isInvite : true
-  },
-  {
-    title : 'SuperGroup',
-    caption : 'Omega good groupgroup',
-    link : '',
-    isOwner : true,
-  },
-  {
-    title : 'Minecraft Group',
-    caption : 'group for minecraft fans',
-    link : '',
-    isPrivate : true,
-  },
-  {
-    title : 'Disabled group',
-    caption : 'group for people who like to game disabled',
-    link : '',
-    isInvite : true
-  },
-  {
-    title : 'SuperGroup',
-    caption : 'Omega good groupgroup',
-    link : '',
-    isOwner : true,
-  },
-  {
-    title : 'Minecraft Group',
-    caption : 'group for minecraft fans',
-    link : '',
-    isPrivate : true,
-  },
-  {
-    title : 'Disabled group',
-    caption : 'group for people who like to game disabled',
-    link : '',
-    isInvite : true
-  },
-  {
-    title : 'SuperGroup',
-    caption : 'Omega good groupgroup',
-    link : '',
-    isOwner : true,
-  },
-  {
-    title : 'Minecraft Group',
-    caption : 'group for minecraft fans',
-    link : '',
-    isPrivate : true,
-  },
-  {
-    title : 'Disabled group',
-    caption : 'group for people who like to game disabled',
-    link : '',
-    isInvite : true
-  },
-  {
-    title : 'SuperGroup',
-    caption : 'Omega good groupgroup',
-    link : '',
-    isOwner : true,
-  },
-  {
-    title : 'Minecraft Group',
-    caption : 'group for minecraft fans',
-    link : '',
-    isPrivate : true,
-  },
-  {
-    title : 'Disabled group',
-    caption : 'group for people who like to game disabled',
-    link : '',
-    isInvite : true
-  },
-  {
-    title : 'SuperGroup',
-    caption : 'Omega good groupgroup',
-    link : '',
-    isOwner : true,
-  },
-  {
-    title : 'Minecraft Group',
-    caption : 'group for minecraft fans',
-    link : '',
-    isPrivate : true,
-  },
-  {
-    title : 'Disabled group',
-    caption : 'group for people who like to game disabled',
-    link : '',
-    isInvite : true
-  },
-  {
-    title : 'SuperGroup',
-    caption : 'Omega good groupgroup',
-    link : '',
-    isOwner : true,
-  },
-  {
-    title : 'Minecraft Group',
-    caption : 'group for minecraft fans',
-    link : '',
-    isPrivate : true,
-  },
-  {
-    title : 'Disabled group',
-    caption : 'group for people who like to game disabled',
-    link : '',
-    isInvite : true
   },
 ];
 
