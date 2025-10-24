@@ -409,7 +409,7 @@ function simulateIncomingInvite(userName: string, groupName: string) {
       {
         label: 'Decline',color: 'white',
         handler: () => {
-          Notify.create({message: 'Invitation declined',color: 'info',icon: 'cancel',position: 'top',timeout: 2000});
+          Notify.create({message: 'Invitation declined',color: 'red',icon: 'cancel',position: 'top',timeout: 2000});
         }
       }
     ]
