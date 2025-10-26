@@ -11,6 +11,14 @@
       <q-infinite-scroll :offset="250" reverse @load="loadMessages">
         <div v-for="(message, index) in messages" :key="index">
           <q-chat-message
+            v-if="message.text"
+            :name="message.sender"
+            :text="[message.text]"
+            :sent="message.sender === 'me'"
+            :bg-color="message.isHighlighted ? 'yellow-3' : (message.sender === 'me' ? 'orange-1' : 'secondary')"
+          />
+          <q-chat-message
+            v-else
             name="me"
             :text="['I will be counting down from X']"
             bg-color="orange-1"
@@ -90,7 +98,7 @@
                   <q-expansion-item caption="Emanuel">
                     <q-card>
                       <q-card-section>
-                        Ja som Emanuel.Nemal som čas sa predstaviť. Nie som 22 ročná občanka Slovenskej Republiky lebo som muž asi idk pišem lorem ipsum. Na fiitke niesom lebo to je ta spravna voľba. PPI je ****** ******* ***** by som **********
+                        Ja som Emanuel.Nemal som čas sa predstaviť. Nie som 22 ročná občanka Slovenskej Republiky lebo som muž asi idk píšem lorem ipsum. Na fiitke niesom lebo to je ta spravna voľba. PPI je ****** ******* ***** by som **********
                       </q-card-section>
                     </q-card>
                   </q-expansion-item>
