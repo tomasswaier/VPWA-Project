@@ -145,6 +145,8 @@ interface Props {
     groupCreate: boolean
     groupDelete: boolean
     groupInvite: boolean
+    userKick: boolean
+    userRevoke: boolean
   }
 }
 
