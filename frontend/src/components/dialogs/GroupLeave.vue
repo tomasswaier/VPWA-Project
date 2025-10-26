@@ -5,7 +5,7 @@
     persistent>
     <q-card>
       <q-card-section class="row items-center">
-        <span class="q-ml-sm">Are you sure you want to leave this group?</span>
+        <span class="q-ml-sm">{{modelMessage}}</span>
       </q-card-section>
 
       <q-card-actions align="right">
@@ -19,6 +19,7 @@
 <script setup lang="ts">
 interface Props {
   modelValue: boolean
+  modelMessage: string
 }
 
 interface Emits {
