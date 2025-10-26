@@ -25,6 +25,8 @@ interface Dialogs {
   groupDelete: boolean
   groupInvite: boolean
   groupUserList: boolean
+  userKick: boolean
+  userRevoke: boolean
 }
 const dialogs: Dialogs = reactive({
   groupLeave : false,
@@ -33,6 +35,8 @@ const dialogs: Dialogs = reactive({
   groupDelete : false,
   groupInvite : false,
   groupUserList : false,
+  userKick : false,
+  userRevoke : false,
 })
 
 const groupLinks: GroupLinkProps[] = [
@@ -271,7 +275,7 @@ function sendMessage() {
   if (inputText) {
     const firstArg: string = inputText.split(' ')[0] as string;
     switch (firstArg) {
-    case "/leave":
+    case "/cancel":
       leaveGroup();
       break;
     case "/invite":
@@ -285,6 +289,12 @@ function sendMessage() {
       break;
     case "/delete":
       deleteGroup();
+      break;
+    case "/revoke":
+      revokeUser();
+      break;
+    case "/kick":
+      kickUser();
       break;
     default:
       console.log('Message sent:', text.value)
@@ -315,6 +325,12 @@ function deleteGroup(){
 function inviteGroup(){
   dialogs.groupInvite = true
 }
+function kickUser(){
+  dialogs.userKick = true
+}
+function revokeUser(){
+  dialogs.userRevoke = true
+}
     export type {GroupLinkProps, Dialogs};
 
     export {
@@ -339,30 +355,43 @@ function inviteGroup(){
 
     };
 
+    function simulateIncomingInvite(userName: string, groupName: string) {
+      Notify.create({
+        message : `${userName} has invited you to ${groupName}`,
+        color : 'primary',
+        icon : 'group_add',
+        position : 'top-right',
+        timeout : 5000,
+        actions : [
+          {
+            label : 'Accept',
+            color : 'white',
+            handler : () => {
+              Notify.create({
+                message : `You joined ${groupName}!`,
+                color : 'positive',
+                icon : 'check_circle',
+                position : 'top',
+                timeout : 2000
+              });
+            }
+          },
+          {
+            label : 'Decline',
+            color : 'white',
+            handler : () => {
+              Notify.create({
+                message : 'Invitation declined',
+                color : 'red',
+                icon : 'cancel',
+                position : 'top',
+                timeout : 2000
+              });
+            }
+          }
+        ]
+      });
+    }
 
-
-function simulateIncomingInvite(userName: string, groupName: string) {
-  Notify.create({
-    message: `${userName} has invited you to ${groupName}`,
-    color: 'primary',
-    icon: 'group_add',
-    position: 'top-right',
-    timeout: 5000,
-    actions: [
-      {label: 'Accept',color: 'white',
-        handler: () => {
-          Notify.create({message: `You joined ${groupName}!`,color: 'positive',icon: 'check_circle',position: 'top',timeout: 2000});
-        }
-      },
-      {
-        label: 'Decline',color: 'white',
-        handler: () => {
-          Notify.create({message: 'Invitation declined',color: 'red',icon: 'cancel',position: 'top',timeout: 2000});
-        }
-      }
-    ]
-  });
-}
-
-export { simulateIncomingInvite };
-//simulateIncomingInvite('Tomas Truman', 'Gaming Group')
+    export {simulateIncomingInvite};
+    // simulateIncomingInvite('Tomas Truman', 'Gaming Group')
