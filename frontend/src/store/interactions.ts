@@ -1,7 +1,19 @@
 import {Notify} from 'quasar'
 import {reactive, ref} from 'vue'
 
-const messages = ref<Record<string, unknown>[]>([ {}, {}, {} ])
+// Interface pre správy
+interface Message {
+  text: string
+  sender: string
+  isHighlighted: boolean
+}
+
+const messages = ref<Message[]>([
+  { text: 'Some normal message', sender: 'Johnka', isHighlighted: false },
+  { text: '@TomáškoTruman hey check this!', sender: 'Johnka', isHighlighted: true },
+  { text: 'Another message', sender: 'Emanuel', isHighlighted: false }
+])
+
 const text = ref('');
 
 // skupinové konštanty
@@ -261,7 +273,15 @@ function resetGroupMembers(): void { displayedMembers.value = []; }
 
 function loadMessages(index: number, done: () => void): void {
   setTimeout(() => {
-    messages.value.splice(0, 0, {}, {}, {}, {}, {}, {}, {})
+    messages.value.splice(0, 0, 
+      { text: '', sender: 'me', isHighlighted: false },
+      { text: '', sender: 'me', isHighlighted: false },
+      { text: '', sender: 'me', isHighlighted: false },
+      { text: '', sender: 'me', isHighlighted: false },
+      { text: '', sender: 'me', isHighlighted: false },
+      { text: '', sender: 'me', isHighlighted: false },
+      { text: '', sender: 'me', isHighlighted: false }
+    )
     done()
   }, 100)
 }
@@ -287,8 +307,15 @@ function sendMessage() {
       deleteGroup();
       break;
     default:
-      console.log('Message sent:', text.value)
-      break;
+      // Kontrola či správa obsahuje @mention
+      { const containsMention = inputText.includes('@');
+      messages.value.push({
+        text: inputText,
+        sender: 'me',
+        isHighlighted: containsMention
+      });
+      console.log('Message sent:', text.value);
+      break; }
     }
     text.value = ''
   }
@@ -315,7 +342,7 @@ function deleteGroup(){
 function inviteGroup(){
   dialogs.groupInvite = true
 }
-    export type {GroupLinkProps, Dialogs};
+    export type {GroupLinkProps, Dialogs, Message};
 
     export {
       messages,
