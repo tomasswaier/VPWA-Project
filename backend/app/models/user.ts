@@ -1,33 +1,49 @@
-import { DateTime } from 'luxon'
-import hash from '@adonisjs/core/services/hash'
-import { compose } from '@adonisjs/core/helpers'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
-import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
-import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
+import {
+  BaseModel,
+  column,
+  HasMany,
+  hasMany,
+  ManyToMany,
+  manyToMany,
+} from "@adonisjs/lucid/orm";
 
-const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
-  uids: ['email'],
-  passwordColumnName: 'password',
-})
+import Group from "./group.js";
+import Message from "./message.js";
 
-export default class User extends compose(BaseModel, AuthFinder) {
+export type UserStatus = "online" | "do_not_disturb" | "offline";
+
+export default class User extends BaseModel {
   @column({ isPrimary: true })
-  declare id: number
+  declare id: string;
 
   @column()
-  declare fullName: string | null
+  declare username: string;
 
   @column()
-  declare email: string
+  declare password: string;
 
-  @column({ serializeAs: null })
-  declare password: string
+  @column()
+  declare status: UserStatus;
+
+  @column()
+  declare notificationPerm: boolean;
 
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime
+  declare createdAt: Date;
 
-  @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  @column
+    .dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: Date;
 
-  static accessTokens = DbAccessTokensProvider.forModel(User)
+  // Relations
+
+  @hasMany(() => Message)
+  declare messages: HasMany<typeof Message>;
+
+  @manyToMany(() => Group, {
+    pivotTable: "group_user",
+    pivotForeignKey: "user_id",
+    pivotRelatedForeignKey: "group_id",
+  })
+  declare groups: ManyToMany<typeof Group>;
 }
