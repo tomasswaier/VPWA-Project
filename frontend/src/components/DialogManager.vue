@@ -13,7 +13,7 @@
       :model-value="props.dialogs.groupLeave"
       model-message="Are you sure you want to leave this group?"
       @update:model-value="$emit('update-dialog','groupLeave',$event)"
-  />// change GroupLeave to some more abstract name
+      /><!-- change GroupLeave to some more abstract name-->
   <GroupCreate
       :model-value="props.dialogs.groupCreate"
       @update:model-value="$emit('update-dialog','groupCreate',$event)"

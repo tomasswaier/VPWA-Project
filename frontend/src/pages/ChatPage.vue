@@ -92,6 +92,17 @@
                   </q-expansion-item>
                 </q-item-section>
               </q-item>
+              <q-item clickable >
+                <q-item-section>
+                  <q-expansion-item caption="Emanuel">
+                    <q-card>
+                      <q-card-section>
+                        Ja som Emanuel.Nemal som čas sa predstaviť. Nie som 22 ročná občanka Slovenskej Republiky lebo som muž asi idk píšem lorem ipsum. Na fiitke niesom lebo to je ta spravna voľba. PPI je ****** ******* ***** by som **********
+                      </q-card-section>
+                    </q-card>
+                  </q-expansion-item>
+                </q-item-section>
+              </q-item>
 
               <q-item clickable >
                 <q-item-section>

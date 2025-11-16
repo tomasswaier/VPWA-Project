@@ -9,7 +9,7 @@
       </q-item-section>
     </div>
 
-    <div class="col-auto q-pl-md">
+    <div v-if="isInvite !== true" class="col-auto q-pl-md">
       <q-btn-dropdown color="primary" @click.stop dense>
         <q-list>
           <q-item clickable @click="leaveGroup" v-close-popup >
@@ -21,11 +21,6 @@
           <q-item clickable @click="inviteGroup" v-close-popup>
             <q-item-section>
               <q-item-label>Invite to</q-item-label>
-            </q-item-section>
-          </q-item>
-          <q-item clickable v-close-popup>
-            <q-item-section>
-              <q-item-label>Some Other option</q-item-label>
             </q-item-section>
           </q-item>
           <q-item v-if="isOwner" clickable @click="deleteGroup" v-close-popup >
