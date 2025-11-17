@@ -1,11 +1,6 @@
-import {
-  BaseModel,
-  column,
-  HasMany,
-  hasMany,
-  ManyToMany,
-  manyToMany,
-} from "@adonisjs/lucid/orm";
+import { BaseModel, column, hasMany, manyToMany } from "@adonisjs/lucid/orm";
+import type { HasMany, ManyToMany } from "@adonisjs/lucid/types/relations";
+import { DateTime } from "luxon";
 
 import Group from "./group.js";
 import Message from "./message.js";
@@ -29,11 +24,11 @@ export default class User extends BaseModel {
   declare notificationPerm: boolean;
 
   @column.dateTime({ autoCreate: true })
-  declare createdAt: Date;
+  declare createdAt: DateTime;
 
   @column
     .dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: Date;
+  declare updatedAt: DateTime;
 
   // Relations
 

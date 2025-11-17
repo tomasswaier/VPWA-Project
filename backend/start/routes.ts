@@ -11,10 +11,12 @@ import AuthController from "#controllers/auth_controller";
 import router from "@adonisjs/core/services/router";
 
 router.get("/", async () => {
+  console.log("moew");
   return { hello: "world" };
 });
 
 router.get("/test", async () => {
+  console.log("moew");
   return {
     title: "Pedro",
     secondTitle: "Pedro",

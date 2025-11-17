@@ -1,6 +1,6 @@
 import { BaseModel, column, hasMany, manyToMany } from "@adonisjs/lucid/orm";
-
-// import type { HanyToMany, HasMany } from "@adonisjs/lucid/orm";
+import type { HasMany, ManyToMany } from "@adonisjs/lucid/types/relations";
+import { DateTime } from "luxon";
 
 import Message from "./message.js";
 import User from "./user.js";
@@ -19,21 +19,19 @@ export default class Group extends BaseModel {
   declare isPrivate: boolean;
 
   @column.dateTime({ autoCreate: true })
-  declare createdAt: Date;
+  declare createdAt: DateTime;
 
   @column
     .dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: Date;
-
-  // Relations
+  declare updatedAt: DateTime;
 
   @hasMany(() => Message)
-  declare messages: hasMany<typeof Message>;
+  declare messages: HasMany<typeof Message>;
 
   @manyToMany(() => User, {
     pivotTable: "group_user",
     pivotForeignKey: "group_id",
     pivotRelatedForeignKey: "user_id",
   })
-  declare users: manyToMany<typeof User>;
+  declare users: ManyToMany<typeof User>;
 }

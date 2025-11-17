@@ -1,4 +1,6 @@
-import { BaseModel, BelongsTo, belongsTo, column } from "@adonisjs/lucid/orm";
+import { BaseModel, belongsTo, column } from "@adonisjs/lucid/orm";
+import type { BelongsTo } from "@adonisjs/lucid/types/relations";
+import { DateTime } from "luxon";
 
 import Group from "./group.js";
 import User from "./user.js";
@@ -17,11 +19,11 @@ export default class Message extends BaseModel {
   declare groupId: string;
 
   @column.dateTime({ autoCreate: true })
-  declare createdAt: Date;
+  declare createdAt: DateTime;
 
   @column
     .dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: Date;
+  declare updatedAt: DateTime;
 
   // Relations
 

@@ -19,7 +19,6 @@ declare module "@vue/runtime-core" {
 const api = axios.create(
   {
     baseURL: process.env.API_URL || "http://localhost:3333",
-    withCredentials: true,
     headers: {},
   },
 );

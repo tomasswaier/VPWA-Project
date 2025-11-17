@@ -1,6 +1,8 @@
 import { Notify } from "quasar";
 import { reactive, ref } from "vue";
 
+import { api } from "../boot/axios";
+
 // Interface pre správy
 interface Message {
   text: string;
@@ -283,7 +285,7 @@ function loadMessages(index: number, done: () => void): void {
   done();
 }
 
-function sendMessage() {
+async function sendMessage() {
   const inputText: string = text.value.trim();
   if (inputText) {
     const firstArg: string = inputText.split(" ")[0] as string;
@@ -310,7 +312,7 @@ function sendMessage() {
         kickUser();
         break;
       case "/test":
-        test();
+        await test();
         break;
       default: // Kontrola či správa obsahuje @mention
       {
@@ -325,7 +327,10 @@ function sendMessage() {
     text.value = "";
   }
 }
-function test() {}
+async function test() {
+  const response = await api.get("/test");
+  console.log(response);
+}
 function listGroupUsers() {
   resetGroupMembers();
   dialogs.groupUserList = true;
