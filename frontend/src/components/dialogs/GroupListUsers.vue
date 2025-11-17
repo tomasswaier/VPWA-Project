@@ -50,7 +50,7 @@
 </template>
 <script setup lang="ts">
 import { watch } from 'vue'
-import { currentGroupName, displayedMembers, loadGroupMembers } from '../../store/interactions'
+import { currentGroupName, displayedMembers, loadGroupMembers } from '../../stores/interactions'
 interface Props {
   modelValue: boolean
 }

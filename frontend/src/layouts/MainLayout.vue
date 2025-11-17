@@ -28,8 +28,8 @@ import {ref} from 'vue';
 import GroupLink  from 'components/GroupLink.vue';
 import HeaderToolbar from 'components/HeaderToolbar.vue';
 
-import {dialogs,joinGroup,listGroups,groupLinks,sortGroupLinksByInvites} from '../store/interactions';
-import type {Dialogs} from '../store/interactions';
+import {dialogs,joinGroup,listGroups,groupLinks,sortGroupLinksByInvites} from '../stores/interactions';
+import type {Dialogs} from '../stores/interactions';
 
 
 const leftDrawerOpen = ref(false);

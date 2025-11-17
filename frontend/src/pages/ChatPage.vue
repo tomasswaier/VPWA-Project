@@ -137,7 +137,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import DialogManager from 'components/DialogManager.vue';
-import type { Dialogs } from '../store/interactions';
+import type { Dialogs } from '../stores/interactions';
 import {
   messages,
   loadMessages,
@@ -146,7 +146,7 @@ import {
   currentGroupName,
   displayedMembers,
   loadGroupMembers
-} from '../store/interactions';
+} from '../stores/interactions';
 
 interface Props {
   dialogs: {

@@ -7,10 +7,24 @@
 |
 */
 
-import router from '@adonisjs/core/services/router'
+import AuthController from "#controllers/auth_controller";
+import router from "@adonisjs/core/services/router";
 
-router.get('/', async () => {
+router.get("/", async () => {
+  return { hello: "world" };
+});
+
+router.get("/test", async () => {
   return {
-    hello: 'world',
-  }
+    title: "Pedro",
+    secondTitle: "Pedro",
+    name: "Pedro",
+    surname: "Pedro",
+    middlename: "Pe",
+  };
+});
+
+router.group(() => {
+  router.post("login", [AuthController, "login"]);
 })
+  .prefix("auth");

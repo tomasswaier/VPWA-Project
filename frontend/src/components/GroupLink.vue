@@ -37,8 +37,8 @@
 
 import
 <script setup lang="ts">
-import {leaveGroup,deleteGroup,inviteGroup} from '../store/interactions';
-import type {GroupLinkProps} from '../store/interactions';
+import {leaveGroup,deleteGroup,inviteGroup} from '../stores/interactions';
+import type {GroupLinkProps} from '../stores/interactions';
 
 export
 

@@ -39,7 +39,7 @@
 </template>
 <script setup lang="ts">
 import { watch } from 'vue'
-import {  publicGroups, loadPublicGroups } from '../../store/interactions'
+import {  publicGroups, loadPublicGroups } from '../../stores/interactions'
 interface Props {
   modelValue: boolean
 }
