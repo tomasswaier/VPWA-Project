@@ -21,11 +21,26 @@ const messages = ref<Message[]>([
 ]);
 
 const text = ref("");
+const currentlyPeekedMessage = ref("");
 
 // skupinové konštanty
 const currentGroupName = ref("Trumans Group");
 const displayedMembers = ref<Array<{ name: string; avatar: string }>>([]);
 const publicGroups = ref<Array<{ name: string; caption: string }>>([]);
+
+interface TypingUser {
+  name: string;
+  message: string;
+}
+
+const typingUsers = ref<TypingUser[]>([
+  { name: "Johnka", message: "I have yet to introduce myself moew moew moe w" },
+  {
+    name: "Emanuel",
+    message:
+      "Ja som Emanuel Emanuel som ja a ja ak budem Emanuel tak budem Emanuel",
+  },
+]);
 
 interface GroupLinkProps {
   title: string;
@@ -45,6 +60,7 @@ interface Dialogs {
   groupUserList: boolean;
   userKick: boolean;
   userRevoke: boolean;
+  userMessagePeek: boolean;
 }
 const dialogs: Dialogs = reactive({
   groupLeave: false,
@@ -55,6 +71,7 @@ const dialogs: Dialogs = reactive({
   groupUserList: false,
   userKick: false,
   userRevoke: false,
+  userMessagePeek: false,
 });
 
 const groupLinks: GroupLinkProps[] = [
@@ -353,8 +370,12 @@ function deleteGroup() {
 function inviteGroup() {
   dialogs.groupInvite = true;
 }
+function openDialog(user: TypingUser) {
+  currentlyPeekedMessage.value = user.message;
+  dialogs.userMessagePeek = true;
+}
 
-export type { Dialogs, GroupLinkProps, Message };
+export type { Dialogs, GroupLinkProps, Message, TypingUser };
 
 function kickUser() {
   dialogs.userKick = true;
@@ -365,6 +386,7 @@ function revokeUser() {
 
 export {
   currentGroupName,
+  currentlyPeekedMessage,
   deleteGroup,
   dialogs,
   displayedMembers,
@@ -377,11 +399,13 @@ export {
   loadMessages,
   loadPublicGroups,
   messages,
+  openDialog,
   publicGroups,
   resetGroupMembers,
   sendMessage,
   sortGroupLinksByInvites,
   text,
+  typingUsers,
 };
 
 function simulateIncomingInvite(userName: string, groupName: string) {

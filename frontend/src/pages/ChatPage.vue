@@ -81,39 +81,8 @@
       <div v-if="someoneTyping" >
           <q-btn-dropdown color="primary" cover label="someone is typing...">
             <q-list>
-              <q-item clickable  >
-                <q-item-section>
-                  <q-expansion-item caption="Johnka">
-                    <q-card>
-                      <q-card-section>
-                        Ja som Johnka.Nemala som čas sa predstaviť. Som 22 ročná občanka Slovenskej Republiky a som an fiitke lebo som girlpop. Cat Ipsum Meow meow meow purr moew meow meow
-                      </q-card-section>
-                    </q-card>
-                  </q-expansion-item>
-                </q-item-section>
-              </q-item>
-              <q-item clickable >
-                <q-item-section>
-                  <q-expansion-item caption="Emanuel">
-                    <q-card>
-                      <q-card-section>
-                        Ja som Emanuel.Nemal som čas sa predstaviť. Nie som 22 ročná občanka Slovenskej Republiky lebo som muž asi idk píšem lorem ipsum. Na fiitke niesom lebo to je ta spravna voľba. PPI je ****** ******* ***** by som **********
-                      </q-card-section>
-                    </q-card>
-                  </q-expansion-item>
-                </q-item-section>
-              </q-item>
-
-              <q-item clickable >
-                <q-item-section>
-                  <q-expansion-item caption="Emanuel">
-                    <q-card>
-                      <q-card-section>
-                        Ja som Emanuel.Nemal som čas sa predstaviť. Nie som 22 ročná občanka Slovenskej Republiky lebo som muž asi idk píšem lorem ipsum. Na fiitke niesom lebo to je ta spravna voľba. PPI je ****** ******* ***** by som **********
-                      </q-card-section>
-                    </q-card>
-                  </q-expansion-item>
-                </q-item-section>
+              <q-item v-for="(user,index) in typingUsers" :key="index"  clickable @click="openDialog(user)">
+                <q-item-section :id="index" >{{user.name}}</q-item-section>
               </q-item>
             </q-list>
           </q-btn-dropdown>
@@ -145,7 +114,8 @@ import {
   text,
   currentGroupName,
   displayedMembers,
-  loadGroupMembers
+  loadGroupMembers,
+  typingUsers, openDialog
 } from '../stores/interactions';
 
 interface Props {
@@ -158,8 +128,10 @@ interface Props {
     groupInvite: boolean
     userKick: boolean
     userRevoke: boolean
+    userMessagePeek: boolean
   }
 }
+
 
 const props = defineProps<Props>();
 const someoneTyping=true;

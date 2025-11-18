@@ -1,3 +1,4 @@
+import { DbAccessTokensProvider } from "@adonisjs/auth/access_tokens";
 import { BaseModel, column, hasMany, manyToMany } from "@adonisjs/lucid/orm";
 import type { HasMany, ManyToMany } from "@adonisjs/lucid/types/relations";
 import { DateTime } from "luxon";
@@ -29,6 +30,13 @@ export default class User extends BaseModel {
   @column
     .dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime;
+  static accessTokens = DbAccessTokensProvider.forModel(User, {
+    expiresIn: "5 days",
+    prefix: "oat_",
+    table: "auth_access_tokens",
+    type: "auth_token",
+    tokenSecretLength: 40,
+  });
 
   // Relations
 

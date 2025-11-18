@@ -38,6 +38,11 @@
       :model-value="props.dialogs.groupInvite"
       @update:model-value="$emit('update-dialog','groupInvite',$event)"
       />
+  <UserMessagePeek
+      :model-value="props.dialogs.userMessagePeek"
+      :model-message=currentlyPeekedMessage
+      @update:model-value="$emit('update-dialog','userMessagePeek',$event)"
+      />
 
 </template>
 
@@ -47,6 +52,8 @@ import GroupList from 'components/dialogs/GroupList.vue';
 import GroupLeave from 'components/dialogs/GroupLeave.vue';
 import GroupCreate from 'components/dialogs/GroupCreate.vue';
 import GroupInvite from 'components/dialogs/GroupInvite.vue';
+import UserMessagePeek from 'components/dialogs/UserMessagePeek.vue';
+import {currentlyPeekedMessage} from "../stores/interactions"
 
 interface Props {
   dialogs: {
@@ -58,6 +65,7 @@ interface Props {
     groupInvite: boolean
     userKick: boolean
     userRevoke: boolean
+    userMessagePeek: boolean
   }
   currentGroupName: string
   displayedMembers: Member[]
