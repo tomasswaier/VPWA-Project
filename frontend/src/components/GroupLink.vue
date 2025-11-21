@@ -1,15 +1,14 @@
 <template>
-<q-item :class="{'bg-primary text-white':isPrivate,'rounded-borders':isInvite}" class="q-pa-md">
+<q-item :class="{'bg-primary text-white':isPrivate,}" class="q-pa-md">
   <div class="row items-center full-width no-wrap">
     <div class="col" clickable tag="a" :href="link">
       <q-item-section class="ellipsis">
         <q-item-label class="ellipsis">{{ title }}</q-item-label>
         <q-item-label caption class="ellipsis">{{ caption }}</q-item-label>
-        <q-item-tag v-if="isInvite">Invitation</q-item-tag>
       </q-item-section>
     </div>
 
-    <div v-if="isInvite !== true" class="col-auto q-pl-md">
+    <div class="col-auto q-pl-md">
       <q-btn-dropdown color="primary" @click.stop dense>
         <q-list>
           <q-item clickable @click="leaveGroup" v-close-popup >
@@ -57,7 +56,6 @@ withDefaults(defineProps<FullProps>(), {
   link: '#',
   isPrivate: false,
   isOwner: false,
-  isInvite: false,
 });
 
 </script>

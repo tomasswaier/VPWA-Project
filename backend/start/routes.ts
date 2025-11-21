@@ -26,7 +26,9 @@ router.get("/test", async () => {
   };
 });
 
-router.group(() => {
-  router.post("login", [AuthController, "login"]);
-})
+router
+  .group(() => {
+    router.post("login", [AuthController, "login"]);
+    router.post("register", [AuthController, "register"]);
+  })
   .prefix("auth");

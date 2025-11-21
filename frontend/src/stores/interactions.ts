@@ -23,10 +23,14 @@ const messages = ref<Message[]>([
 const text = ref("");
 const currentlyPeekedMessage = ref("");
 
+export type UserStatus = "online" | "do_not_disturb" | "offline";
+interface User {
+  name: string;
+  status: UserStatus;
+}
+const displayedMembers = ref<User[]>([]);
 // skupinové konštanty
 const currentGroupName = ref("Trumans Group");
-const displayedMembers = ref<Array<{ name: string; avatar: string }>>([]);
-const publicGroups = ref<Array<{ name: string; caption: string }>>([]);
 
 interface TypingUser {
   name: string;
@@ -42,13 +46,75 @@ const typingUsers = ref<TypingUser[]>([
   },
 ]);
 
+const publicGroups = ref<GroupLinkProps[]>([]);
+/*const groupInvitations = ref<GroupLinkProps[]>([
+  {
+    title: "AAAAAAA",
+    caption: "Gaming group",
+    link: "",
+    isPrivate: true,
+  },
+  {
+    title: "BBBBBBkj",
+    caption: "Omega good groupgroup",
+    link: "",
+    isOwner: true,
+  },
+  {
+    title: "CCCCCCCC",
+    caption: "group for minecraft fans",
+    link: "",
+    isPrivate: true,
+  },
+  {
+    title: "DDDDDD",
+    caption: "play game disabled",
+    link: "",
+  },
+  {
+    title: "Chat group ",
+    caption: "",
+    link: "",
+    isOwner: true,
+  },
+  {
+    title: "League of lengeds Group",
+    caption: "group for league fans",
+    link: "",
+    isPrivate: true,
+  },
+  {
+    title: "group Group",
+    caption: "group for group",
+    link: "",
+    isPrivate: true,
+  },
+  {
+    title: "SuperGroupGroup",
+    caption: "Omega good groupgroupgrougroup",
+    link: "",
+    isPrivate: true,
+    isOwner: true,
+  },
+  {
+    title: "Minecraft Group pvp",
+    caption: "group for minecraft pvp fans",
+    link: "",
+    isPrivate: true,
+  },
+  {
+    title: "groupgrougroup",
+    caption: "group for people who groupgroup",
+    link: "",
+  },
+]);
+*/
 interface GroupLinkProps {
   title: string;
   caption?: string;
   link?: string;
   isPrivate?: boolean;
   isOwner?: boolean;
-  isInvite?: boolean;
 }
 
 interface Dialogs {
@@ -97,7 +163,6 @@ const groupLinks: GroupLinkProps[] = [
     title: "Disabled group",
     caption: "play game disabled",
     link: "",
-    isInvite: true,
   },
   {
     title: "Chat group ",
@@ -116,7 +181,6 @@ const groupLinks: GroupLinkProps[] = [
     caption: "group for group",
     link: "",
     isPrivate: true,
-    isInvite: true,
   },
   {
     title: "SuperGroupGroup",
@@ -135,7 +199,6 @@ const groupLinks: GroupLinkProps[] = [
     title: "groupgrougroup",
     caption: "group for people who groupgroup",
     link: "",
-    isInvite: true,
   },
   {
     title: "League group aram",
@@ -153,7 +216,6 @@ const groupLinks: GroupLinkProps[] = [
     title: "CoolChatgroup",
     caption: "group for people who are cool",
     link: "",
-    isInvite: true,
   },
   {
     title: "Meow Cats Meow",
@@ -171,7 +233,6 @@ const groupLinks: GroupLinkProps[] = [
     title: "Disabled group",
     caption: "group for people play game disabled",
     link: "",
-    isInvite: true,
   },
   {
     title: "SuperGroup",
@@ -189,7 +250,6 @@ const groupLinks: GroupLinkProps[] = [
     title: "not Disabled group",
     caption: "we hate game disabled",
     link: "",
-    isInvite: true,
   },
   {
     title: "penguin gruop",
@@ -213,26 +273,45 @@ const groupLinks: GroupLinkProps[] = [
 
 // Zoznam base memberov
 const baseMemberTemplates = [
-  { name: "Johnka", avatar: "https://cdn.quasar.dev/img/avatar2.jpg" },
+  { name: "Johnka", status: "online" },
   {
     name: "Marian Emanual Chornandez Pelko De La Muerto",
-    avatar: "https://cdn.quasar.dev/img/avatar3.jpg",
+    status: "do_not_disturb",
   },
-  { name: "Tomas Truman", avatar: "https://cdn.quasar.dev/img/avatar4.jpg" },
+  { name: "Tomas Truman", status: "offline" },
 ];
 
 const baseGroupTemplates = [
   {
-    name: "Anima Group",
+    title: "Anima Group",
     caption: "here we talk about animals and other fun stuff",
+    isPrivate: false,
+    link: "",
   },
-  { name: "Fun Group XD", caption: "we have fun here!" },
   {
-    name: "Leauge of legends",
-    caption: "HERE WE TALK ABOUT LEAGUE OF LEGENDS",
+    title: "Fun Group XD",
+    caption: "we have fun here!",
+    isPrivate: false,
+    link: "",
   },
-  { name: "GAMING", caption: "HERE WE TALK ABOUT GAMES!!" },
-  { name: "Fashion", caption: "let's discuss fashion!!" },
+  {
+    title: "Leauge of legends",
+    caption: "HERE WE TALK ABOUT LEAGUE OF LEGENDS",
+    isPrivate: false,
+    link: "",
+  },
+  {
+    title: "GAMING",
+    caption: "HERE WE TALK ABOUT GAMES!!",
+    isPrivate: false,
+    link: "",
+  },
+  {
+    title: "Fashion",
+    caption: "let's discuss fashion!!",
+    isPrivate: false,
+    link: "",
+  },
 ];
 
 function loadGroupMembers(index: number, done: () => void): void {
@@ -249,7 +328,7 @@ function loadGroupMembers(index: number, done: () => void): void {
       // "nový" členovia skupiny
       newMembers.push({
         name: `${template.name} #${displayedMembers.value.length + i + 1}`,
-        avatar: template.avatar,
+        status: template.status as UserStatus,
       });
     }
 
@@ -261,7 +340,7 @@ function loadGroupMembers(index: number, done: () => void): void {
 function loadPublicGroups(index: number, done: () => void): void {
   setTimeout(() => {
     const batchSize = 10;
-    const newGroups = [];
+    const newGroups: GroupLinkProps[] = [];
 
     for (let i = 0; i < batchSize; i++) {
       const templateIX = (publicGroups.value.length + i) %
@@ -269,28 +348,17 @@ function loadPublicGroups(index: number, done: () => void): void {
       const template = baseGroupTemplates[templateIX]!;
 
       newGroups.push({
-        name: `${template.name} #${publicGroups.value.length + i + 1}`,
+        title: `${template.title} #${publicGroups.value.length + i + 1}`,
         caption: template.caption,
+        link: template.link ?? "",
+        isPrivate: template.isPrivate ?? false,
+        isOwner: false,
       });
     }
 
     publicGroups.value.push(...newGroups);
     done();
   }, 300);
-}
-
-function sortGroupLinksByInvites(groupLinks: GroupLinkProps[]) {
-  let firstAvailablePosition = 0;
-  let walkingPointer = 0;
-  while (walkingPointer < groupLinks.length) {
-    if (groupLinks[walkingPointer]?.isInvite) {
-      const temp: GroupLinkProps = groupLinks[firstAvailablePosition]!;
-      groupLinks[firstAvailablePosition] = groupLinks[walkingPointer]!;
-      groupLinks[walkingPointer] = temp;
-      firstAvailablePosition++;
-    }
-    walkingPointer++;
-  }
 }
 
 function resetGroupMembers(): void {
@@ -375,7 +443,7 @@ function openDialog(user: TypingUser) {
   dialogs.userMessagePeek = true;
 }
 
-export type { Dialogs, GroupLinkProps, Message, TypingUser };
+export type { Dialogs, GroupLinkProps, Message, TypingUser, User };
 
 function kickUser() {
   dialogs.userKick = true;
@@ -403,7 +471,6 @@ export {
   publicGroups,
   resetGroupMembers,
   sendMessage,
-  sortGroupLinksByInvites,
   text,
   typingUsers,
 };

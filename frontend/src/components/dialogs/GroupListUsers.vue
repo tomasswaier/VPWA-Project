@@ -26,9 +26,11 @@
             <q-list>
               <q-item v-for="(member, index) in displayedMembers" :key="index" class="q-mb-sm">
                 <q-item-section avatar>
-                  <q-avatar>
-                    <img :src="member.avatar" :alt="member.name">
-                  </q-avatar>
+                  <q-item :class="member.status == 'online' ? 'bg-light-green' : member.status == 'do_not_disturb'?'bg-red':''">
+                    <q-item-section >
+                      ME
+                    </q-item-section>
+                  </q-item>
                 </q-item-section>
 
                 <q-item-section>

@@ -1,4 +1,7 @@
 import { DbAccessTokensProvider } from "@adonisjs/auth/access_tokens";
+import { withAuthFinder } from "@adonisjs/auth/mixins/lucid";
+import { compose } from "@adonisjs/core/helpers";
+import hash from "@adonisjs/core/services/hash";
 import { BaseModel, column, hasMany, manyToMany } from "@adonisjs/lucid/orm";
 import type { HasMany, ManyToMany } from "@adonisjs/lucid/types/relations";
 import { DateTime } from "luxon";
@@ -6,9 +9,14 @@ import { DateTime } from "luxon";
 import Group from "./group.js";
 import Message from "./message.js";
 
+const AuthFinder = withAuthFinder(() => hash.use("scrypt"), {
+  uids: ["username"],
+  passwordColumnName: "password",
+});
+
 export type UserStatus = "online" | "do_not_disturb" | "offline";
 
-export default class User extends BaseModel {
+export default class User extends compose(BaseModel, AuthFinder) {
   @column({ isPrimary: true })
   declare id: string;
 
@@ -30,17 +38,7 @@ export default class User extends BaseModel {
   @column
     .dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime;
-  static accessTokens = DbAccessTokensProvider.forModel(User, {
-    expiresIn: "5 days",
-    prefix: "oat_",
-    table: "auth_access_tokens",
-    type: "auth_token",
-    tokenSecretLength: 40,
-  });
-
-  // Relations
-
-  @hasMany(() => Message)
+  @column() @hasMany(() => Message)
   declare messages: HasMany<typeof Message>;
 
   @manyToMany(() => Group, {

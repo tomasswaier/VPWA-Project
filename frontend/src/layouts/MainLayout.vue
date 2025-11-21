@@ -6,8 +6,14 @@
     </q-header>
     <q-drawer class="bg-accent text-bold" v-model="leftDrawerOpen" show-if-above bordered>
       <q-list style="height: 90vh; overflow-y: auto;">
-        <!--the user will NOT be part of thousands of groups-->
         <q-item-label header> Groups </q-item-label>
+        <q-item clickable @click="listGroups">
+          <q-item-section >
+            <span>You have <span class="text-red">10</span> new Invitations</span>
+          </q-item-section>
+          <q-item-section side >
+          </q-item-section>
+        </q-item>
         <GroupLink :dialogs="dialogs" v-for="link in groupLinks" :key="link.title" v-bind="link" />
       </q-list>
       <div class="q-pa-md fixed-bottom">
@@ -28,7 +34,7 @@ import {ref} from 'vue';
 import GroupLink  from 'components/GroupLink.vue';
 import HeaderToolbar from 'components/HeaderToolbar.vue';
 
-import {dialogs,joinGroup,listGroups,groupLinks,sortGroupLinksByInvites} from '../stores/interactions';
+import {dialogs,joinGroup,listGroups,groupLinks} from '../stores/interactions';
 import type {Dialogs} from '../stores/interactions';
 
 
@@ -40,6 +46,5 @@ function toggleDrawer() {
 function updateDialog(dialogName: keyof Dialogs,value:boolean){
   dialogs[dialogName] = value
 }
-sortGroupLinksByInvites(groupLinks);
 
 </script>

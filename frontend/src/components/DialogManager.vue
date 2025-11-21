@@ -54,6 +54,7 @@ import GroupCreate from 'components/dialogs/GroupCreate.vue';
 import GroupInvite from 'components/dialogs/GroupInvite.vue';
 import UserMessagePeek from 'components/dialogs/UserMessagePeek.vue';
 import {currentlyPeekedMessage} from "../stores/interactions"
+import type{User} from "../stores/interactions"
 
 interface Props {
   dialogs: {
@@ -68,14 +69,9 @@ interface Props {
     userMessagePeek: boolean
   }
   currentGroupName: string
-  displayedMembers: Member[]
+  displayedMembers: User[]
   loadGroupMembers: (index: number, done: (stop?: boolean) => void) => void
 }
-
-  interface Member {
-    name: string
-    avatar: string
-  }
 
   const props = defineProps<Props>()
 

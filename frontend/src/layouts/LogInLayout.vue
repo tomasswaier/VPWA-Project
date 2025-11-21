@@ -20,17 +20,16 @@
               <q-input
                 filled
                 v-model="email"
-                type="email"
-                label="Email *"
+                type="text"
+                label="Username"
                 hint="Enter your email address"
                 lazy-rules
                 :rules="[
-                  (val:string) => val && val.length > 0 || 'Please enter your email',
-                  (val:string) => val && val.includes('@') || 'Please enter a valid email'
+                  (val:string) => val && val.length > 0 || 'Please enter your username',
                 ]"
               >
                 <template v-slot:prepend>
-                  <q-icon name="email" />
+                  <q-icon name="person" />
                 </template>
               </q-input>
 
@@ -97,7 +96,7 @@ const isPwd = ref(true);
 function handleLogin() {
   // Zatiaľ len simulácia prihlásenia
   console.log('Login attempt:', { email: email.value, password: password.value });
-  
+
   // Po úspešnom prihlásení presmerovanie na hlavnú stránku
   void router.push('/');
 }
