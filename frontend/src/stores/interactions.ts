@@ -461,7 +461,7 @@ async function register(
 async function login(username: string, password: string) {
   try {
     const response = await api.post<LoginResponse>("/auth/login", {
-      name: username,
+      username: username,
       password,
     });
 

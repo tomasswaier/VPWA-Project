@@ -8,7 +8,6 @@ import { HttpContext } from "@adonisjs/core/http";
 export default class AuthController {
   async register({ request }: HttpContext) {
     const data = await request.validateUsing(registerValidator);
-    console.log(data);
     const user = await User.create(data);
 
     const general = await Group.findByOrFail("name", "general");
@@ -23,6 +22,7 @@ export default class AuthController {
     const user = await User.verifyCredentials(username, password);
 
     const token = await User.accessTokens.create(user);
+    console.log(token);
 
     return response.ok({
       token: token.value!.release(),

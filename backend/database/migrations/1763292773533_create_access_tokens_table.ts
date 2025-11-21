@@ -1,17 +1,22 @@
-import { BaseSchema } from "@adonisjs/lucid/schema";
+import {BaseSchema} from "@adonisjs/lucid/schema";
 
 export default class extends BaseSchema {
   protected tableName = "auth_access_tokens";
 
   async up() {
+    this.schema.raw(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+
     this.schema.createTable(this.tableName, (table) => {
-      table.uuid("id").primary().notNullable();
+      table.uuid("id")
+          .primary()
+          .defaultTo(this.raw('uuid_generate_v4()'))
+          .notNullable();
+
       table.uuid("tokenable_id")
-        .notNullable()
-        .unsigned()
-        .references("id")
-        .inTable("users")
-        .onDelete("CASCADE");
+          .notNullable()
+          .references("id")
+          .inTable("users")
+          .onDelete("CASCADE");
 
       table.string("type").notNullable();
       table.string("name").nullable();
@@ -26,5 +31,6 @@ export default class extends BaseSchema {
 
   async down() {
     this.schema.dropTable(this.tableName);
+    this.schema.raw(`DROP EXTENSION IF EXISTS "uuid-ossp"`);
   }
 }
