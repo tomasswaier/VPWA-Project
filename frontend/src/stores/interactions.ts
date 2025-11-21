@@ -1,3 +1,4 @@
+import type { AxiosError } from "axios";
 import { Notify } from "quasar";
 import { reactive, ref } from "vue";
 
@@ -35,6 +36,24 @@ const currentGroupName = ref("Trumans Group");
 interface TypingUser {
   name: string;
   message: string;
+}
+interface RegisterResponse {
+  id: string;
+  username: string;
+  status: string;
+  notificationPerm: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface LoginResponse {
+  token: string;
+  id: string;
+  username: string;
+  status: string;
+  notificationPerm: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const typingUsers = ref<TypingUser[]>([
@@ -412,6 +431,61 @@ async function sendMessage() {
     text.value = "";
   }
 }
+
+async function register(
+  username: string,
+  email: string,
+  password: string,
+  passwordConfirmation: string,
+) {
+  try {
+    const response = await api.post<RegisterResponse>("/auth/register", {
+      name: username,
+      email,
+      password,
+      password_confirmation: passwordConfirmation, // Vine validator uses confirmed
+    });
+
+    return response.data;
+  } catch (err) {
+    const error = err as AxiosError;
+
+    // Access response data safely
+    if (error.response) {
+      console.error("Status:", error.response.status);
+      console.error("Data:", error.response.data);
+    } else {
+      console.error("Error message:", error.message);
+    }
+  }
+}
+
+async function login(username: string, password: string) {
+  try {
+    const response = await api.post<LoginResponse>("/auth/login", {
+      name: username,
+      password,
+    });
+
+    const { token, ...user } = response.data;
+
+    localStorage.setItem("access_token", token);
+
+    localStorage.setItem("user", JSON.stringify(user));
+
+    return user;
+  } catch (err) {
+    const error = err as AxiosError;
+
+    // Access response data safely
+    if (error.response) {
+      console.error("Status:", error.response.status);
+      console.error("Data:", error.response.data);
+    } else {
+      console.error("Error message:", error.message);
+    }
+  }
+}
 async function test() {
   const response = await api.get("/test");
   console.log(response);
@@ -451,30 +525,6 @@ function kickUser() {
 function revokeUser() {
   dialogs.userRevoke = true;
 }
-
-export {
-  currentGroupName,
-  currentlyPeekedMessage,
-  deleteGroup,
-  dialogs,
-  displayedMembers,
-  groupLinks,
-  inviteGroup,
-  joinGroup,
-  leaveGroup,
-  listGroups,
-  loadGroupMembers,
-  loadMessages,
-  loadPublicGroups,
-  messages,
-  openDialog,
-  publicGroups,
-  resetGroupMembers,
-  sendMessage,
-  text,
-  typingUsers,
-};
-
 function simulateIncomingInvite(userName: string, groupName: string) {
   Notify.create({
     message: `${userName} has invited you to ${groupName}`,
@@ -512,6 +562,31 @@ function simulateIncomingInvite(userName: string, groupName: string) {
     ],
   });
 }
+
+export {
+  currentGroupName,
+  currentlyPeekedMessage,
+  deleteGroup,
+  dialogs,
+  displayedMembers,
+  groupLinks,
+  inviteGroup,
+  joinGroup,
+  leaveGroup,
+  listGroups,
+  loadGroupMembers,
+  loadMessages,
+  loadPublicGroups,
+  login,
+  messages,
+  openDialog,
+  publicGroups,
+  register,
+  resetGroupMembers,
+  sendMessage,
+  text,
+  typingUsers,
+};
 
 export { simulateIncomingInvite };
 // simulateIncomingInvite('Tomas Truman', 'Gaming Group')

@@ -55,11 +55,11 @@
                 v-model="password"
                 :type="isPwd ? 'password' : 'text'"
                 label="Password *"
-                hint="Enter your password (min. 6 characters)"
+                hint="Enter your password (min. 4 characters)"
                 lazy-rules
                 :rules="[
                   (val:string) => val && val.length > 0 || 'Please enter your password',
-                  (val:string) => val && val.length >= 6 || 'Password must be at least 6 characters'
+                  (val:string) => val && val.length >= 4 || 'Password must be at least 4 characters'
                 ]"
               >
                 <template v-slot:prepend>
@@ -128,6 +128,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { register } from '../stores/interactions';
 
 const router = useRouter();
 const username = ref('');
@@ -137,14 +138,16 @@ const confirmPassword = ref('');
 const isPwd = ref(true);
 const isConfirmPwd = ref(true);
 
-function handleRegister() {
+async function handleRegister() {
   // Zatiaľ len simulácia registrácie
   console.log('Register attempt:', {
     username: username.value,
     email: email.value,
     password: password.value
   });
-  
+  await register(username.value,email.value,password.value,confirmPassword.value);
+
+
   // Po úspešnej registrácii presmerovanie na login
   void router.push('/login');
 }
