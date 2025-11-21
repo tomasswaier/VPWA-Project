@@ -434,14 +434,12 @@ async function sendMessage() {
 
 async function register(
   username: string,
-  email: string,
   password: string,
   passwordConfirmation: string,
 ) {
   try {
     const response = await api.post<RegisterResponse>("/auth/register", {
-      name: username,
-      email,
+      username: username,
       password,
       password_confirmation: passwordConfirmation, // Vine validator uses confirmed
     });
@@ -472,7 +470,6 @@ async function login(username: string, password: string) {
     localStorage.setItem("access_token", token);
 
     localStorage.setItem("user", JSON.stringify(user));
-
     return user;
   } catch (err) {
     const error = err as AxiosError;

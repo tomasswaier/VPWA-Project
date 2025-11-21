@@ -1,23 +1,18 @@
 import { boot } from "quasar/wrappers";
-import { authManager } from "src/services";
-import { useAuthStore } from "src/stores/auth";
+import type { Router } from "vue-router";
 
-export default boot(({ router }) => {
-  const auth = useAuthStore();
+export default boot(
+  ({ router }: { router: Router }) => {
+    router.beforeEach((to, from, next) => {
+      const publicRoutes = ["/login", "/register"];
 
-  authManager.onLogout(() => {
-    void router.push({ name: "login" });
-  });
+      const token = localStorage.getItem("access_token");
 
-  router.beforeEach(async (to) => {
-    const isAuthenticated = await auth.check();
+      if (!token && !publicRoutes.includes(to.path)) {
+        return next("/login");
+      }
 
-    if (to.meta.requiresAuth && !isAuthenticated) {
-      return { name: "login", query: { redirect: to.fullPath } };
-    }
-
-    if (to.meta.guestOnly && isAuthenticated) {
-      return { name: "/" };
-    }
-  });
-});
+      next();
+    });
+  },
+);

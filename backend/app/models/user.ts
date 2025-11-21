@@ -2,9 +2,16 @@ import { DbAccessTokensProvider } from "@adonisjs/auth/access_tokens";
 import { withAuthFinder } from "@adonisjs/auth/mixins/lucid";
 import { compose } from "@adonisjs/core/helpers";
 import hash from "@adonisjs/core/services/hash";
-import { BaseModel, column, hasMany, manyToMany } from "@adonisjs/lucid/orm";
+import {
+  BaseModel,
+  beforeCreate,
+  column,
+  hasMany,
+  manyToMany,
+} from "@adonisjs/lucid/orm";
 import type { HasMany, ManyToMany } from "@adonisjs/lucid/types/relations";
 import { DateTime } from "luxon";
+import { randomUUID } from "node:crypto";
 
 import Group from "./group.js";
 import Message from "./message.js";
@@ -19,6 +26,13 @@ export type UserStatus = "online" | "do_not_disturb" | "offline";
 export default class User extends compose(BaseModel, AuthFinder) {
   @column({ isPrimary: true })
   declare id: string;
+
+  @beforeCreate()
+  static assignUuid(user: User) {
+    if (!user.id) {
+      user.id = randomUUID();
+    }
+  }
 
   @column()
   declare username: string;

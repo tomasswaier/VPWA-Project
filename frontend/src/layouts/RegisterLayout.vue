@@ -35,23 +35,6 @@
 
               <q-input
                 filled
-                v-model="email"
-                type="email"
-                label="Email *"
-                hint="Enter your email address"
-                lazy-rules
-                :rules="[
-                  (val:string) => val && val.length > 0 || 'Please enter your email',
-                  (val:string) => val && val.includes('@') || 'Please enter a valid email'
-                ]"
-              >
-                <template v-slot:prepend>
-                  <q-icon name="email" />
-                </template>
-              </q-input>
-
-              <q-input
-                filled
                 v-model="password"
                 :type="isPwd ? 'password' : 'text'"
                 label="Password *"
@@ -132,7 +115,6 @@ import { register } from '../stores/interactions';
 
 const router = useRouter();
 const username = ref('');
-const email = ref('');
 const password = ref('');
 const confirmPassword = ref('');
 const isPwd = ref(true);
@@ -142,10 +124,9 @@ async function handleRegister() {
   // Zatiaľ len simulácia registrácie
   console.log('Register attempt:', {
     username: username.value,
-    email: email.value,
     password: password.value
   });
-  await register(username.value,email.value,password.value,confirmPassword.value);
+  await register(username.value,password.value,confirmPassword.value);
 
 
   // Po úspešnej registrácii presmerovanie na login
