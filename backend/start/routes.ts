@@ -8,22 +8,15 @@
 */
 
 import AuthController from "#controllers/auth_controller";
+import UsersController from "#controllers/users_controller";
 import router from "@adonisjs/core/services/router";
 
 router.get("/", async () => {
-  console.log("moew");
-  return { hello: "world" };
-});
-
-router.get("/test", async () => {
-  console.log("moew");
-  return {
-    title: "Pedro",
-    secondTitle: "Pedro",
-    name: "Pedro",
-    surname: "Pedro",
-    middlename: "Pe",
-  };
+  /*
+   * this route is used to check whether the server is alive
+   */
+  console.log("ping");
+  return { success: true };
 });
 
 router
@@ -33,3 +26,9 @@ router
     router.post("register", [AuthController, "register"]);
   })
   .prefix("auth");
+
+router
+  .group(() => {
+    router.post("changeStatus", [UsersController, "changeStatus"]);
+  })
+  .prefix("user");

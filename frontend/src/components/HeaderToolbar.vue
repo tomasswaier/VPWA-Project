@@ -8,21 +8,19 @@
 
     <q-btn class="relative-position" flat dense round icon="person" aria-label="Profile">
       <q-badge
-        v-if="userStatus === 'online'"
+        v-if="loggedUser?.status as String== 'online'"
         color="light-green"
         floating
         rounded
         style="top: 3px; right: 3px;"
       />
       <q-badge
-        v-if="userStatus === 'dnd'"
+        v-if="loggedUser?.status as String== 'dnd'"
         color="red"
         floating
-        rounded
-        style="top: 3px; right: 3px;"
-      />
+        rounded style="top: 3px; right: 3px;" />
       <q-badge
-        v-if="userStatus === 'offline'"
+        v-if="loggedUser?.status as String== 'offline'"
         color="grey"
         floating
         rounded
@@ -37,10 +35,7 @@
         <q-card style="min-width: 250px;">
           <!-- profil časť -->
           <q-card-section class="text-center q-pb-none">
-            <q-avatar size="80px">
-              <img src="https://cdn.quasar.dev/img/avatar4.jpg" alt="User Avatar">
-            </q-avatar>
-            <div class="text-h6 q-mt-sm">Tomáško Truman</div>
+            <div class="text-h6 q-mt-sm">{{loggedUser?.username}}</div>
           </q-card-section>
 
           <q-separator class="q-my-md" />
@@ -59,7 +54,7 @@
                 </q-item-section>
               </q-item>
 
-              <q-item clickable v-ripple @click="userStatus = 'dnd'" :active="userStatus === 'dnd'">
+              <q-item clickable v-ripple @click="changeStatus('do_not_disturb')">
                 <q-item-section avatar>
                   <q-icon name="do_not_disturb" color="red" size="xs" />
                 </q-item-section>
@@ -68,7 +63,7 @@
                 </q-item-section>
               </q-item>
 
-              <q-item clickable v-ripple @click="userStatus = 'offline'" :active="userStatus === 'offline'">
+              <q-item clickable v-ripple @click="changeStatus('offline')" >
                 <q-item-section avatar>
                   <q-icon name="circle" color="grey" size="xs" />
                 </q-item-section>
@@ -88,7 +83,7 @@
 
 <script setup lang="ts">
   import {ref} from 'vue';
-  import {logout } from '../stores/interactions';
+  import {logout,loggedUser,changeStatus } from '../stores/interactions';
 
 
   const emit = defineEmits<{
@@ -100,5 +95,4 @@
   }
 
   const userStatus = ref<'online' | 'dnd' | 'offline'>('online');
-
 </script>

@@ -39,8 +39,6 @@ import
 import {leaveGroup,deleteGroup,inviteGroup} from '../stores/interactions';
 import type {GroupLinkProps} from '../stores/interactions';
 
-export
-
 interface FullProps extends GroupLinkProps {
   dialogs: {
     groupList: boolean
