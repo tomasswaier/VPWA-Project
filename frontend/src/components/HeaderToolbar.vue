@@ -4,8 +4,7 @@
 
     <q-toolbar-title>Mickeys Clubhouse</q-toolbar-title>
 
-    <q-btn class="" to="/auth/login" flat dense round icon="login" aria-label="Meow" />
-      <!--<q-btn class="" flat dense round icon="logout" aria-label=""  />-->
+    <q-btn class="" @click="logout" flat dense round icon="logout" aria-label="Meow" />
 
     <q-btn class="relative-position" flat dense round icon="person" aria-label="Profile">
       <q-badge
@@ -89,6 +88,7 @@
 
 <script setup lang="ts">
   import {ref} from 'vue';
+  import {logout } from '../stores/interactions';
 
 
   const emit = defineEmits<{

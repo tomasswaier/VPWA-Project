@@ -3,6 +3,7 @@ import { Notify } from "quasar";
 import { reactive, ref } from "vue";
 
 import { api } from "../boot/axios";
+import router from "../router";
 
 // Interface pre správy
 interface Message {
@@ -66,68 +67,6 @@ const typingUsers = ref<TypingUser[]>([
 ]);
 
 const publicGroups = ref<GroupLinkProps[]>([]);
-/*const groupInvitations = ref<GroupLinkProps[]>([
-  {
-    title: "AAAAAAA",
-    caption: "Gaming group",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "BBBBBBkj",
-    caption: "Omega good groupgroup",
-    link: "",
-    isOwner: true,
-  },
-  {
-    title: "CCCCCCCC",
-    caption: "group for minecraft fans",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "DDDDDD",
-    caption: "play game disabled",
-    link: "",
-  },
-  {
-    title: "Chat group ",
-    caption: "",
-    link: "",
-    isOwner: true,
-  },
-  {
-    title: "League of lengeds Group",
-    caption: "group for league fans",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "group Group",
-    caption: "group for group",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "SuperGroupGroup",
-    caption: "Omega good groupgroupgrougroup",
-    link: "",
-    isPrivate: true,
-    isOwner: true,
-  },
-  {
-    title: "Minecraft Group pvp",
-    caption: "group for minecraft pvp fans",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "groupgrougroup",
-    caption: "group for people who groupgroup",
-    link: "",
-  },
-]);
-*/
 interface GroupLinkProps {
   title: string;
   caption?: string;
@@ -389,7 +328,7 @@ function loadMessages(index: number, done: () => void): void {
   done();
 }
 
-async function sendMessage() {
+function sendMessage() {
   const inputText: string = text.value.trim();
   if (inputText) {
     const firstArg: string = inputText.split(" ")[0] as string;
@@ -414,9 +353,6 @@ async function sendMessage() {
         break;
       case "/kick":
         kickUser();
-        break;
-      case "/test":
-        await test();
         break;
       default: // Kontrola či správa obsahuje @mention
       {
@@ -470,6 +406,7 @@ async function login(username: string, password: string) {
     localStorage.setItem("access_token", token);
 
     localStorage.setItem("user", JSON.stringify(user));
+    await router.push("/");
     return user;
   } catch (err) {
     const error = err as AxiosError;
@@ -483,10 +420,26 @@ async function login(username: string, password: string) {
     }
   }
 }
-async function test() {
-  const response = await api.get("/test");
-  console.log(response);
+async function logout() {
+  try {
+    await api.post("/auth/logout");
+
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+
+    console.log("Redirecting to login...");
+    await router.push("/auth/login");
+  } catch (err) {
+    const error = err as AxiosError;
+    if (error.response) {
+      console.error("Status:", error.response.status);
+      console.error("Data:", error.response.data);
+    } else {
+      console.error("Logout Error message:", error.message);
+    }
+  }
 }
+
 function listGroupUsers() {
   resetGroupMembers();
   dialogs.groupUserList = true;
@@ -575,6 +528,7 @@ export {
   loadMessages,
   loadPublicGroups,
   login,
+  logout,
   messages,
   openDialog,
   publicGroups,

@@ -70,20 +70,13 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
 import { login } from '../stores/interactions';
 
-const router = useRouter();
 const email = ref('');
 const password = ref('');
 const isPwd = ref(true);
 
 async function handleLogin() {
-  console.log("Login attempt:", {
-    email: email.value,
-    password: password.value,
-  });
   await login(email.value, password.value);
-  void router.push("/");
 }
 </script>
