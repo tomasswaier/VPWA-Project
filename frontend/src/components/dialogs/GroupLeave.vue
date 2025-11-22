@@ -10,7 +10,7 @@
 
       <q-card-actions align="right">
         <q-btn flat label="No" color="primary" @click="closeDialog" />
-        <q-btn flat label="Yes" color="primary"  @click="closeDialog" />
+        <q-btn flat label="Yes" color="primary"  @click="confirmAction" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -24,6 +24,7 @@ interface Props {
 
 interface Emits {
   (e: 'update:modelValue', value: boolean): void
+  (e: 'confirm'): void
 }
 
 defineProps<Props>()
@@ -33,4 +34,7 @@ function closeDialog() {
   emit('update:modelValue', false)
 }
 
+function confirmAction() {
+  emit('confirm')
+}
 </script>

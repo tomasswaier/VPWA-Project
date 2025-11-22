@@ -1,9 +1,7 @@
 import Group from "#models/group";
 import User from "#models/user";
 import { logInValidator, registerValidator } from "#validators/auth";
-// import { AccessToken } from "@adonisjs/auth/access_tokens";
 import { HttpContext } from "@adonisjs/core/http";
-// import hash from "@adonisjs/core/services/hash";
 
 export default class AuthController {
   async register({ request }: HttpContext) {

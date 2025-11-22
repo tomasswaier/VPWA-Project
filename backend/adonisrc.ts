@@ -68,6 +68,15 @@ export default defineConfig({
   | and add additional suites.
   |
   */
+  alias: {
+    '#controllers': './app/controllers',
+    '#exceptions': './app/exceptions',
+    '#models': './app/models',
+    '#middleware': './app/middleware',
+    '#validators': './app/validators',
+    '#start': './start',
+  },
+  
   tests: {
     suites: [
       {

@@ -129,6 +129,7 @@ interface Props {
     userKick: boolean
     userRevoke: boolean
     userMessagePeek: boolean
+    ConfirmDecision: boolean
   }
 }
 
