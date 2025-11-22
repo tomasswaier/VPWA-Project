@@ -24,10 +24,11 @@ const messages = ref<Message[]>([
 
 const text = ref("");
 const currentlyPeekedMessage = ref("");
+const loggedUser = ref<User | null>(null);
 
 export type UserStatus = "online" | "do_not_disturb" | "offline";
 interface User {
-  name: string;
+  username: string;
   status: UserStatus;
 }
 const displayedMembers = ref<User[]>([]);
@@ -285,7 +286,7 @@ function loadGroupMembers(index: number, done: () => void): void {
       // pri kazdom znovunačítaní som pridal číslo, nech vidno, že sú to
       // "nový" členovia skupiny
       newMembers.push({
-        name: `${template.name} #${displayedMembers.value.length + i + 1}`,
+        username: `${template.name} #${displayedMembers.value.length + i + 1}`,
         status: template.status as UserStatus,
       });
     }
@@ -326,6 +327,10 @@ function resetGroupMembers(): void {
 function loadMessages(index: number, done: () => void): void {
   messages.value.splice(0, 0, { text: "", sender: "me", isHighlighted: false });
   done();
+}
+
+function getUsernameAbbr(username: string) {
+  return username[0] + username[1]!;
 }
 
 function sendMessage() {
@@ -402,10 +407,16 @@ async function login(username: string, password: string) {
     });
 
     const { token, ...user } = response.data;
+    console.log(user);
 
     localStorage.setItem("access_token", token);
 
     localStorage.setItem("user", JSON.stringify(user));
+    loggedUser.value = {
+      username: response.data.username,
+      status: response.data.status as UserStatus,
+    };
+
     await router.push("/");
     return user;
   } catch (err) {
@@ -436,6 +447,28 @@ async function logout() {
       console.error("Data:", error.response.data);
     } else {
       console.error("Logout Error message:", error.message);
+    }
+  }
+}
+async function changeStatus(status: string) {
+  try {
+    const result = await api.post<LoginResponse>("user/changeStatus", {
+      status: status,
+    });
+    console.log(result);
+
+    // loggedUser.value = {
+    //   username: response.data.username,
+    //   status: response.data.status as UserStatus,
+    // };
+  } catch (err) {
+    const error = err as AxiosError;
+    // Access response data safely
+    if (error.response) {
+      console.error("Status:", error.response.status);
+      console.error("Data:", error.response.data);
+    } else {
+      console.error("Error message:", error.message);
     }
   }
 }
@@ -514,11 +547,13 @@ function simulateIncomingInvite(userName: string, groupName: string) {
 }
 
 export {
+  changeStatus,
   currentGroupName,
   currentlyPeekedMessage,
   deleteGroup,
   dialogs,
   displayedMembers,
+  getUsernameAbbr,
   groupLinks,
   inviteGroup,
   joinGroup,
@@ -527,6 +562,7 @@ export {
   loadGroupMembers,
   loadMessages,
   loadPublicGroups,
+  loggedUser,
   login,
   logout,
   messages,

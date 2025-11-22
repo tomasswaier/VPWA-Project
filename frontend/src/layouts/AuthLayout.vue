@@ -3,7 +3,6 @@
     <q-header elevated>
       <q-toolbar>
         <q-toolbar-title>Chat Appus</q-toolbar-title>
-        <q-btn to="/" flat dense round icon="home" aria-label="Home" />
       </q-toolbar>
     </q-header>
 
