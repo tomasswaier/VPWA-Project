@@ -4,6 +4,7 @@ import router from "src/router";
 import { reactive, ref } from "vue";
 
 import { api } from "../boot/axios";
+import router from "../router";
 
 // Interface pre správy
 interface Message {
@@ -23,10 +24,11 @@ const messages = ref<Message[]>([
 
 const text = ref("");
 const currentlyPeekedMessage = ref("");
+const loggedUser = ref<User | null>(null);
 
 export type UserStatus = "online" | "do_not_disturb" | "offline";
 interface User {
-  name: string;
+  username: string;
   status: UserStatus;
 }
 const displayedMembers = ref<User[]>([]);
@@ -66,68 +68,6 @@ const typingUsers = ref<TypingUser[]>([
 ]);
 
 const publicGroups = ref<GroupLinkProps[]>([]);
-/*const groupInvitations = ref<GroupLinkProps[]>([
-  {
-    title: "AAAAAAA",
-    caption: "Gaming group",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "BBBBBBkj",
-    caption: "Omega good groupgroup",
-    link: "",
-    isOwner: true,
-  },
-  {
-    title: "CCCCCCCC",
-    caption: "group for minecraft fans",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "DDDDDD",
-    caption: "play game disabled",
-    link: "",
-  },
-  {
-    title: "Chat group ",
-    caption: "",
-    link: "",
-    isOwner: true,
-  },
-  {
-    title: "League of lengeds Group",
-    caption: "group for league fans",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "group Group",
-    caption: "group for group",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "SuperGroupGroup",
-    caption: "Omega good groupgroupgrougroup",
-    link: "",
-    isPrivate: true,
-    isOwner: true,
-  },
-  {
-    title: "Minecraft Group pvp",
-    caption: "group for minecraft pvp fans",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "groupgrougroup",
-    caption: "group for people who groupgroup",
-    link: "",
-  },
-]);
-*/
 interface GroupLinkProps {
   title: string;
   caption?: string;
@@ -346,7 +286,7 @@ function loadGroupMembers(index: number, done: () => void): void {
       // pri kazdom znovunačítaní som pridal číslo, nech vidno, že sú to
       // "nový" členovia skupiny
       newMembers.push({
-        name: `${template.name} #${displayedMembers.value.length + i + 1}`,
+        username: `${template.name} #${displayedMembers.value.length + i + 1}`,
         status: template.status as UserStatus,
       });
     }
@@ -387,6 +327,10 @@ function resetGroupMembers(): void {
 function loadMessages(index: number, done: () => void): void {
   messages.value.splice(0, 0, { text: "", sender: "me", isHighlighted: false });
   done();
+}
+
+function getUsernameAbbr(username: string) {
+  return username[0] + username[1]!;
 }
 
 function sendMessage() {
@@ -463,13 +407,20 @@ async function login(username: string, password: string) {
     });
 
     const { token, ...user } = response.data;
+    console.log(user);
 
     localStorage.setItem("access_token", token);
 
     localStorage.setItem("user", JSON.stringify(user));
-    if (user) {
-      await router.push("/");
+    if (!user) {
+      await router.push("/login");
     }
+    loggedUser.value = {
+      username: response.data.username,
+      status: response.data.status as UserStatus,
+    };
+
+    await router.push("/");
     return user;
   } catch (err) {
     const error = err as AxiosError;
@@ -487,15 +438,13 @@ async function logout() {
   try {
     await api.post("/auth/logout");
 
-    // Remove stored token and user
     localStorage.removeItem("access_token");
     localStorage.removeItem("user");
-    // await router.push("/login");
-    console.log("logging out");
+
+    console.log("Redirecting to login...");
+    await router.push("/auth/login");
   } catch (err) {
     const error = err as AxiosError;
-
-    // Access response data safely
     if (error.response) {
       console.error("Status:", error.response.status);
       console.error("Data:", error.response.data);
@@ -504,22 +453,29 @@ async function logout() {
     }
   }
 }
-
-async function ping() {
+async function changeStatus(status: string) {
   try {
-    await api.get("/");
+    const result = await api.post<LoginResponse>("user/changeStatus", {
+      status: status,
+    });
+    console.log(result);
+
+    // loggedUser.value = {
+    //   username: response.data.username,
+    //   status: response.data.status as UserStatus,
+    // };
   } catch (err) {
     const error = err as AxiosError;
-
     // Access response data safely
     if (error.response) {
       console.error("Status:", error.response.status);
       console.error("Data:", error.response.data);
     } else {
-      console.error("Logout Error message:", error.message);
+      console.error("Error message:", error.message);
     }
   }
 }
+
 function listGroupUsers() {
   resetGroupMembers();
   dialogs.groupUserList = true;
@@ -594,11 +550,13 @@ function simulateIncomingInvite(userName: string, groupName: string) {
 }
 
 export {
+  changeStatus,
   currentGroupName,
   currentlyPeekedMessage,
   deleteGroup,
   dialogs,
   displayedMembers,
+  getUsernameAbbr,
   groupLinks,
   inviteGroup,
   joinGroup,
@@ -607,6 +565,7 @@ export {
   loadGroupMembers,
   loadMessages,
   loadPublicGroups,
+  loggedUser,
   login,
   logout,
   messages,
