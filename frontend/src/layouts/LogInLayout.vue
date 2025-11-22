@@ -81,21 +81,14 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { login } from '../stores/interactions';
+import { login,ping } from '../stores/interactions';
+
+
 
 async function handleLogin() {
-  // Zatiaľ len simulácia prihlásenia
-  console.log("Login attempt:", {
-    email: email.value,
-    password: password.value,
-  });
   await login(email.value,password.value);
-
-  void router.push("/");
 }
 
-const router = useRouter();
 const email = ref('');
 const password = ref('');
 const isPwd = ref(true);

@@ -11,18 +11,16 @@ import AuthController from "#controllers/auth_controller";
 import router from "@adonisjs/core/services/router";
 
 router.get("/", async () => {
-  console.log("moew");
-  return { hello: "world" };
+  /*
+   * this route is used to check whether the server is alive
+   */
+  console.log("ping");
+  return { success: true };
 });
 
-router.get("/test", async () => {
-  console.log("moew");
+router.get("/ping", async () => {
   return {
-    title: "Pedro",
-    secondTitle: "Pedro",
-    name: "Pedro",
-    surname: "Pedro",
-    middlename: "Pe",
+    success: true,
   };
 });
 

@@ -18,12 +18,8 @@ export default class AuthController {
 
   async login({ request, response }: HttpContext) {
     const { username, password } = await request.validateUsing(logInValidator);
-
     const user = await User.verifyCredentials(username, password);
-
     const token = await User.accessTokens.create(user);
-    console.log(token);
-
     return response.ok({
       token: token.value!.release(),
       ...user.serialize(),

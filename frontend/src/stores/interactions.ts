@@ -1,5 +1,6 @@
 import type { AxiosError } from "axios";
 import { Notify } from "quasar";
+import router from "src/router";
 import { reactive, ref } from "vue";
 
 import { api } from "../boot/axios";
@@ -10,7 +11,6 @@ interface Message {
   sender: string;
   isHighlighted: boolean;
 }
-
 const messages = ref<Message[]>([
   { text: "Some normal message", sender: "Johnka", isHighlighted: false },
   {
@@ -389,7 +389,7 @@ function loadMessages(index: number, done: () => void): void {
   done();
 }
 
-async function sendMessage() {
+function sendMessage() {
   const inputText: string = text.value.trim();
   if (inputText) {
     const firstArg: string = inputText.split(" ")[0] as string;
@@ -414,9 +414,6 @@ async function sendMessage() {
         break;
       case "/kick":
         kickUser();
-        break;
-      case "/test":
-        await test();
         break;
       default: // Kontrola či správa obsahuje @mention
       {
@@ -453,7 +450,7 @@ async function register(
       console.error("Status:", error.response.status);
       console.error("Data:", error.response.data);
     } else {
-      console.error("Error message:", error.message);
+      console.error("Register Error message:", error.message);
     }
   }
 }
@@ -470,6 +467,9 @@ async function login(username: string, password: string) {
     localStorage.setItem("access_token", token);
 
     localStorage.setItem("user", JSON.stringify(user));
+    if (user) {
+      await router.push("/");
+    }
     return user;
   } catch (err) {
     const error = err as AxiosError;
@@ -479,13 +479,46 @@ async function login(username: string, password: string) {
       console.error("Status:", error.response.status);
       console.error("Data:", error.response.data);
     } else {
-      console.error("Error message:", error.message);
+      console.error("Login Error message:", error.message);
     }
   }
 }
-async function test() {
-  const response = await api.get("/test");
-  console.log(response);
+async function logout() {
+  try {
+    await api.post("/auth/logout");
+
+    // Remove stored token and user
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+    // await router.push("/login");
+    console.log("logging out");
+  } catch (err) {
+    const error = err as AxiosError;
+
+    // Access response data safely
+    if (error.response) {
+      console.error("Status:", error.response.status);
+      console.error("Data:", error.response.data);
+    } else {
+      console.error("Logout Error message:", error.message);
+    }
+  }
+}
+
+async function ping() {
+  try {
+    await api.get("/");
+  } catch (err) {
+    const error = err as AxiosError;
+
+    // Access response data safely
+    if (error.response) {
+      console.error("Status:", error.response.status);
+      console.error("Data:", error.response.data);
+    } else {
+      console.error("Logout Error message:", error.message);
+    }
+  }
 }
 function listGroupUsers() {
   resetGroupMembers();
@@ -575,8 +608,10 @@ export {
   loadMessages,
   loadPublicGroups,
   login,
+  logout,
   messages,
   openDialog,
+  ping,
   publicGroups,
   register,
   resetGroupMembers,
