@@ -17,11 +17,15 @@
       <q-card-section class="q-pt-md" style="padding: 0;">
         <q-scroll-area style="height: 60vh; width: 100%;">
           <q-infinite-scroll :offset="250" @load="loadPublicGroups">
-            <q-list>
-              <q-item v-for="(group, index) in publicGroups" :key="index" class="q-mb-sm">
+            <q-list class="container">
+              <q-item v-for="(group, index) in publicGroups" :key="index">
                 <q-item-section>
-                  <q-item-label class="text-white text-weight-medium">{{ group.name }}</q-item-label>
-                  <q-item-label caption class="">{{ group.caption}}</q-item-label>
+                  <q-item-label class="text-white text-weight-medium">{{ group.title}}</q-item-label>
+                  <q-item-label caption>{{ group.caption }}</q-item-label>
+                </q-item-section>
+
+                <q-item-section side>
+                  <q-btn dense round icon="add" class="text-white" aria-label="Join group"/>
                 </q-item-section>
               </q-item>
             </q-list>
@@ -39,7 +43,7 @@
 </template>
 <script setup lang="ts">
 import { watch } from 'vue'
-import {  publicGroups, loadPublicGroups } from '../../store/interactions'
+import {  publicGroups, loadPublicGroups } from '../../stores/interactions'
 interface Props {
   modelValue: boolean
 }

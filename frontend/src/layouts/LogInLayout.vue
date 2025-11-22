@@ -20,17 +20,16 @@
               <q-input
                 filled
                 v-model="email"
-                type="email"
-                label="Email *"
+                type="text"
+                label="Username"
                 hint="Enter your email address"
                 lazy-rules
                 :rules="[
-                  (val:string) => val && val.length > 0 || 'Please enter your email',
-                  (val:string) => val && val.includes('@') || 'Please enter a valid email'
+                  (val:string) => val && val.length > 0 || 'Please enter your username',
                 ]"
               >
                 <template v-slot:prepend>
-                  <q-icon name="email" />
+                  <q-icon name="person" />
                 </template>
               </q-input>
 
@@ -40,11 +39,6 @@
                 :type="isPwd ? 'password' : 'text'"
                 label="Password *"
                 hint="Enter your password"
-                lazy-rules
-                :rules="[
-                  (val:string) => val && val.length > 0 || 'Please enter your password',
-                  (val:string) => val && val.length >= 6 || 'Password must be at least 6 characters'
-                ]"
               >
                 <template v-slot:prepend>
                   <q-icon name="lock" />
@@ -88,17 +82,22 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { login } from '../stores/interactions';
+
+async function handleLogin() {
+  // Zatiaľ len simulácia prihlásenia
+  console.log("Login attempt:", {
+    email: email.value,
+    password: password.value,
+  });
+  await login(email.value,password.value);
+
+  void router.push("/");
+}
 
 const router = useRouter();
 const email = ref('');
 const password = ref('');
 const isPwd = ref(true);
 
-function handleLogin() {
-  // Zatiaľ len simulácia prihlásenia
-  console.log('Login attempt:', { email: email.value, password: password.value });
-  
-  // Po úspešnom prihlásení presmerovanie na hlavnú stránku
-  void router.push('/');
-}
 </script>
