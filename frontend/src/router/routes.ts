@@ -8,17 +8,17 @@ const routes: RouteRecordRaw[] = [
       { path: "", component: () => import("pages/ChatPage.vue") },
     ],
   },
+
   {
-    path: "/login",
-    component: () => import("layouts/LogInLayout.vue"),
-  },
-  {
-    path: "/register",
-    component: () => import("layouts/RegisterLayout.vue"),
+    path: "/auth",
+    component: () => import("layouts/AuthLayout.vue"),
+    children: [
+      { path: "", redirect: "/auth/login" },
+      { path: "login", component: () => import("pages/LoginPage.vue") },
+      { path: "register", component: () => import("pages/RegisterPage.vue") },
+    ],
   },
 
-  // Always leave this as last one,
-  // but you can also remove it
   {
     path: "/:catchAll(.*)*",
     component: () => import("pages/ErrorNotFound.vue"),
