@@ -1,6 +1,5 @@
 import type { AxiosError } from "axios";
 import { Notify } from "quasar";
-import router from "src/router";
 import { reactive, ref } from "vue";
 
 import { api } from "../boot/axios";
@@ -570,7 +569,6 @@ export {
   logout,
   messages,
   openDialog,
-  ping,
   publicGroups,
   register,
   resetGroupMembers,
