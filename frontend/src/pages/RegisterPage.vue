@@ -26,6 +26,54 @@
 
           <q-input
             filled
+            v-model="first_name"
+            label="First Name*"
+            hint="John"
+            lazy-rules
+            :rules="[
+              (val:string) => val && val.length > 0 || 'Please enter your first name',
+              (val:string) => val && val.length >= 3 || 'First name must be at least 3 characters'
+            ]"
+          >
+            <template v-slot:prepend>
+              <q-icon name="person" />
+            </template>
+          </q-input>
+          <q-input
+            filled
+            v-model="last_name"
+            label="Last Name*"
+            hint="Smith von Gutenberg"
+            lazy-rules
+            :rules="[
+              (val:string) => val && val.length > 0 || 'Please enter your first name',
+              (val:string) => val && val.length >= 1 || 'First name must be at least 3 characters'
+            ]"
+          >
+            <template v-slot:prepend>
+              <q-icon name="person" />
+            </template>
+          </q-input>
+          <q-input
+            filled
+            v-model="email"
+            label="Email Address*"
+            hint="example@yahoo.com"
+            lazy-rules
+            :rules="[
+              (val:string) => val && val.length > 0 || 'Please enter your first name',
+              (val:string) => val && val.length >= 1 || 'First name must be at least 3 characters'
+            ]"
+          >
+            <template v-slot:prepend>
+              <q-icon name="person" />
+            </template>
+          </q-input>
+
+
+
+          <q-input
+            filled
             v-model="password"
             :type="isPwd ? 'password' : 'text'"
             label="Password *"
@@ -104,6 +152,9 @@ import { register } from '../stores/interactions';
 
 const router = useRouter();
 const username = ref('');
+const email= ref('');
+const firs_name= ref('');
+const last_name= ref('');
 const password = ref('');
 const confirmPassword = ref('');
 const isPwd = ref(true);
