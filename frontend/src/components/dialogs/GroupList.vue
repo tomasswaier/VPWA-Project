@@ -16,37 +16,39 @@
       <q-separator color="white" />
       <q-card-section class="q-pt-md" style="padding: 0;">
         <q-scroll-area style="height: 60vh; width: 100%;">
-          <q-infinite-scroll :offset="250" @load="loadPublicGroups">
-            <q-list class="container">
-              <q-item v-for="(group, index) in publicGroups" :key="index">
-                <q-item-section>
-                  <q-item-label class="text-white text-weight-medium">{{ group.title}}</q-item-label>
-                  <q-item-label caption>{{ group.caption }}</q-item-label>
-                </q-item-section>
+          <q-list class="container">
+            <q-item v-for="(group, index) in publicGroups" :key="index">
+              <q-item-section>
+                <q-item-label class="text-white text-weight-medium">{{ group.title}}</q-item-label>
+                <q-item-label caption>{{ group.caption }}</q-item-label>
+              </q-item-section>
 
-                <q-item-section side>
-                  <q-btn dense round icon="add" class="text-white" aria-label="Join group"/>
-                </q-item-section>
-              </q-item>
-            </q-list>
-
-            <template v-slot:loading>
-              <div class="row justify-center q-my-md">
-                <q-spinner-dots color="white" size="40px" />
-              </div>
-            </template>
-          </q-infinite-scroll>
+              <q-item-section side>
+                <q-btn 
+                  dense 
+                  round 
+                  icon="add" 
+                  class="text-white" 
+                  aria-label="Join group"
+                  @click="handleJoinGroup(group.id)"
+                />
+              </q-item-section>
+            </q-item>
+          </q-list>
         </q-scroll-area>
       </q-card-section>
     </q-card>
   </q-dialog>
 </template>
+
 <script setup lang="ts">
 import { watch } from 'vue'
-import {  publicGroups, loadPublicGroups } from '../../stores/interactions'
+import { publicGroups, loadPublicGroups, joinPublicGroup } from '../../stores/interactions'
+
 interface Props {
   modelValue: boolean
 }
+
 const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
@@ -55,14 +57,17 @@ const emit = defineEmits<{
 function closeDialog() {
   emit('update:modelValue', false)
 }
+
+async function handleJoinGroup(groupId: string | undefined) {
+  if (!groupId) return;
+  await joinPublicGroup(groupId);
+  closeDialog();
+}
+
 watch(()=>props.modelValue, (isOpen) => {
   if (isOpen) {
-    //po otvorení (pop-upu) sa načítajú členovia skupiny
-    setTimeout(() => {
-      if (publicGroups.value.length === 0) {
-        loadPublicGroups(0, () => {});
-      }
-    }, 100);
+    publicGroups.value = []
+    void loadPublicGroups(0, () => {})
   }
-});
+})
 </script>

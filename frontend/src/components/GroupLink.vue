@@ -11,11 +11,10 @@
     <div class="col-auto q-pl-md">
       <q-btn-dropdown color="primary" @click.stop dense>
         <q-list>
-          <q-item clickable @click="leaveGroup" v-close-popup >
+          <q-item clickable @click="handleLeaveGroup" v-close-popup >
             <q-item-section>
               <q-item-label>Leave Group</q-item-label>
             </q-item-section>
-
           </q-item>
           <q-item clickable @click="inviteGroup" v-close-popup>
             <q-item-section>
@@ -34,12 +33,11 @@
 </q-item>
 </template>
 
-import
 <script setup lang="ts">
-import {leaveGroup,deleteGroup,inviteGroup} from '../stores/interactions';
-import type {GroupLinkProps} from '../stores/interactions';
+import { leaveGroup, deleteGroup, inviteGroup, leaveGroupAPI } from '../stores/interactions';
+import type { GroupLinkProps } from '../stores/interactions';
 
-interface FullProps extends GroupLinkProps {
+export interface FullProps extends GroupLinkProps {
   dialogs: {
     groupList: boolean
     groupLeave: boolean
@@ -49,11 +47,18 @@ interface FullProps extends GroupLinkProps {
   }
 }
 
-withDefaults(defineProps<FullProps>(), {
+const props = withDefaults(defineProps<FullProps>(), {
   caption: '',
   link: '#',
   isPrivate: false,
   isOwner: false,
 });
 
+async function handleLeaveGroup() {
+  if (props.id) {
+    await leaveGroupAPI(props.id)
+  } else {
+    leaveGroup()
+  }
+}
 </script>

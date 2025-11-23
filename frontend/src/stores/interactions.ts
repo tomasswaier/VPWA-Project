@@ -5,7 +5,6 @@ import { reactive, ref } from "vue";
 import { api } from "../boot/axios";
 import router from "../router";
 
-// Interface pre správy
 interface Message {
   text: string;
   sender: string;
@@ -31,7 +30,6 @@ interface User {
   status: UserStatus;
 }
 const displayedMembers = ref<User[]>([]);
-// skupinové konštanty
 const currentGroupName = ref("Trumans Group");
 
 interface TypingUser {
@@ -68,6 +66,7 @@ const typingUsers = ref<TypingUser[]>([
 
 const publicGroups = ref<GroupLinkProps[]>([]);
 interface GroupLinkProps {
+  id?: string;
   title: string;
   caption?: string;
   link?: string;
@@ -98,138 +97,8 @@ const dialogs: Dialogs = reactive({
   userMessagePeek: false,
 });
 
-const groupLinks: GroupLinkProps[] = [
-  {
-    title: "Group#1",
-    caption: "Gaming group",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "SuperGroup",
-    caption: "Omega good groupgroup",
-    link: "",
-    isOwner: true,
-  },
-  {
-    title: "Minecraft Group",
-    caption: "group for minecraft fans",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "Disabled group",
-    caption: "play game disabled",
-    link: "",
-  },
-  {
-    title: "Chat group ",
-    caption: "",
-    link: "",
-    isOwner: true,
-  },
-  {
-    title: "League of lengeds Group",
-    caption: "group for league fans",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "group Group",
-    caption: "group for group",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "SuperGroupGroup",
-    caption: "Omega good groupgroupgrougroup",
-    link: "",
-    isPrivate: true,
-    isOwner: true,
-  },
-  {
-    title: "Minecraft Group pvp",
-    caption: "group for minecraft pvp fans",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "groupgrougroup",
-    caption: "group for people who groupgroup",
-    link: "",
-  },
-  {
-    title: "League group aram",
-    caption: "aram group group",
-    link: "",
-    isOwner: true,
-  },
-  {
-    title: "Minecraft Group skyublock",
-    caption: "group for minecraft skyblock fans",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "CoolChatgroup",
-    caption: "group for people who are cool",
-    link: "",
-  },
-  {
-    title: "Meow Cats Meow",
-    caption: "Meow moew meow",
-    link: "",
-    isOwner: true,
-  },
-  {
-    title: "Minecraft Cats group",
-    caption: "group for minecraft cat fans",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "Disabled group",
-    caption: "group for people play game disabled",
-    link: "",
-  },
-  {
-    title: "SuperGroup",
-    caption: "Omega good groupgroup",
-    link: "",
-    isOwner: true,
-  },
-  {
-    title: "Minecraft hate Group  ",
-    caption: "group for minecraft fans",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "not Disabled group",
-    caption: "we hate game disabled",
-    link: "",
-  },
-  {
-    title: "penguin gruop",
-    caption: "pengu",
-    link: "",
-    isOwner: true,
-    isPrivate: true,
-  },
-  {
-    title: "baseball",
-    caption: "baseball fans",
-    link: "",
-    isPrivate: true,
-  },
-  {
-    title: "Disabled group",
-    caption: "we play game disabled",
-    link: "",
-  },
-];
+const groupLinks = ref<GroupLinkProps[]>([]);
 
-// Zoznam base memberov
 const baseMemberTemplates = [
   { name: "Johnka", status: "online" },
   {
@@ -237,39 +106,6 @@ const baseMemberTemplates = [
     status: "do_not_disturb",
   },
   { name: "Tomas Truman", status: "offline" },
-];
-
-const baseGroupTemplates = [
-  {
-    title: "Anima Group",
-    caption: "here we talk about animals and other fun stuff",
-    isPrivate: false,
-    link: "",
-  },
-  {
-    title: "Fun Group XD",
-    caption: "we have fun here!",
-    isPrivate: false,
-    link: "",
-  },
-  {
-    title: "Leauge of legends",
-    caption: "HERE WE TALK ABOUT LEAGUE OF LEGENDS",
-    isPrivate: false,
-    link: "",
-  },
-  {
-    title: "GAMING",
-    caption: "HERE WE TALK ABOUT GAMES!!",
-    isPrivate: false,
-    link: "",
-  },
-  {
-    title: "Fashion",
-    caption: "let's discuss fashion!!",
-    isPrivate: false,
-    link: "",
-  },
 ];
 
 function loadGroupMembers(index: number, done: () => void): void {
@@ -282,8 +118,6 @@ function loadGroupMembers(index: number, done: () => void): void {
         baseMemberTemplates.length;
       const template = baseMemberTemplates[templateIX]!;
 
-      // pri kazdom znovunačítaní som pridal číslo, nech vidno, že sú to
-      // "nový" členovia skupiny
       newMembers.push({
         username: `${template.name} #${displayedMembers.value.length + i + 1}`,
         status: template.status as UserStatus,
@@ -295,28 +129,38 @@ function loadGroupMembers(index: number, done: () => void): void {
   }, 300);
 }
 
-function loadPublicGroups(index: number, done: () => void): void {
-  setTimeout(() => {
-    const batchSize = 10;
-    const newGroups: GroupLinkProps[] = [];
+async function loadPublicGroups(index: number, done: () => void): Promise<void> {
+  try {
+    console.log("Calling API /groups...");
+    const response = await api.get("/groups");
+    console.log("Response:", response);
+    const groups = response.data;
 
-    for (let i = 0; i < batchSize; i++) {
-      const templateIX = (publicGroups.value.length + i) %
-        baseGroupTemplates.length;
-      const template = baseGroupTemplates[templateIX]!;
+    publicGroups.value = groups.map((group: { id: string; name: string; description: string | null; isPrivate: boolean }) => ({
+      id: group.id || "",
+      title: group.name,
+      caption: group.description || "",
+      link: "",
+      isPrivate: group.isPrivate,
+      isOwner: false,
+    }));
 
-      newGroups.push({
-        title: `${template.title} #${publicGroups.value.length + i + 1}`,
-        caption: template.caption,
-        link: template.link ?? "",
-        isPrivate: template.isPrivate ?? false,
-        isOwner: false,
-      });
-    }
-
-    publicGroups.value.push(...newGroups);
     done();
-  }, 300);
+  } catch (err) {
+    const error = err as AxiosError<{ message?: string }>;
+    console.error("Full error:", err);
+    console.error("Error response:", error.response);
+    
+    Notify.create({
+      message: error.response?.data?.message || "Failed to load groups",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
+    });
+    
+    done();
+  }
 }
 
 function resetGroupMembers(): void {
@@ -381,14 +225,13 @@ async function register(
     const response = await api.post<RegisterResponse>("/auth/register", {
       username: username,
       password,
-      password_confirmation: passwordConfirmation, // Vine validator uses confirmed
+      password_confirmation: passwordConfirmation,
     });
 
     return response.data;
   } catch (err) {
     const error = err as AxiosError;
 
-    // Access response data safely
     if (error.response) {
       console.error("Status:", error.response.status);
       console.error("Data:", error.response.data);
@@ -424,7 +267,6 @@ async function login(username: string, password: string) {
   } catch (err) {
     const error = err as AxiosError;
 
-    // Access response data safely
     if (error.response) {
       console.error("Status:", error.response.status);
       console.error("Data:", error.response.data);
@@ -487,9 +329,11 @@ function listGroups() {
 function joinGroup() {
   dialogs.groupCreate = true;
 }
+
 function leaveGroup() {
   dialogs.groupLeave = true;
 }
+
 function deleteGroup() {
   dialogs.groupDelete = true;
 }
@@ -497,19 +341,20 @@ function deleteGroup() {
 function inviteGroup() {
   dialogs.groupInvite = true;
 }
+
 function openDialog(user: TypingUser) {
   currentlyPeekedMessage.value = user.message;
   dialogs.userMessagePeek = true;
 }
 
-export type { Dialogs, GroupLinkProps, Message, TypingUser, User };
-
 function kickUser() {
   dialogs.userKick = true;
 }
+
 function revokeUser() {
   dialogs.userRevoke = true;
 }
+
 function simulateIncomingInvite(userName: string, groupName: string) {
   Notify.create({
     message: `${userName} has invited you to ${groupName}`,
@@ -548,6 +393,106 @@ function simulateIncomingInvite(userName: string, groupName: string) {
   });
 }
 
+async function joinPublicGroup(groupId: string): Promise<void> {
+  try {
+    const response = await api.post(`/groups/${groupId}/join`);
+    
+    Notify.create({
+      message: response.data.message || "Successfully joined the group!",
+      color: "positive",
+      icon: "check_circle",
+      position: "top",
+      timeout: 2000,
+    });
+
+    await loadUserGroups();
+  } catch (err) {
+    const error = err as AxiosError<{ message?: string }>;
+    console.error("Error joining group:", error);
+    
+    Notify.create({
+      message: error.response?.data?.message || "Failed to join group",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
+    });
+  }
+}
+
+async function leaveGroupAPI(groupId: string): Promise<void> {
+  try {
+    const response = await api.post(`/groups/${groupId}/leave`);
+    
+    Notify.create({
+      message: response.data.message || "Successfully left the group",
+      color: "positive",
+      icon: "check_circle",
+      position: "top",
+      timeout: 2000,
+    });
+
+    await loadUserGroups();
+  } catch (err) {
+    const error = err as AxiosError<{ message?: string }>;
+    console.error("Error leaving group:", error);
+    
+    Notify.create({
+      message: error.response?.data?.message || "Failed to leave group",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
+    });
+  }
+}
+
+async function loadGroupMembersAPI(groupId: string): Promise<void> {
+  try {
+    const response = await api.get(`/groups/${groupId}/members`);
+    const members = response.data;
+
+    displayedMembers.value = members.map((member: { username: string; status: UserStatus }) => ({
+      name: member.username,
+      status: member.status,
+    }));
+  } catch (err) {
+    const error = err as AxiosError<{ message?: string }>;
+    console.error("Error loading members:", error);
+    
+    Notify.create({
+      message: error.response?.data?.message || "Failed to load group members",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
+    });
+  }
+}
+
+async function loadUserGroups(): Promise<void> {
+  try {
+    const response = await api.get("/auth/me");
+    const user = response.data;
+    
+    if (user.groups) {
+      groupLinks.value = user.groups.map((group: { id: string; name: string; description: string | null; isPrivate: boolean; is_private: boolean }) => ({
+        id: group.id,
+        title: group.name,
+        caption: group.description || "",
+        link: "",
+        isPrivate: group.isPrivate || group.is_private,
+        isOwner: false,
+      }));
+    }
+  } catch (err) {
+    const error = err as AxiosError<{ message?: string }>;
+    console.error("Error loading user groups:", error);
+  }
+}
+
+export type { Dialogs, GroupLinkProps, Message, TypingUser, User };
+
 export {
   changeStatus,
   currentGroupName,
@@ -559,11 +504,15 @@ export {
   groupLinks,
   inviteGroup,
   joinGroup,
+  joinPublicGroup,
   leaveGroup,
+  leaveGroupAPI,
   listGroups,
   loadGroupMembers,
+  loadGroupMembersAPI,
   loadMessages,
   loadPublicGroups,
+  loadUserGroups,
   loggedUser,
   login,
   logout,
@@ -573,9 +522,7 @@ export {
   register,
   resetGroupMembers,
   sendMessage,
+  simulateIncomingInvite,
   text,
   typingUsers,
 };
-
-export { simulateIncomingInvite };
-// simulateIncomingInvite('Tomas Truman', 'Gaming Group')

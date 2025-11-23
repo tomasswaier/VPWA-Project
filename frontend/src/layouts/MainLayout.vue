@@ -1,5 +1,4 @@
 <template>
-
   <q-layout view="lHh Lpr lFf">
     <q-header elevated >
       <HeaderToolbar @toggle-drawer="toggleDrawer()" />
@@ -30,21 +29,23 @@
 </template>
 
 <script setup lang="ts">
-import {ref} from 'vue';
-import GroupLink  from 'components/GroupLink.vue';
+import { ref, onMounted } from 'vue';
+import GroupLink from 'components/GroupLink.vue';
 import HeaderToolbar from 'components/HeaderToolbar.vue';
-
-import {dialogs,joinGroup,listGroups,groupLinks} from '../stores/interactions';
-import type {Dialogs} from '../stores/interactions';
-
+import { dialogs, joinGroup, listGroups, groupLinks, loadUserGroups } from '../stores/interactions';
+import type { Dialogs } from '../stores/interactions';
 
 const leftDrawerOpen = ref(false);
+
 function toggleDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
-}//keep it a function for better readability no ?
-
-function updateDialog(dialogName: keyof Dialogs,value:boolean){
-  dialogs[dialogName] = value
 }
 
+function updateDialog(dialogName: keyof Dialogs, value: boolean) {
+  dialogs[dialogName] = value;
+}
+
+onMounted(() => {
+  void loadUserGroups();
+});
 </script>
