@@ -35,7 +35,7 @@
         <q-card style="min-width: 250px;">
           <!-- profil časť -->
           <q-card-section class="text-center q-pb-none">
-            <div class="text-h6 q-mt-sm">{{loggedUser?.username}}</div>
+            <div class="text-h6 q-mt-sm" v-if="loggedUser">{{ loggedUser.username }}</div>
           </q-card-section>
 
           <q-separator class="q-my-md" />

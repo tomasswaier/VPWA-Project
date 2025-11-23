@@ -22,7 +22,17 @@ const messages = ref<Message[]>([
 
 const text = ref("");
 const currentlyPeekedMessage = ref("");
+
 const loggedUser = ref<User | null>(null);
+function initLoggedUser() {
+  console.log(JSON.parse(localStorage.getItem("user")!));
+  if (localStorage.getItem("user") != "") {
+    const user: User = JSON.parse(localStorage.getItem("user")!);
+
+    loggedUser.value = { username: user?.username, status: user?.status };
+  }
+}
+initLoggedUser();
 
 export type UserStatus = "online" | "do_not_disturb" | "offline";
 interface User {
@@ -129,14 +139,22 @@ function loadGroupMembers(index: number, done: () => void): void {
   }, 300);
 }
 
-async function loadPublicGroups(index: number, done: () => void): Promise<void> {
+async function loadPublicGroups(
+  index: number,
+  done: () => void,
+): Promise<void> {
   try {
     console.log("Calling API /groups...");
     const response = await api.get("/groups");
     console.log("Response:", response);
     const groups = response.data;
 
-    publicGroups.value = groups.map((group: { id: string; name: string; description: string | null; isPrivate: boolean }) => ({
+    publicGroups.value = groups.map((group: {
+      id: string;
+      name: string;
+      description: string | null;
+      isPrivate: boolean;
+    }) => ({
       id: group.id || "",
       title: group.name,
       caption: group.description || "",
@@ -150,7 +168,7 @@ async function loadPublicGroups(index: number, done: () => void): Promise<void> 
     const error = err as AxiosError<{ message?: string }>;
     console.error("Full error:", err);
     console.error("Error response:", error.response);
-    
+
     Notify.create({
       message: error.response?.data?.message || "Failed to load groups",
       color: "negative",
@@ -158,7 +176,7 @@ async function loadPublicGroups(index: number, done: () => void): Promise<void> 
       position: "top",
       timeout: 2000,
     });
-    
+
     done();
   }
 }
@@ -178,11 +196,15 @@ function getUsernameAbbr(username: string) {
 
 function sendMessage() {
   const inputText: string = text.value.trim();
+  const allArguments: string[] = inputText.split(" ");
   if (inputText) {
-    const firstArg: string = inputText.split(" ")[0] as string;
+    const firstArg: string = allArguments[0] as string;
     switch (firstArg) {
+      case "/test":
+        console.log(localStorage.getItem("user"));
+        break;
       case "/cancel":
-        leaveGroup();
+        // leaveGroup();
         break;
       case "/invite":
         inviteGroup();
@@ -330,7 +352,8 @@ function joinGroup() {
   dialogs.groupCreate = true;
 }
 
-function leaveGroup() {
+function leaveGroup(groupId: string) {
+  console.log(groupId);
   dialogs.groupLeave = true;
 }
 
@@ -396,7 +419,7 @@ function simulateIncomingInvite(userName: string, groupName: string) {
 async function joinPublicGroup(groupId: string): Promise<void> {
   try {
     const response = await api.post(`/groups/${groupId}/join`);
-    
+
     Notify.create({
       message: response.data.message || "Successfully joined the group!",
       color: "positive",
@@ -409,7 +432,7 @@ async function joinPublicGroup(groupId: string): Promise<void> {
   } catch (err) {
     const error = err as AxiosError<{ message?: string }>;
     console.error("Error joining group:", error);
-    
+
     Notify.create({
       message: error.response?.data?.message || "Failed to join group",
       color: "negative",
@@ -423,7 +446,7 @@ async function joinPublicGroup(groupId: string): Promise<void> {
 async function leaveGroupAPI(groupId: string): Promise<void> {
   try {
     const response = await api.post(`/groups/${groupId}/leave`);
-    
+
     Notify.create({
       message: response.data.message || "Successfully left the group",
       color: "positive",
@@ -436,7 +459,7 @@ async function leaveGroupAPI(groupId: string): Promise<void> {
   } catch (err) {
     const error = err as AxiosError<{ message?: string }>;
     console.error("Error leaving group:", error);
-    
+
     Notify.create({
       message: error.response?.data?.message || "Failed to leave group",
       color: "negative",
@@ -452,14 +475,16 @@ async function loadGroupMembersAPI(groupId: string): Promise<void> {
     const response = await api.get(`/groups/${groupId}/members`);
     const members = response.data;
 
-    displayedMembers.value = members.map((member: { username: string; status: UserStatus }) => ({
+    displayedMembers.value = members.map((
+      member: { username: string; status: UserStatus },
+    ) => ({
       name: member.username,
       status: member.status,
     }));
   } catch (err) {
     const error = err as AxiosError<{ message?: string }>;
     console.error("Error loading members:", error);
-    
+
     Notify.create({
       message: error.response?.data?.message || "Failed to load group members",
       color: "negative",
@@ -474,16 +499,24 @@ async function loadUserGroups(): Promise<void> {
   try {
     const response = await api.get("/auth/me");
     const user = response.data;
-    
+
     if (user.groups) {
-      groupLinks.value = user.groups.map((group: { id: string; name: string; description: string | null; isPrivate: boolean; is_private: boolean }) => ({
-        id: group.id,
-        title: group.name,
-        caption: group.description || "",
-        link: "",
-        isPrivate: group.isPrivate || group.is_private,
-        isOwner: false,
-      }));
+      groupLinks.value = user.groups.map(
+        (group: {
+          id: string;
+          name: string;
+          description: string | null;
+          isPrivate: boolean;
+          is_private: boolean;
+        }) => ({
+          id: group.id,
+          title: group.name,
+          caption: group.description || "",
+          link: "",
+          isPrivate: group.isPrivate || group.is_private,
+          isOwner: false,
+        }),
+      );
     }
   } catch (err) {
     const error = err as AxiosError<{ message?: string }>;

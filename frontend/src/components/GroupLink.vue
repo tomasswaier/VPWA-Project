@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { leaveGroup, deleteGroup, inviteGroup, leaveGroupAPI } from '../stores/interactions';
+import { deleteGroup, inviteGroup, leaveGroupAPI } from '../stores/interactions';
 import type { GroupLinkProps } from '../stores/interactions';
 
 export interface FullProps extends GroupLinkProps {
@@ -58,7 +58,7 @@ async function handleLeaveGroup() {
   if (props.id) {
     await leaveGroupAPI(props.id)
   } else {
-    leaveGroup()
+    //leaveGroup()
   }
 }
 </script>

@@ -1,9 +1,8 @@
-
-import AuthController from "#controllers/auth_controller";
+// import AuthController from "#controllers/auth_controller";
 import UsersController from "#controllers/users_controller";
-import router from "@adonisjs/core/services/router";
-import { middleware } from "#start/kernel";
 import Group from "#models/group";
+import { middleware } from "#start/kernel";
+import router from "@adonisjs/core/services/router";
 
 router.get("/", async () => {
   /*
@@ -17,15 +16,13 @@ router
   .group(() => {
     router.post("login", "#controllers/auth_controller.login");
     router.post("register", "#controllers/auth_controller.register");
-    router.post("register", "#controllers/auth_controller.logout");
-
+    router.post("logout", "#controllers/auth_controller.logout");
   })
   .prefix("auth");
 
-router
-  .group(() => {
-    router.get("me", "#controllers/auth_controller.me");
-  })
+router.group(() => {
+  router.get("me", "#controllers/auth_controller.me");
+})
   .prefix("auth")
   .use(middleware.auth());
 
@@ -33,11 +30,13 @@ router
   .group(() => {
     router.get("/", async ({ response }) => {
       try {
-        const groups = await Group.query().where('is_private', false);
+        const groups = await Group.query().where("is_private", false);
         return response.ok(groups);
       } catch (error) {
-        console.error('Error:', error);
-        return response.internalServerError({ message: 'Failed to load groups' });
+        console.error("Error:", error);
+        return response.internalServerError(
+          { message: "Failed to load groups" },
+        );
       }
     });
 
@@ -48,7 +47,9 @@ router
 
       const isMember = group.users.some((u) => u.id === user!.id);
       if (isMember) {
-        return response.badRequest({ message: "Already a member of this group" });
+        return response.badRequest(
+          { message: "Already a member of this group" },
+        );
       }
 
       await group.related("users").attach([user!.id]);
@@ -71,7 +72,7 @@ router
   })
   .prefix("groups")
   .use(middleware.auth());
-  router
+router
   .group(() => {
     router.post("changeStatus", [UsersController, "changeStatus"]);
   })
