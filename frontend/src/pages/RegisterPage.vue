@@ -153,7 +153,7 @@ import { register } from '../stores/interactions';
 const router = useRouter();
 const username = ref('');
 const email= ref('');
-const firs_name= ref('');
+const first_name= ref('');
 const last_name= ref('');
 const password = ref('');
 const confirmPassword = ref('');
