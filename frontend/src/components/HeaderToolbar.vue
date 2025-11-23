@@ -20,6 +20,11 @@
         floating
         rounded style="top: 3px; right: 3px;" />
       <q-badge
+        v-if="loggedUser?.status as String== 'idle'"
+        color="yellow"
+        floating
+        rounded style="top: 3px; right: 3px;" />
+      <q-badge
         v-if="loggedUser?.status as String== 'offline'"
         color="grey"
         floating
@@ -54,6 +59,14 @@
                 </q-item-section>
               </q-item>
 
+              <q-item clickable v-ripple @click="changeStatus('idle')" :active="loggedUser?.status == 'idle'">
+                <q-item-section avatar>
+                  <q-icon name="do_not_disturb" color="yellow" size="xs" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>Do Not Disturb</q-item-label>
+                </q-item-section>
+              </q-item>
               <q-item clickable v-ripple @click="changeStatus('do_not_disturb')" :active="loggedUser?.status == 'do_not_disturb'">
                 <q-item-section avatar>
                   <q-icon name="do_not_disturb" color="red" size="xs" />

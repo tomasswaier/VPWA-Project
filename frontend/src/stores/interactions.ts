@@ -34,7 +34,7 @@ function initLoggedUser() {
 }
 initLoggedUser();
 
-export type UserStatus = "online" | "do_not_disturb" | "offline";
+export type UserStatus = "online" | "do_not_disturb" | "offline" | "idle";
 interface User {
   username: string;
   status: UserStatus;

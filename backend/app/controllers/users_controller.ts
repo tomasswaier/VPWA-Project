@@ -1,6 +1,6 @@
 // import type { HttpContext } from '@adonisjs/core/http'
 // import User from "#models/user";
-// import type UserStatus from "#models/user";
+import type UserStatus from "#models/user";
 import { HttpContext } from "@adonisjs/core/http";
 
 export default class UsersController {
@@ -9,7 +9,7 @@ export default class UsersController {
 
     const { status } = request.body();
 
-    if (!status) {
+    if (!status || !(status as UserStatus)) {
       return { error: "Status not provided" };
     }
 
