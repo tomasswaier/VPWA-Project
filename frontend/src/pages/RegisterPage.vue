@@ -35,9 +35,6 @@
               (val:string) => val && val.length >= 3 || 'First name must be at least 3 characters'
             ]"
           >
-            <template v-slot:prepend>
-              <q-icon name="person" />
-            </template>
           </q-input>
           <q-input
             filled
@@ -50,9 +47,6 @@
               (val:string) => val && val.length >= 1 || 'First name must be at least 3 characters'
             ]"
           >
-            <template v-slot:prepend>
-              <q-icon name="person" />
-            </template>
           </q-input>
           <q-input
             filled
@@ -66,7 +60,7 @@
             ]"
           >
             <template v-slot:prepend>
-              <q-icon name="person" />
+              <q-icon name="email" />
             </template>
           </q-input>
 
@@ -153,7 +147,7 @@ import { register } from '../stores/interactions';
 const router = useRouter();
 const username = ref('');
 const email= ref('');
-const firs_name= ref('');
+const first_name= ref('');
 const last_name= ref('');
 const password = ref('');
 const confirmPassword = ref('');
@@ -165,7 +159,7 @@ async function handleRegister() {
     username: username.value,
     password: password.value
   });
-  await register(username.value, password.value, confirmPassword.value);
+  await register(username.value,first_name.value,last_name.value,email.value, password.value, confirmPassword.value);
   void router.push('/auth/login');
 }
 </script>
