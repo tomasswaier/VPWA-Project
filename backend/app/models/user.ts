@@ -21,7 +21,7 @@ const AuthFinder = withAuthFinder(() => hash.use("scrypt"), {
   passwordColumnName: "password",
 });
 
-export type UserStatus = "online" | "do_not_disturb" | "offline";
+export type UserStatus = "online" | "do_not_disturb" | "offline" | "idle";
 
 export default class User extends compose(BaseModel, AuthFinder) {
   @column({ isPrimary: true })
@@ -36,6 +36,14 @@ export default class User extends compose(BaseModel, AuthFinder) {
 
   @column()
   declare username: string;
+
+  @column()
+  declare first_name: string;
+
+  @column()
+  declare last_name: string;
+  @column()
+  declare email: string;
 
   @column()
   declare password: string;

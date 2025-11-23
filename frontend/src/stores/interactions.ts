@@ -34,7 +34,7 @@ function initLoggedUser() {
 }
 initLoggedUser();
 
-export type UserStatus = "online" | "do_not_disturb" | "offline";
+export type UserStatus = "online" | "do_not_disturb" | "offline" | "idle";
 interface User {
   username: string;
   status: UserStatus;
@@ -240,12 +240,18 @@ function sendMessage() {
 
 async function register(
   username: string,
+  first_name: string,
+  last_name: string,
+  email: string,
   password: string,
   passwordConfirmation: string,
 ) {
   try {
     const response = await api.post<RegisterResponse>("/auth/register", {
       username: username,
+      first_name: first_name,
+      last_name: last_name,
+      email: email,
       password,
       password_confirmation: passwordConfirmation,
     });
@@ -263,11 +269,14 @@ async function register(
   }
 }
 
-async function login(username: string, password: string) {
+async function login(
+  username: string,
+  password: string,
+) {
   try {
     const response = await api.post<LoginResponse>("/auth/login", {
       username: username,
-      password,
+      password: password,
     });
 
     const { token, ...user } = response.data;

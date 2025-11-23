@@ -5,7 +5,7 @@ export default class Users extends BaseSchema {
 
   public async up() {
     this.schema.raw(`
-      CREATE TYPE user_status AS ENUM ('online', 'do_not_disturb', 'offline');
+      CREATE TYPE user_status AS ENUM ('online', 'do_not_disturb', 'offline','idle');
     `);
 
     this.schema.createTable(this.tableName, (table) => {
