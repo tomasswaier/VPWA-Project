@@ -5,14 +5,15 @@ import { HttpContext } from "@adonisjs/core/http";
 
 export default class UsersController {
   async changeStatus({ auth, request }: HttpContext) {
-    const user = auth.use("access_tokens").user;
+    const user = await auth.use("access_tokens").authenticate();
 
-    if (!user) {
-      return { error: "Unauthorized" };
+    const { status } = request.body();
+
+    if (!status) {
+      return { error: "Status not provided" };
     }
 
-    const newStatus = request.input("status");
-    user.status = newStatus;
+    user.status = status;
     await user.save();
 
     return { status: user.status };

@@ -15,7 +15,7 @@
         style="top: 3px; right: 3px;"
       />
       <q-badge
-        v-if="loggedUser?.status as String== 'dnd'"
+        v-if="loggedUser?.status as String== 'do_not_disturb'"
         color="red"
         floating
         rounded style="top: 3px; right: 3px;" />
@@ -45,7 +45,7 @@
             <div class="text-caption text-grey-7 q-mb-sm">Status</div>
 
             <q-list dense>
-              <q-item clickable v-ripple @click="userStatus = 'online'" :active="userStatus === 'online'">
+              <q-item clickable v-ripple @click="changeStatus('online')" :active="loggedUser?.status == 'online'">
                 <q-item-section avatar>
                   <q-icon name="circle" color="light-green" size="xs" />
                 </q-item-section>
@@ -54,7 +54,7 @@
                 </q-item-section>
               </q-item>
 
-              <q-item clickable v-ripple @click="changeStatus('do_not_disturb')">
+              <q-item clickable v-ripple @click="changeStatus('do_not_disturb')" :active="loggedUser?.status == 'do_not_disturb'">
                 <q-item-section avatar>
                   <q-icon name="do_not_disturb" color="red" size="xs" />
                 </q-item-section>
@@ -63,7 +63,7 @@
                 </q-item-section>
               </q-item>
 
-              <q-item clickable v-ripple @click="changeStatus('offline')" >
+              <q-item clickable v-ripple @click="changeStatus('offline')" :active="loggedUser?.status == 'offline'">
                 <q-item-section avatar>
                   <q-icon name="circle" color="grey" size="xs" />
                 </q-item-section>
@@ -82,7 +82,7 @@
 
 
 <script setup lang="ts">
-  import {ref} from 'vue';
+  //import {ref} from 'vue';
   import {logout,loggedUser,changeStatus } from '../stores/interactions';
 
 
@@ -94,5 +94,6 @@
     emit('toggleDrawer')
   }
 
-  const userStatus = ref<'online' | 'dnd' | 'offline'>('online');
+  //const userStatus = ref<'online' | 'dnd' | 'offline'>('online');
+  //loggedUser.status=userStatus
 </script>

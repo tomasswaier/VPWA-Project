@@ -271,11 +271,9 @@ async function login(username: string, password: string) {
     });
 
     const { token, ...user } = response.data;
-    console.log(user);
-
     localStorage.setItem("access_token", token);
-
     localStorage.setItem("user", JSON.stringify(user));
+
     if (!user) {
       await router.push("/login");
     }
@@ -318,15 +316,20 @@ async function logout() {
 }
 async function changeStatus(status: string) {
   try {
-    const result = await api.post<LoginResponse>("user/changeStatus", {
-      status: status,
+    const result = await api.post("user/changeStatus", { status }, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
     });
-    console.log(result);
 
-    // loggedUser.value = {
-    //   username: response.data.username,
-    //   status: response.data.status as UserStatus,
-    // };
+    loggedUser.value = {
+      username: loggedUser.value!.username,
+      status: result.data.status as UserStatus,
+    };
+    const user = JSON.parse(localStorage.getItem("user")!);
+    user!.status = result.data.status as UserStatus;
+
+    localStorage.setItem("user", JSON.stringify(user));
   } catch (err) {
     const error = err as AxiosError;
     // Access response data safely
