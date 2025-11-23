@@ -7,7 +7,7 @@
       <q-card-section class="row items-center">
 
         <q-form
-          @submit="dummyFunction"
+          @submit="handleSubmit"
           @reset="dummyFunction"
           class="q-gutter-md"
         >
@@ -34,13 +34,18 @@
 
       <q-card-actions align="right">
         <q-btn flat label="No" color="primary" @click="closeDialog" />
-        <q-btn flat label="Submit" color="primary"  @click="closeDialog" />
+        <q-btn flat label="Submit" color="primary" @click="handleSubmit" />
       </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
 <script setup lang="ts">
   import {ref} from 'vue';
+  import {Notify} from 'quasar';
+  import {api} from 'src/boot/axios';
+  import type {AxiosError} from 'axios';
+  import {loadUserGroups} from 'src/stores/interactions';
+  
   interface Props {
     modelValue: boolean
   }
@@ -53,8 +58,46 @@
   const emit = defineEmits<Emits>()
 
   function closeDialog() {
+    name.value = '';
+    caption.value = '';
+    isPrivate.value = true;
     emit('update:modelValue', false)
   }
+  
+  async function handleSubmit() {
+    if (!name.value || name.value.trim() === '') {
+      return;
+    }
+
+    try {
+      const response = await api.post("/groups/join-or-create", {
+        name: name.value,
+        isPrivate: isPrivate.value,
+        description: caption.value || null
+      });
+
+      Notify.create({
+        message: response.data.message,
+        color: "positive",
+        icon: "check_circle",
+        position: "top",
+        timeout: 2000
+      });
+
+      await loadUserGroups();
+      closeDialog();
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>;
+      Notify.create({
+        message: error.response?.data?.message || "Failed to create group",
+        color: "negative",
+        icon: "error",
+        position: "top",
+        timeout: 2000
+      });
+    }
+  }
+  
   function dummyFunction(){
   }
   const name= ref('');
@@ -62,4 +105,3 @@
   const isPrivate= ref(true);
 
 </script>
-

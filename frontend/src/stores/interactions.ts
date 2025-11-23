@@ -194,6 +194,60 @@ function getUsernameAbbr(username: string) {
   return username[0] + username[1]!;
 }
 
+async function joinGroup(args: string[]) {
+  if (args.length === 0) {
+    Notify.create({
+      message: "Usage: /join groupName [private] [description]",
+      color: "warning",
+      position: "top",
+      timeout: 2000
+    });
+    return;
+  }
+
+  const groupName = args[0];
+  let isPrivate = false;
+  let description = null;
+
+  if (args.length > 1 && args[1] === "[private]") {
+    isPrivate = true;
+    if (args.length > 2) {
+      description = args.slice(2).join(" ");
+    }
+  } else {
+    if (args.length > 1) {
+      description = args.slice(1).join(" ");
+    }
+  }
+
+  try {
+    const response = await api.post("/groups/join-or-create", {
+      name: groupName,
+      isPrivate: isPrivate,
+      description: description
+    });
+
+    Notify.create({
+      message: response.data.message,
+      color: "positive",
+      icon: "check_circle",
+      position: "top",
+      timeout: 2000
+    });
+
+    await loadUserGroups();
+  } catch (err) {
+    const error = err as AxiosError<{ message?: string }>;
+    Notify.create({
+      message: error.response?.data?.message || "Failed to join/create group",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000
+    });
+  }
+}
+
 function sendMessage() {
   const inputText: string = text.value.trim();
   const allArguments: string[] = inputText.split(" ");
@@ -203,8 +257,11 @@ function sendMessage() {
       case "/test":
         console.log(localStorage.getItem("user"));
         break;
+      case "/quit": //to iste ako /cancel, ale bolo v zadani aj quit, cize dali sme sem obe funkcie
+        void cancelGroup(allArguments.slice(1));
+        break;
       case "/cancel":
-        // leaveGroup();
+        void cancelGroup(allArguments.slice(1));
         break;
       case "/invite":
         inviteGroup();
@@ -213,7 +270,7 @@ function sendMessage() {
         listGroupUsers();
         break;
       case "/join":
-        joinGroup();
+        void joinGroup(allArguments.slice(1));
         break;
       case "/delete":
         deleteGroup();
@@ -224,8 +281,7 @@ function sendMessage() {
       case "/kick":
         kickUser();
         break;
-      default: // Kontrola či správa obsahuje @mention
-      {
+      default: {
         const containsMention = inputText.includes("@");
         messages.value.push(
           { text: inputText, sender: "me", isHighlighted: containsMention },
@@ -341,7 +397,6 @@ async function changeStatus(status: string) {
     localStorage.setItem("user", JSON.stringify(user));
   } catch (err) {
     const error = err as AxiosError;
-    // Access response data safely
     if (error.response) {
       console.error("Status:", error.response.status);
       console.error("Data:", error.response.data);
@@ -360,7 +415,7 @@ function listGroups() {
   dialogs.groupList = true;
 }
 
-function joinGroup() {
+function openCreateGroupDialog() {
   dialogs.groupCreate = true;
 }
 
@@ -536,6 +591,57 @@ async function loadUserGroups(): Promise<void> {
   }
 }
 
+async function cancelGroup(args: string[]) {
+  if (args.length === 0) {
+    Notify.create({
+      message: "Usage: /cancel or /quit groupName",
+      color: "warning",
+      position: "top",
+      timeout: 2000
+    });
+    return;
+  }
+
+  const groupName = args[0];
+
+  //skupina podľa názvu v "groupLinks"
+  const group = groupLinks.value.find(g => g.title === groupName);
+
+  if (!group || !group.id) {
+    Notify.create({
+      message: `Group "${groupName}" not found`,
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000
+    });
+    return;
+  }
+
+  try {
+    const response = await api.post(`/groups/${group.id}/leave`);
+
+    Notify.create({
+      message: response.data.message,
+      color: "positive",
+      icon: "check_circle",
+      position: "top",
+      timeout: 2000
+    });
+
+    await loadUserGroups();
+  } catch (err) {
+    const error = err as AxiosError<{ message?: string }>;
+    Notify.create({
+      message: error.response?.data?.message || "Failed to leave group",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000
+    });
+  }
+}
+
 export type { Dialogs, GroupLinkProps, Message, TypingUser, User };
 
 export {
@@ -549,6 +655,8 @@ export {
   groupLinks,
   inviteGroup,
   joinGroup,
+  cancelGroup,
+  openCreateGroupDialog,
   joinPublicGroup,
   leaveGroup,
   leaveGroupAPI,

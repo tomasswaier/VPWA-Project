@@ -16,8 +16,8 @@
         <GroupLink :dialogs="dialogs" v-for="link in groupLinks" :key="link.title" v-bind="link" />
       </q-list>
       <div class="q-pa-md fixed-bottom">
-        <q-btn class="col bottom" @click="joinGroup"  flat dense round icon="add" aria-label="Meow" />
-        <q-btn class="col-auto bottom" @click="listGroups"  flat dense round icon="list" aria-label="Meow" />
+        <q-btn class="col bottom" @click="openCreateGroupDialog" flat dense round icon="add" aria-label="Meow" />
+        <q-btn class="col-auto bottom" @click="listGroups" flat dense round icon="list" aria-label="Meow" />
        </div>
     </q-drawer>
     <q-page-container>
@@ -32,7 +32,7 @@
 import { ref, onMounted } from 'vue';
 import GroupLink from 'components/GroupLink.vue';
 import HeaderToolbar from 'components/HeaderToolbar.vue';
-import { dialogs, joinGroup, listGroups, groupLinks, loadUserGroups } from '../stores/interactions';
+import { dialogs, openCreateGroupDialog, listGroups, groupLinks, loadUserGroups } from '../stores/interactions';
 import type { Dialogs } from '../stores/interactions';
 
 const leftDrawerOpen = ref(false);
