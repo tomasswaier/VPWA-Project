@@ -1,27 +1,24 @@
+
+import AuthController from "#controllers/auth_controller";
+import UsersController from "#controllers/users_controller";
 import router from "@adonisjs/core/services/router";
 import { middleware } from "#start/kernel";
 import Group from "#models/group";
 
 router.get("/", async () => {
-  console.log("moew");
-  return { hello: "world" };
-});
-
-router.get("/test", async () => {
-  console.log("moew");
-  return {
-    title: "Pedro",
-    secondTitle: "Pedro",
-    name: "Pedro",
-    surname: "Pedro",
-    middlename: "Pe",
-  };
+  /*
+   * this route is used to check whether the server is alive
+   */
+  console.log("ping");
+  return { success: true };
 });
 
 router
   .group(() => {
     router.post("login", "#controllers/auth_controller.login");
     router.post("register", "#controllers/auth_controller.register");
+    router.post("register", "#controllers/auth_controller.logout");
+
   })
   .prefix("auth");
 
@@ -74,3 +71,8 @@ router
   })
   .prefix("groups")
   .use(middleware.auth());
+  router
+  .group(() => {
+    router.post("changeStatus", [UsersController, "changeStatus"]);
+  })
+  .prefix("user");

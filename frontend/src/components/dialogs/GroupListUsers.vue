@@ -34,7 +34,7 @@
                 </q-item-section>
 
                 <q-item-section>
-                  <q-item-label class="text-white text-weight-medium">{{ member.name }}</q-item-label>
+                  <q-item-label class="text-white text-weight-medium">{{ member.username}}</q-item-label>
                 </q-item-section>
               </q-item>
             </q-list>

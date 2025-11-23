@@ -3,13 +3,13 @@ import { Notify } from "quasar";
 import { reactive, ref } from "vue";
 
 import { api } from "../boot/axios";
+import router from "../router";
 
 interface Message {
   text: string;
   sender: string;
   isHighlighted: boolean;
 }
-
 const messages = ref<Message[]>([
   { text: "Some normal message", sender: "Johnka", isHighlighted: false },
   {
@@ -22,10 +22,11 @@ const messages = ref<Message[]>([
 
 const text = ref("");
 const currentlyPeekedMessage = ref("");
+const loggedUser = ref<User | null>(null);
 
 export type UserStatus = "online" | "do_not_disturb" | "offline";
 interface User {
-  name: string;
+  username: string;
   status: UserStatus;
 }
 const displayedMembers = ref<User[]>([]);
@@ -64,7 +65,6 @@ const typingUsers = ref<TypingUser[]>([
 ]);
 
 const publicGroups = ref<GroupLinkProps[]>([]);
-
 interface GroupLinkProps {
   id?: string;
   title: string;
@@ -119,7 +119,7 @@ function loadGroupMembers(index: number, done: () => void): void {
       const template = baseMemberTemplates[templateIX]!;
 
       newMembers.push({
-        name: `${template.name} #${displayedMembers.value.length + i + 1}`,
+        username: `${template.name} #${displayedMembers.value.length + i + 1}`,
         status: template.status as UserStatus,
       });
     }
@@ -172,7 +172,11 @@ function loadMessages(index: number, done: () => void): void {
   done();
 }
 
-async function sendMessage() {
+function getUsernameAbbr(username: string) {
+  return username[0] + username[1]!;
+}
+
+function sendMessage() {
   const inputText: string = text.value.trim();
   if (inputText) {
     const firstArg: string = inputText.split(" ")[0] as string;
@@ -198,10 +202,7 @@ async function sendMessage() {
       case "/kick":
         kickUser();
         break;
-      case "/test":
-        await test();
-        break;
-      default:
+      default: // Kontrola či správa obsahuje @mention
       {
         const containsMention = inputText.includes("@");
         messages.value.push(
@@ -235,7 +236,7 @@ async function register(
       console.error("Status:", error.response.status);
       console.error("Data:", error.response.data);
     } else {
-      console.error("Error message:", error.message);
+      console.error("Register Error message:", error.message);
     }
   }
 }
@@ -248,10 +249,20 @@ async function login(username: string, password: string) {
     });
 
     const { token, ...user } = response.data;
+    console.log(user);
 
     localStorage.setItem("access_token", token);
 
     localStorage.setItem("user", JSON.stringify(user));
+    if (!user) {
+      await router.push("/login");
+    }
+    loggedUser.value = {
+      username: response.data.username,
+      status: response.data.status as UserStatus,
+    };
+
+    await router.push("/");
     return user;
   } catch (err) {
     const error = err as AxiosError;
@@ -260,14 +271,50 @@ async function login(username: string, password: string) {
       console.error("Status:", error.response.status);
       console.error("Data:", error.response.data);
     } else {
-      console.error("Error message:", error.message);
+      console.error("Login Error message:", error.message);
     }
   }
 }
+async function logout() {
+  try {
+    await api.post("/auth/logout");
 
-async function test() {
-  const response = await api.get("/test");
-  console.log(response);
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+
+    console.log("Redirecting to login...");
+    await router.push("/auth/login");
+  } catch (err) {
+    const error = err as AxiosError;
+    if (error.response) {
+      console.error("Status:", error.response.status);
+      console.error("Data:", error.response.data);
+    } else {
+      console.error("Logout Error message:", error.message);
+    }
+  }
+}
+async function changeStatus(status: string) {
+  try {
+    const result = await api.post<LoginResponse>("user/changeStatus", {
+      status: status,
+    });
+    console.log(result);
+
+    // loggedUser.value = {
+    //   username: response.data.username,
+    //   status: response.data.status as UserStatus,
+    // };
+  } catch (err) {
+    const error = err as AxiosError;
+    // Access response data safely
+    if (error.response) {
+      console.error("Status:", error.response.status);
+      console.error("Data:", error.response.data);
+    } else {
+      console.error("Error message:", error.message);
+    }
+  }
 }
 
 function listGroupUsers() {
@@ -447,11 +494,13 @@ async function loadUserGroups(): Promise<void> {
 export type { Dialogs, GroupLinkProps, Message, TypingUser, User };
 
 export {
+  changeStatus,
   currentGroupName,
   currentlyPeekedMessage,
   deleteGroup,
   dialogs,
   displayedMembers,
+  getUsernameAbbr,
   groupLinks,
   inviteGroup,
   joinGroup,
@@ -464,7 +513,9 @@ export {
   loadMessages,
   loadPublicGroups,
   loadUserGroups,
+  loggedUser,
   login,
+  logout,
   messages,
   openDialog,
   publicGroups,
