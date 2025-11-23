@@ -1,5 +1,5 @@
-import router from "@adonisjs/core/services/router";
 import { middleware } from "#start/kernel";
+import router from "@adonisjs/core/services/router";
 
 router.get("/", async () => {
   console.log("moew");
@@ -26,11 +26,11 @@ router
 
 router
   .group(() => {
-    router.get("/", "#controllers/groups_controller.index");
-    router.get("/:id", "#controllers/groups_controller.show");
-    router.get("/:id/members", "#controllers/groups_controller.members");
-    router.post("/:id/join", "#controllers/groups_controller.join");
-    router.post("/:id/leave", "#controllers/groups_controller.leave");
+    router.get("/", "#controllers/group_controller.index");
+    router.get("/:id", "#controllers/group_controller.show");
+    router.get("/:id/members", "#controllers/group_controller.members");
+    router.post("/:id/join", "#controllers/group_controller.join");
+    router.post("/:id/leave", "#controllers/group_controller.leave");
   })
   .prefix("groups")
   .use(middleware.auth());
