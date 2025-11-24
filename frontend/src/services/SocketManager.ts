@@ -1,7 +1,6 @@
 import type { Pinia } from "pinia";
 import { Manager } from "socket.io-client";
 import type { Socket } from "socket.io-client";
-// Instead of BootCallback typing (removed)
 import type { App } from "vue";
 
 import { authManager } from ".";

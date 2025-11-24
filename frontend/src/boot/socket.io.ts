@@ -9,7 +9,7 @@ declare module "@vue/runtime-core" {
 }
 
 // create socket.io manager
-const io = SocketManager.createManager(process.env.API_URL);
+const io = SocketManager.createManager("http://localhost:3333");
 
 export default boot((params) => {
   params.app.config.globalProperties.$io = io;
