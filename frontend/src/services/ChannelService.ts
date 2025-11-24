@@ -1,56 +1,122 @@
-import type { RawMessage, SerializedMessage } from "src/contracts";
+import type { SerializedMessage } from "src/contracts";
 import { useChannelsStore } from "src/stores/channels";
 
 import { SocketManager } from "./SocketManager";
 // import type { BootParams } from "./SocketManager";
 
-// creating instance of this class automatically connects to given socket.io
-// namespace subscribe is called with boot params, so you can use it to
-class ChannelSocketManager extends SocketManager {
+export class ChannelSocketManager extends SocketManager {
+  private groupId: string | null = null;
+  constructor(groupId: string) {
+    super("/groups");
+    this.groupId = groupId;
+  }
+  public async setGroup(groupId: string) {
+    this.groupId = groupId;
+    await this.joinGroup();
+  }
+
   public subscribe(): void {
     this.socket.on("message", (message: SerializedMessage) => {
+      if (!this.groupId) {
+        return; // Ignore if not in a group
+      }
+
       const channelsStore = useChannelsStore();
-      channelsStore.receiveMessage({ channel: this.namespace, message });
+      channelsStore.receiveMessage({
+        channel: this.groupId,
+        message,
+      });
     });
   }
 
-  public addMessage(message: RawMessage): Promise<SerializedMessage> {
-    return this.emitAsync("addMessage", message);
+  public joinGroup(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.socket.emit(
+        "joinGroup",
+        this.groupId,
+        (res: { success?: boolean; error?: string }) => {
+          if (res.success) {
+            resolve();
+          } else {
+            reject(new Error(res.error));
+          }
+        },
+      );
+    });
   }
 
-  public loadMessages(): Promise<SerializedMessage[]> {
-    return this.emitAsync("loadMessages");
+  public sendMessage(content: string): Promise<SerializedMessage> {
+    if (!this.groupId) {
+      return Promise.reject(new Error("No group selected"));
+    }
+
+    return new Promise((resolve, reject) => {
+      this.socket.emit(
+        "sendMessage",
+        { groupId: this.groupId, content },
+        (res: SerializedMessage | { error: string }) => {
+          if ("error" in res) {
+            reject(new Error(res.error));
+          } else {
+            resolve(res);
+          }
+        },
+      );
+    });
+  }
+
+  public loadMessages(page = 1): Promise<SerializedMessage[]> {
+    if (!this.groupId) {
+      return Promise.reject(new Error("No group selected"));
+    }
+
+    return new Promise((resolve, reject) => {
+      this.socket.emit(
+        "loadMessages",
+        this.groupId,
+        page,
+        (res: SerializedMessage[] | { error: string }) => {
+          if ("error" in res) {
+            reject(new Error(res.error));
+          } else {
+            resolve(res);
+          }
+        },
+      );
+    });
   }
 }
-
 class ChannelService {
   private channels: Map<string, ChannelSocketManager> = new Map();
 
-  public join(name: string): ChannelSocketManager {
-    if (this.channels.has(name)) {
-      throw new Error(`User is already joined in channel "${name}"`);
+  public join(groupId: string): ChannelSocketManager {
+    if (this.channels.has(groupId)) {
+      return this.channels.get(groupId)!;
     }
 
-    // connect to given channel namespace
-    const channel = new ChannelSocketManager(`/channels/${name}`);
-    this.channels.set(name, channel);
+    const channel = new ChannelSocketManager(`/groups`);
+    this.channels.set(groupId, channel);
     return channel;
   }
 
-  public leave(name: string): boolean {
-    const channel = this.channels.get(name);
-
+  public leave(groupId: string): boolean {
+    const channel = this.channels.get(groupId);
     if (!channel) {
       return false;
     }
-
-    // disconnect namespace and remove references to socket
     channel.destroy();
-    return this.channels.delete(name);
+    return this.channels.delete(groupId);
   }
 
-  public in(name: string): ChannelSocketManager | undefined {
-    return this.channels.get(name);
+  public in(groupId: string): ChannelSocketManager | undefined {
+    return this.channels.get(groupId);
+  }
+  public async setGroup(groupId: string) {
+    const channel = this.channels.get(groupId);
+    if (!channel) {
+      throw new Error(`Channel ${groupId} not found`);
+    }
+    await channel.setGroup(groupId);
   }
 }
 export default new ChannelService();

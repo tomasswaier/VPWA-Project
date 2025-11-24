@@ -13,7 +13,7 @@ export type BootParams = {
 export interface SocketManagerContract {
   namespace: string;
   readonly socket: Socket;
-  subscribe(params: BootParams): void;
+  subscribe(): void;
   destroy(): void;
 }
 
@@ -77,7 +77,7 @@ export abstract class SocketManager implements SocketManagerContract {
     instance.$socket = null;
   }
   private static bootInstance(instance: SocketManagerContract): void {
-    instance.subscribe(this.params!);
+    instance.subscribe();
     instance.socket.connect();
   }
 
@@ -166,5 +166,5 @@ export abstract class SocketManager implements SocketManagerContract {
       .destroyInstance(this);
   }
 
-  public abstract subscribe(params: BootParams): void;
+  public abstract subscribe(): void;
 }

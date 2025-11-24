@@ -5,6 +5,7 @@ import { reactive, ref } from "vue";
 import { api } from "../boot/axios";
 import type { SerializedMessage } from "../contracts/Message";
 import router from "../router";
+import channelService from "../services/ChannelService";
 
 const page = ref(1);
 const finished = ref(false);
@@ -174,11 +175,28 @@ async function loadPublicGroups(
 function resetGroupMembers(): void {
   displayedMembers.value = [];
 }
-function changeGroup(groupId: string) {
+async function changeGroup(groupId: string) {
+  // Update current group
   currentGroupId.value = groupId;
   finished.value = false;
   messages.value = [];
   page.value = 1;
+
+  try {
+    // Join the new group
+    const channel = channelService.join(groupId);
+    await channelService.setGroup(groupId);
+
+    // Load first page of messages
+    const loadedMessages = await channel.loadMessages(page.value);
+    messages.value = loadedMessages;
+    page.value++;
+
+    channel.subscribe();
+    // Subscribe to new messages
+  } catch (err) {
+    console.error("Failed to change group:", err);
+  }
 }
 
 async function loadMessages(index: number, done: () => void) {
@@ -199,7 +217,7 @@ async function loadMessages(index: number, done: () => void) {
           content: msg.content,
           author: msg.author,
           containsMention: false,
-          groupId: msg.groupId || 1,
+          groupId: msg.groupId || "",
         }),
       );
 
@@ -274,7 +292,7 @@ async function joinGroup(args: string[]) {
   }
 }
 
-function sendMessage() {
+async function sendMessage() {
   const inputText: string = text.value.trim();
   const allArguments: string[] = inputText.split(" ");
   if (inputText) {
@@ -309,21 +327,41 @@ function sendMessage() {
         kickUser();
         break;
       default: {
-        const containsMention = inputText.includes("@");
-        messages.value.push(
-          {
-            content: inputText,
-            groupId: 1,
-            id: 1,
-            author: "me",
-            containsMention: containsMention,
-          },
-        );
-        console.log("Message sent:", text.value);
+        await sendMessageAPI(inputText);
         break;
       }
     }
     text.value = "";
+  }
+}
+async function sendMessageAPI(inputText: string) {
+  const containsMention = inputText.includes("@");
+
+  const newMessage: SerializedMessage = {
+    content: inputText,
+    groupId: currentGroupId.value,
+    id: Date.now(),
+    author: "me",
+    containsMention,
+  };
+
+  messages.value.push(newMessage);
+  text.value = "";
+
+  try {
+    const res = await api.post(
+      `/groups/${currentGroupId.value}/messages`,
+      { contents: inputText },
+    );
+
+    // Optionally update the pushed message with real ID from server
+    newMessage.id = res.data.id;
+    newMessage.author = res.data.user.username; // or however your backend responds
+    newMessage.groupId = res.data.groupId;
+  } catch (err) {
+    console.error("Failed to send message", err);
+    // Optionally remove the optimistic message or mark it failed
+    messages.value = messages.value.filter((m) => m.id !== newMessage.id);
   }
 }
 
@@ -618,7 +656,7 @@ async function loadUserGroups(): Promise<void> {
         }),
       );
       if (groupLinks.value[0] && groupLinks.value[0].id) {
-        currentGroupId.value = groupLinks.value[0].id;
+        await changeGroup(groupLinks.value[0].id);
       }
     }
   } catch (err) {

@@ -63,7 +63,10 @@ export const useChannelsStore = defineStore("channels", {
     async addMessage(
       { channel, message }: { channel: string; message: RawMessage },
     ) {
-      const newMessage = await channelService.in(channel)?.addMessage(message);
+      const newMessage = await channelService.in(channel)?.sendMessage(
+        message,
+      );
+
       this.messages[channel]!.push(newMessage!);
     },
     receiveMessage(

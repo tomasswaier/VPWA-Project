@@ -65,10 +65,10 @@ async function handleLeaveGroup() {
   }
 }
 
-function selectGroup() {
+async function selectGroup() {
 
   if (props.id) {
-  changeGroup(props.id);
+  await changeGroup(props.id);
   }
 }
 </script>
