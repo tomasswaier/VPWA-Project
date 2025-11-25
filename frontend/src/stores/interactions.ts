@@ -230,7 +230,7 @@ async function loadMessages(index: number, done: () => void) {
     if (!newMessages.length) {
       finished.value = true;
     } else {
-      messages.value.unshift(...newMessages);
+      messages.value.unshift(...newMessages.reverse());
       page.value++;
     }
   } catch (err) {
