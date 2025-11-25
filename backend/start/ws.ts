@@ -7,7 +7,7 @@ import server from "@adonisjs/core/services/server";
 import { Server, Socket } from "socket.io";
 
 app.ready(() => {
-  console.log("WS is running");
+  console.info("WS is running");
 
   const io = new Server(server.getNodeServer(), {
     cors: { origin: "*" },
@@ -18,8 +18,6 @@ app.ready(() => {
     // Extract groupId from namespace
     const namespace = socket.nsp.name; // e.g. "/groups/123"
     const groupId = namespace.split("/").pop();
-
-    console.log(`New connection to group ${groupId}: ${socket.id}`);
 
     // Authenticate user
     try {
@@ -67,6 +65,18 @@ app.ready(() => {
 
       // Handle loading messages
       socket.on("loadMessages", async (page: number, callback) => {
+        try {
+          const messages = await MessagesController.loadMessages(
+            groupId!,
+            page,
+          );
+          callback(messages);
+        } catch (err) {
+          console.error(err);
+          callback({ error: "Failed to load messages" });
+        }
+      });
+      socket.on("voteKick", async (page: number, callback) => {
         try {
           const messages = await MessagesController.loadMessages(
             groupId!,
