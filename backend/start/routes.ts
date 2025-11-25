@@ -1,4 +1,5 @@
 import AuthController from "#controllers/auth_controller";
+import GroupController from "#controllers/group_controller";
 import MessagesController from "#controllers/messages_controller";
 import UsersController from "#controllers/users_controller";
 import { middleware } from "#start/kernel";
@@ -25,14 +26,14 @@ router.group(() => {
 
 router
   .group(() => {
-    router.get("/", "#controllers/group_controller.index");
+    router.get("/", [GroupController, "index"]);
     router.post(
       "/join-or-create",
-      "#controllers/group_controller.joinOrCreate",
+      [GroupController, "joinOrCreate"],
     );
-    router.post("/:id/join", "#controllers/group_controller.join");
-    router.post("/:id/leave", "#controllers/group_controller.leave");
-    router.get("/:id/members", "#controllers/group_controller.members");
+    router.post("/:id/join", [GroupController, "join"]);
+    router.post("/:id/leave", [GroupController, "leave"]);
+    router.get("/:id/members", [GroupController, "members"]);
     router.get(":groupId/messages", [MessagesController, "index"]);
     router.post(":groupId/messages", [MessagesController, "store"]);
   })
