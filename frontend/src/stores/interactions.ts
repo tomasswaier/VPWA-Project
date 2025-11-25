@@ -75,6 +75,8 @@ const typingUsers = ref<TypingUser[]>([
 ]);
 
 const publicGroups = ref<GroupLinkProps[]>([]);
+const invitations = ref<GroupLinkProps[]>([]);
+
 interface GroupLinkProps {
   id?: string;
   title: string;
@@ -181,6 +183,97 @@ async function loadPublicGroups(
   }
 }
 
+async function loadInvitations(
+  index: number,
+  done: () => void,
+): Promise<void> {
+  try {
+    const response = await api.get("/groups/invitations");
+    const invites = response.data;
+
+    invitations.value = invites.map((invite: {
+      id: string;
+      name: string;
+      description: string | null;
+      isPrivate: boolean;
+    }) => ({
+      id: invite.id || "",
+      title: invite.name,
+      caption: invite.description || "",
+      link: "",
+      isPrivate: invite.isPrivate,
+      isOwner: false,
+    }));
+
+    done();
+  } catch (err) {
+    const error = err as AxiosError<{ message?: string }>;
+    console.error("Full error:", err);
+
+    Notify.create({
+      message: error.response?.data?.message || "Failed to load invitations",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
+    });
+
+    done();
+  }
+}
+
+async function acceptInvitation(groupId: string): Promise<void> {
+  try {
+    const response = await api.post(`/groups/${groupId}/accept-invitation`);
+
+    Notify.create({
+      message: response.data.message || "Invitation accepted!",
+      color: "positive",
+      icon: "check_circle",
+      position: "top",
+      timeout: 2000,
+    });
+
+    await loadUserGroups();
+  } catch (err) {
+    const error = err as AxiosError<{ message?: string }>;
+    console.error("Error accepting invitation:", error);
+
+    Notify.create({
+      message: error.response?.data?.message || "Failed to accept invitation",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
+    });
+  }
+}
+
+async function declineInvitation(groupId: string): Promise<void> {
+  try {
+    const response = await api.post(`/groups/${groupId}/decline-invitation`);
+
+    Notify.create({
+      message: response.data.message || "Invitation declined",
+      color: "info",
+      icon: "cancel",
+      position: "top",
+      timeout: 2000,
+    });
+  } catch (err) {
+    const error = err as AxiosError<{ message?: string }>;
+    console.error("Error declining invitation:", error);
+
+    Notify.create({
+      message: error.response?.data?.message || "Failed to decline invitation",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
+    });
+  }
+}
+
 function resetGroupMembers(): void {
   displayedMembers.value = [];
 }
@@ -199,7 +292,7 @@ async function changeGroup(groupId: string) {
     messages.value = loadedMessages.data;
     page.value++;
 
-    channel.subscribe(); // only subscribes once per instance
+    channel.subscribe();
   } catch (err) {
     console.error("Failed to change group:", err);
   }
@@ -405,8 +498,9 @@ async function sendMessage() {
         }
         break;
       case "/invite":
+
         if (checkMessageCommandParams(allArguments, 2)) {
-          inviteGroup();
+          inviteToGroup(allArguments.slice(1));
         }
         break;
       case "/list":
@@ -435,7 +529,6 @@ async function sendMessage() {
         }
         break;
       default: {
-        // await sendMessageAPI(inputText);
         await sendMessageUsingSocket(inputText);
         break;
       }
@@ -583,17 +676,59 @@ function openCreateGroupDialog() {
   dialogs.groupCreate = true;
 }
 
-function leaveGroup(groupId: string) {
-  console.log(groupId);
-  dialogs.groupLeave = true;
-}
-
 function deleteGroup() {
   dialogs.groupDelete = true;
 }
 
-function inviteGroup() {
-  dialogs.groupInvite = true;
+async function inviteToGroup(args: string[]) {
+  if (args.length < 2) {
+    Notify.create({
+      message: "Usage: /invite username groupName",
+      color: "warning",
+      position: "top",
+      timeout: 2000,
+    });
+    return;
+  }
+
+  const username = args[0];
+  const groupName = args.slice(1).join(" ");
+
+  const group = groupLinks.value.find((g) => g.title === groupName);
+
+  if (!group || !group.id) {
+    Notify.create({
+      message: `Group "${groupName}" not found`,
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
+    });
+    return;
+  }
+
+  try {
+    const response = await api.post(`/groups/${group.id}/invite`, {
+      username: username,
+    });
+
+    Notify.create({
+      message: response.data.message || `Invitation sent to ${username}`,
+      color: "positive",
+      icon: "mail",
+      position: "top",
+      timeout: 2500,
+    });
+  } catch (err) {
+    const error = err as AxiosError<{ message?: string }>;
+    Notify.create({
+      message: error.response?.data?.message || "Failed to send invitation",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
+    });
+  }
 }
 
 function openDialog(user: TypingUser) {
@@ -775,7 +910,6 @@ async function cancelGroup(args: string[]) {
 
   const groupName = args[0];
 
-  // skupina podľa názvu v "groupLinks"
   const group = groupLinks.value.find((g) => g.title === groupName);
 
   if (!group || !group.id) {
@@ -816,25 +950,28 @@ async function cancelGroup(args: string[]) {
 export type { Dialogs, GroupLinkProps, TypingUser, User };
 
 export {
+  acceptInvitation,
   cancelGroup,
   changeGroup,
   changeStatus,
   currentGroupId,
   currentGroupName,
   currentlyPeekedMessage,
+  declineInvitation,
   deleteGroup,
   dialogs,
   displayedMembers,
   getUsernameAbbr,
   groupLinks,
-  inviteGroup,
+  invitations,
+  inviteToGroup,
   joinGroup,
   joinPublicGroup,
-  leaveGroup,
   leaveGroupAPI,
   listGroups,
   loadGroupMembers,
   loadGroupMembersAPI,
+  loadInvitations,
   loadMessages,
   loadPublicGroups,
   loadUserGroups,

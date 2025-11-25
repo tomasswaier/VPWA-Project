@@ -17,21 +17,36 @@
       <q-card-section class="q-pt-md" style="padding: 0;">
         <q-scroll-area style="height: 60vh; width: 100%;">
           <q-list class="container">
-            <q-item v-for="(group, index) in publicGroups" :key="index">
+            <q-item v-if="invitations.length === 0">
               <q-item-section>
-                <q-item-label class="text-white text-weight-medium">{{ group.title}}</q-item-label>
-                <q-item-label caption>{{ group.caption }}</q-item-label>
+                <q-item-label class="text-white text-center">No pending invitations</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item v-for="(invitation, index) in invitations" :key="index">
+              <q-item-section>
+                <q-item-label class="text-white text-weight-medium">{{ invitation.title}}</q-item-label>
+                <q-item-label caption>{{ invitation.caption }}</q-item-label>
               </q-item-section>
 
               <q-item-section side>
-                <q-btn 
-                  dense 
-                  round 
-                  icon="add" 
-                  class="text-white" 
-                  aria-label="Join group"
-                  @click="handleJoinGroup(group.id)"
-                />
+                <div class="row q-gutter-sm">
+                  <q-btn 
+                    dense 
+                    round 
+                    icon="check" 
+                    class="text-white bg-positive" 
+                    aria-label="Accept invitation"
+                    @click="handleAcceptInvitation(invitation.id)"
+                  />
+                  <q-btn 
+                    dense 
+                    round 
+                    icon="close" 
+                    class="text-white bg-negative" 
+                    aria-label="Decline invitation"
+                    @click="handleDeclineInvitation(invitation.id)"
+                  />
+                </div>
               </q-item-section>
             </q-item>
           </q-list>
@@ -43,7 +58,7 @@
 
 <script setup lang="ts">
 import { watch } from 'vue'
-import { publicGroups, loadPublicGroups, joinPublicGroup } from '../../stores/interactions'
+import { invitations, loadInvitations, acceptInvitation, declineInvitation } from '../../stores/interactions'
 
 interface Props {
   modelValue: boolean
@@ -58,16 +73,22 @@ function closeDialog() {
   emit('update:modelValue', false)
 }
 
-async function handleJoinGroup(groupId: string | undefined) {
+async function handleAcceptInvitation(groupId: string | undefined) {
   if (!groupId) return;
-  await joinPublicGroup(groupId);
+  await acceptInvitation(groupId);
   closeDialog();
+}
+
+async function handleDeclineInvitation(groupId: string | undefined) {
+  if (!groupId) return;
+  await declineInvitation(groupId);
+  invitations.value = invitations.value.filter(inv => inv.id !== groupId);
 }
 
 watch(()=>props.modelValue, (isOpen) => {
   if (isOpen) {
-    publicGroups.value = []
-    void loadPublicGroups(0, () => {})
+    invitations.value = []
+    void loadInvitations(0, () => {})
   }
 })
 </script>
