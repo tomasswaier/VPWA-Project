@@ -6,69 +6,53 @@ import type { PaginatedMessages } from "../stores/interactions";
 import { SocketManager } from "./SocketManager";
 
 // import type { BootParams } from "./SocketManager";
+type JoinGroupResponse = {
+  success: true;
+} | { error: string };
 
 export class ChannelSocketManager extends SocketManager {
-  private isSubscribed = false;
-  private groupId: string | null = null;
   constructor(groupId: string) {
-    super("/groups");
-    this.groupId = groupId;
-  }
-  public async setGroup(groupId: string) {
-    this.groupId = groupId;
-    await this.joinGroup();
-
-    if (!this.socket.connected) {
-      this.socket.connect();
-    }
+    super(`/groups/${groupId}`); // namespace per groupId
   }
 
   public subscribe(): void {
-    if (this.isSubscribed) {
-      return; // Prevent duplicate subscriptions
-    }
-    this.isSubscribed = true;
-
-    this.socket.off("message"); // Clean previous listeners (if any)
-
+    this.socket.off("message"); // clear old listeners
     this.socket.on("message", (message: SerializedMessage) => {
-      if (!this.groupId) {
-        return;
-      }
-
       const channelsStore = useChannelsStore();
       channelsStore.receiveMessage({
-        channel: this.groupId,
+        channel: this.namespace, // keep track of which group
         message,
       });
     });
   }
 
-  public joinGroup(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.socket.emit(
-        "joinGroup",
-        this.groupId,
-        (res: { success?: boolean; error?: string }) => {
-          if (res.success) {
-            resolve();
-          } else {
-            reject(new Error(res.error));
-          }
-        },
-      );
+  public async joinGroup(): Promise<void> {
+    const groupId = this.namespace.split("/").pop();
+    if (!groupId) {
+      throw new Error("Missing groupId");
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      this.socket.emit("joinGroup", groupId, (res: JoinGroupResponse) => {
+        if ("success" in res) {
+          resolve();
+        } else {
+          reject(new Error(res.error));
+        }
+      });
     });
   }
 
   public sendMessage(content: string): Promise<SerializedMessage> {
-    if (!this.groupId) {
-      return Promise.reject(new Error("No group selected"));
+    const groupId = this.namespace.split("/").pop();
+    if (!groupId) {
+      return Promise.reject(new Error("No groupId"));
     }
 
     return new Promise((resolve, reject) => {
       this.socket.emit(
         "sendMessage",
-        { groupId: this.groupId, content },
+        { groupId, content },
         (res: SerializedMessage | { error: string }) => {
           if ("error" in res) {
             reject(new Error(res.error));
@@ -81,14 +65,15 @@ export class ChannelSocketManager extends SocketManager {
   }
 
   public loadMessages(page = 1): Promise<PaginatedMessages> {
-    if (!this.groupId) {
-      return Promise.reject(new Error("No group selected"));
+    const groupId = this.namespace.split("/").pop();
+    if (!groupId) {
+      return Promise.reject(new Error("No groupId"));
     }
 
     return new Promise((resolve, reject) => {
       this.socket.emit(
         "loadMessages",
-        this.groupId,
+        groupId,
         page,
         (res: PaginatedMessages | { error: string }) => {
           if ("error" in res) {
@@ -101,6 +86,7 @@ export class ChannelSocketManager extends SocketManager {
     });
   }
 }
+
 class ChannelService {
   private channels: Map<string, ChannelSocketManager> = new Map();
 
@@ -110,7 +96,6 @@ class ChannelService {
     }
 
     const channel = new ChannelSocketManager(groupId);
-
     this.channels.set(groupId, channel);
     return channel;
   }
@@ -120,6 +105,7 @@ class ChannelService {
     if (!channel) {
       return false;
     }
+
     channel.destroy();
     return this.channels.delete(groupId);
   }
@@ -127,12 +113,13 @@ class ChannelService {
   public in(groupId: string): ChannelSocketManager | undefined {
     return this.channels.get(groupId);
   }
+
   public async setGroup(groupId: string) {
     const channel = this.channels.get(groupId);
     if (!channel) {
       throw new Error(`Channel ${groupId} not found`);
     }
-    await channel.setGroup(groupId);
+    await channel.joinGroup();
   }
 }
 export default new ChannelService();
