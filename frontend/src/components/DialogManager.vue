@@ -1,5 +1,4 @@
 <template>
-  <!--/list príkaz - zoznam členov -->
   <GroupListUsers
     :model-value="props.dialogs.groupUserList"
     @update:model-value="$emit('update-dialog','groupUserList',$event)"
@@ -13,7 +12,7 @@
       :model-value="props.dialogs.groupLeave"
       model-message="Are you sure you want to leave this group?"
       @update:model-value="$emit('update-dialog','groupLeave',$event)"
-      /><!-- change GroupLeave to some more abstract name-->
+      />
   <GroupCreate
       :model-value="props.dialogs.groupCreate"
       @update:model-value="$emit('update-dialog','groupCreate',$event)"
@@ -34,10 +33,6 @@
       model-message="Are you sure you want KICK this user?"
       />
 
-  <GroupInvite
-      :model-value="props.dialogs.groupInvite"
-      @update:model-value="$emit('update-dialog','groupInvite',$event)"
-      />
   <UserMessagePeek
       :model-value="props.dialogs.userMessagePeek"
       :model-message=currentlyPeekedMessage
@@ -51,7 +46,6 @@ import GroupListUsers from 'components/dialogs/GroupListUsers.vue';
 import GroupList from 'components/dialogs/GroupList.vue';
 import GroupLeave from 'components/dialogs/GroupLeave.vue';
 import GroupCreate from 'components/dialogs/GroupCreate.vue';
-import GroupInvite from 'components/dialogs/GroupInvite.vue';
 import UserMessagePeek from 'components/dialogs/UserMessagePeek.vue';
 import {currentlyPeekedMessage} from "../stores/interactions"
 import type{User} from "../stores/interactions"

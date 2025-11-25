@@ -27,12 +27,13 @@ router.group(() => {
 router
   .group(() => {
     router.get("/", [GroupController, "index"]);
-    router.post(
-      "/join-or-create",
-      [GroupController, "joinOrCreate"],
-    );
+    router.get("/invitations", [GroupController, "invitations"]);
+    router.post("/join-or-create", [GroupController, "joinOrCreate"]);
     router.post("/:id/join", [GroupController, "join"]);
     router.post("/:id/leave", [GroupController, "leave"]);
+    router.post("/:id/invite", [GroupController, "invite"]);
+    router.post("/:id/accept-invitation", [GroupController, "acceptInvitation"]);
+    router.post("/:id/decline-invitation", [GroupController, "declineInvitation"]);
     router.get("/:id/members", [GroupController, "members"]);
     router.get(":groupId/messages", [MessagesController, "index"]);
     router.post(":groupId/messages", [MessagesController, "store"]);
