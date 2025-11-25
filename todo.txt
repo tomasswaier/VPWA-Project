@@ -1,0 +1,1 @@
+fix:spravy sa posielaju v zlom poradi teda batches su odoslane zle 

@@ -35,8 +35,9 @@ export const useChannelsStore = defineStore("channels", {
       try {
         this.loading = true;
         this.error = null;
-        const messages = await channelService.join(channel).loadMessages();
-        this.messages[channel] = messages;
+        // const messages = await channelService.join(channel).loadMessages();
+        const response = await channelService.join(channel).loadMessages();
+        this.messages[channel] = response.data; // not response
       } catch (err: unknown) {
         if (err instanceof Error) {
           this.error = err;

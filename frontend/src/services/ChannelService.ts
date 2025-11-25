@@ -1,7 +1,10 @@
 import type { SerializedMessage } from "src/contracts";
 import { useChannelsStore } from "src/stores/channels";
 
+import type { PaginatedMessages } from "../stores/interactions";
+
 import { SocketManager } from "./SocketManager";
+
 // import type { BootParams } from "./SocketManager";
 
 export class ChannelSocketManager extends SocketManager {
@@ -69,7 +72,7 @@ export class ChannelSocketManager extends SocketManager {
     });
   }
 
-  public loadMessages(page = 1): Promise<SerializedMessage[]> {
+  public loadMessages(page = 1): Promise<PaginatedMessages> {
     if (!this.groupId) {
       return Promise.reject(new Error("No group selected"));
     }
@@ -79,7 +82,7 @@ export class ChannelSocketManager extends SocketManager {
         "loadMessages",
         this.groupId,
         page,
-        (res: SerializedMessage[] | { error: string }) => {
+        (res: PaginatedMessages | { error: string }) => {
           if ("error" in res) {
             reject(new Error(res.error));
           } else {

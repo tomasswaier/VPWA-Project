@@ -14,6 +14,15 @@ const currentGroupId = ref("");
 
 const text = ref("");
 const currentlyPeekedMessage = ref("");
+export interface PaginatedMessages {
+  data: SerializedMessage[];
+  meta: {
+    total: number;
+    perPage: number;
+    currentPage: number;
+    [k: string]: unknown;
+  };
+}
 
 const loggedUser = ref<User | null>(null);
 function initLoggedUser() {
@@ -183,13 +192,13 @@ async function changeGroup(groupId: string) {
   page.value = 1;
 
   try {
-    // Join the new group
     const channel = channelService.join(groupId);
     await channelService.setGroup(groupId);
 
-    // Load first page of messages
-    const loadedMessages = await channel.loadMessages(page.value);
-    messages.value = loadedMessages;
+    const loadedMessages: PaginatedMessages = await channel.loadMessages(
+      page.value,
+    );
+    messages.value = loadedMessages.data;
     page.value++;
 
     channel.subscribe();
@@ -353,9 +362,9 @@ async function sendMessageAPI(inputText: string) {
       { contents: inputText },
     );
 
-    // Optionally update the pushed message with real ID from server
+    console.log(res.data);
     newMessage.id = res.data.id;
-    newMessage.author = res.data.user.username; // or however your backend responds
+    newMessage.author = res.data.author;
     newMessage.groupId = res.data.groupId;
   } catch (err) {
     console.error("Failed to send message", err);

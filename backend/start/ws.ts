@@ -39,7 +39,7 @@ app.ready(() => {
   });
 
   groupsNamespace.on("connection", async (socket: Socket) => {
-    console.log("New connection:", socket.id);
+    // console.log("New connection:", socket.id);
 
     // Listen to join room
     socket.on(
@@ -110,8 +110,11 @@ app.ready(() => {
         callback: (messages: any) => void,
       ) => {
         try {
-          console.log("loadMessages triggered");
           const userId = socket.data.userId;
+          console.log(
+            "loadMessages triggered for userId>" +
+              userId.toString(),
+          );
 
           const membership = await GroupUser.query()
             .where("group_id", groupId)
