@@ -308,6 +308,7 @@ async function sendMessage() {
     const firstArg: string = allArguments[0] as string;
     switch (firstArg) {
       case "/test":
+        console.log(messages);
         break;
       case "/quit": // to iste ako /cancel, ale bolo v zadani aj quit, cize dali
         // sme sem obe funkcie

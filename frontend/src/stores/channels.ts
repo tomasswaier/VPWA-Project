@@ -65,11 +65,12 @@ export const useChannelsStore = defineStore("channels", {
     async addMessage(
       { channel, message }: { channel: string; message: RawMessage },
     ) {
-      const newMessage = await channelService.in(channel)?.sendMessage(
+      // const newMessage =
+      await channelService.in(channel)?.sendMessage(
         message,
       );
 
-      this.messages[channel]!.push(newMessage!);
+      // this.messages[channel]!.push(newMessage!);
     },
     receiveMessage(
       { channel, message }: { channel: string; message: SerializedMessage },
@@ -78,6 +79,7 @@ export const useChannelsStore = defineStore("channels", {
         this.messages[channel] = [];
       }
       this.messages[channel]?.push(message);
+      console.log(message);
       messages.value.push(message);
     },
 

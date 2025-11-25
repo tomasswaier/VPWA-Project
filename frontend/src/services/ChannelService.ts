@@ -8,6 +8,7 @@ import { SocketManager } from "./SocketManager";
 // import type { BootParams } from "./SocketManager";
 
 export class ChannelSocketManager extends SocketManager {
+  private isSubscribed = false;
   private groupId: string | null = null;
   constructor(groupId: string) {
     super("/groups");
@@ -23,9 +24,16 @@ export class ChannelSocketManager extends SocketManager {
   }
 
   public subscribe(): void {
+    if (this.isSubscribed) {
+      return; // Prevent duplicate subscriptions
+    }
+    this.isSubscribed = true;
+
+    this.socket.off("message"); // Clean previous listeners (if any)
+
     this.socket.on("message", (message: SerializedMessage) => {
       if (!this.groupId) {
-        return; // Ignore if not in a group
+        return;
       }
 
       const channelsStore = useChannelsStore();

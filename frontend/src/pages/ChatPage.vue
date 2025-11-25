@@ -17,7 +17,7 @@
         <q-chat-message
           :name="message.author"
           :text="[message.content]"
-          :sent="message.author === 'me'"
+          :sent="message.author === loggedUser!.username"
           :id="index"
           :bg-color="message.containsMention
             ? 'yellow-3'
@@ -71,7 +71,7 @@ import {
   currentGroupName,
   displayedMembers,
   loadGroupMembers,
-  typingUsers, openDialog
+  typingUsers, openDialog,loggedUser
 } from '../stores/interactions';
 
 interface Props {
