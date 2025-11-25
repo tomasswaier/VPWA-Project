@@ -185,24 +185,21 @@ function resetGroupMembers(): void {
   displayedMembers.value = [];
 }
 async function changeGroup(groupId: string) {
-  // Update current group
   currentGroupId.value = groupId;
   finished.value = false;
   messages.value = [];
   page.value = 1;
 
   try {
-    const channel = channelService.join(groupId);
-    await channelService.setGroup(groupId);
-
+    const channel = channelService.join(groupId); // will create or reuse
+    await channelService.setGroup(groupId); // join the group
     const loadedMessages: PaginatedMessages = await channel.loadMessages(
       page.value,
     );
     messages.value = loadedMessages.data;
     page.value++;
 
-    channel.subscribe();
-    // Subscribe to new messages
+    channel.subscribe(); // only subscribes once per instance
   } catch (err) {
     console.error("Failed to change group:", err);
   }
