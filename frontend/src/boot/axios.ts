@@ -16,6 +16,7 @@ const api = axios.create(
     headers: {},
   },
 );
+localStorage.debug = "*";
 
 const DEBUG = process.env.NODE_ENV === "development";
 

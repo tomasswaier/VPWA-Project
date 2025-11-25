@@ -299,7 +299,6 @@ async function sendMessage() {
     const firstArg: string = allArguments[0] as string;
     switch (firstArg) {
       case "/test":
-        console.log(localStorage.getItem("user"));
         break;
       case "/quit": // to iste ako /cancel, ale bolo v zadani aj quit, cize dali
         // sme sem obe funkcie
@@ -407,6 +406,9 @@ async function login(
     });
 
     const { token, ...user } = response.data;
+    if (token == "[redacted]") {
+      console.log("ten token je proste redacted");
+    }
     localStorage.setItem("access_token", token);
     localStorage.setItem("user", JSON.stringify(user));
 
@@ -635,7 +637,11 @@ async function loadGroupMembersAPI(groupId: string): Promise<void> {
 
 async function loadUserGroups(): Promise<void> {
   try {
-    const response = await api.get("/auth/me");
+    const response = await api.get("/auth/me", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
+    });
     const user = response.data;
 
     if (user.groups) {

@@ -108,8 +108,9 @@ function updateDialog(dialogName: keyof Dialogs, value: boolean) {
 
 <style scoped>
 /*tymto osetrime to ten infinity scroll nech sa nedava furt vyssie*/
-#chatMessages {
+/*#chatMessages {
   overflow-y: auto;
   overflow-x: hidden;
 }
+  */
 </style>

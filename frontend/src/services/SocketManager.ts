@@ -108,7 +108,7 @@ export abstract class SocketManager implements SocketManagerContract {
       .getManager();
 
     const socket = io.socket(this.namespace, {
-      auth: { token: authManager.getToken() },
+      auth: { token: authManager.getToken()?.toString().trim() },
     });
 
     socket.on("connect_error", (err: SocketError) => {

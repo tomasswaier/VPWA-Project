@@ -22,7 +22,11 @@ export const useAuthStore = defineStore("auth", {
   actions: {
     async check() {
       try {
-        const response = await api.get("/auth/me");
+        const response = await api.get("/auth/me", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+        });
         this.user = response.data;
         return true;
       } catch {
@@ -33,6 +37,9 @@ export const useAuthStore = defineStore("auth", {
 
     async login(credentials: { username: string; password: string }) {
       const response = await api.post("/auth/login", credentials);
+      console.log("tu som");
+      // console.log(response.data);
+      // console.log(response.data.token);
       authManager.setToken(response.data.token);
 
       await this.check();

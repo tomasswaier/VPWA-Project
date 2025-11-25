@@ -13,6 +13,10 @@ export class ChannelSocketManager extends SocketManager {
   public async setGroup(groupId: string) {
     this.groupId = groupId;
     await this.joinGroup();
+
+    if (!this.socket.connected) {
+      this.socket.connect();
+    }
   }
 
   public subscribe(): void {
@@ -94,7 +98,8 @@ class ChannelService {
       return this.channels.get(groupId)!;
     }
 
-    const channel = new ChannelSocketManager(`/groups`);
+    const channel = new ChannelSocketManager(groupId);
+
     this.channels.set(groupId, channel);
     return channel;
   }

@@ -29,7 +29,7 @@ export default class MessagesController {
     const messages = await Message.query()
       .where("groupId", params.groupId)
       .preload("user", (q) => q.select("username"))
-      .orderBy("createdAt", "asc")
+      .orderBy("createdAt", "desc")
       .offset((page - 1) * perPage)
       .limit(perPage);
 
