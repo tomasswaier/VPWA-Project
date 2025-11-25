@@ -1,4 +1,5 @@
-// import AuthController from "#controllers/auth_controller";
+import AuthController from "#controllers/auth_controller";
+import MessagesController from "#controllers/messages_controller";
 import UsersController from "#controllers/users_controller";
 import Group from "#models/group";
 import { middleware } from "#start/kernel";
@@ -15,14 +16,14 @@ router.get("/", async () => {
 
 router
   .group(() => {
-    router.post("login", "#controllers/auth_controller.login");
-    router.post("register", "#controllers/auth_controller.register");
-    router.post("logout", "#controllers/auth_controller.logout");
+    router.post("login", [AuthController, "login"]);
+    router.post("register", [AuthController, "register"]);
+    router.post("logout", [AuthController, "logout"]);
   })
   .prefix("auth");
 
 router.group(() => {
-  router.get("me", "#controllers/auth_controller.me");
+  router.get("me", [AuthController, "me"]);
 })
   .prefix("auth")
   .use(middleware.auth());
@@ -57,32 +58,40 @@ router
           const isMember = existingGroup.users.some((u) => u.id === user!.id);
 
           if (isMember) {
-            return response.ok({ message: "Group already exists and you are already a member" });
+            return response.ok({
+              message: "Group already exists and you are already a member",
+            });
           }
 
           if (existingGroup.isPrivate) {
-            return response.badRequest({ message: "Cannot join private group" });
+            return response.badRequest(
+              { message: "Cannot join private group" },
+            );
           }
 
           await existingGroup.related("users").attach([user!.id]);
-          return response.ok({ message: "Successfully joined existing group" });
+          return response.ok(
+            { message: "Successfully joined existing group" },
+          );
         }
 
         const newGroup = await Group.create({
           id: randomUUID(),
           name: name,
           description: description || null,
-          isPrivate: isPrivate || false
+          isPrivate: isPrivate || false,
         });
 
-        await newGroup.related("users").attach({
-          [user!.id]: { is_owner: true }
-        });
+        await newGroup.related("users").attach(
+          { [user!.id]: { is_owner: true } },
+        );
 
         return response.ok({ message: "Group created successfully" });
       } catch (error) {
         console.error("Error in join-or-create:", error);
-        return response.internalServerError({ message: "Failed to join/create group" });
+        return response.internalServerError(
+          { message: "Failed to join/create group" },
+        );
       }
     });
 
@@ -112,7 +121,8 @@ router
         return response.badRequest({ message: "Not a member of this group" });
       }
 
-      const pivotData = await group.related("users").pivotQuery()
+      const pivotData = await group.related("users")
+        .pivotQuery()
         .where("user_id", user!.id)
         .where("group_id", group.id)
         .first();
@@ -127,6 +137,8 @@ router
         return response.ok({ message: "Successfully left the group" });
       }
     });
+    router.get(":groupId/messages", [MessagesController, "index"]);
+    router.post(":groupId/messages", [MessagesController, "store"]);
   })
   .prefix("groups")
   .use(middleware.auth());

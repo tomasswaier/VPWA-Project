@@ -3,29 +3,29 @@ import { Notify } from "quasar";
 import { reactive, ref } from "vue";
 
 import { api } from "../boot/axios";
+import type { SerializedMessage } from "../contracts/Message";
 import router from "../router";
+import channelService from "../services/ChannelService";
 
-interface Message {
-  text: string;
-  sender: string;
-  isHighlighted: boolean;
-}
-const messages = ref<Message[]>([
-  { text: "Some normal message", sender: "Johnka", isHighlighted: false },
-  {
-    text: "@TomáškoTruman hey check this!",
-    sender: "Johnka",
-    isHighlighted: true,
-  },
-  { text: "Another message", sender: "Emanuel", isHighlighted: false },
-]);
+const page = ref(1);
+const finished = ref(false);
+const messages = ref<SerializedMessage[]>([]);
+const currentGroupId = ref("");
 
 const text = ref("");
 const currentlyPeekedMessage = ref("");
+export interface PaginatedMessages {
+  data: SerializedMessage[];
+  meta: {
+    total: number;
+    perPage: number;
+    currentPage: number;
+    [k: string]: unknown;
+  };
+}
 
 const loggedUser = ref<User | null>(null);
 function initLoggedUser() {
-  console.log(JSON.parse(localStorage.getItem("user")!));
   if (localStorage.getItem("user") != "") {
     const user: User = JSON.parse(localStorage.getItem("user")!);
 
@@ -184,9 +184,63 @@ async function loadPublicGroups(
 function resetGroupMembers(): void {
   displayedMembers.value = [];
 }
+async function changeGroup(groupId: string) {
+  // Update current group
+  currentGroupId.value = groupId;
+  finished.value = false;
+  messages.value = [];
+  page.value = 1;
 
-function loadMessages(index: number, done: () => void): void {
-  messages.value.splice(0, 0, { text: "", sender: "me", isHighlighted: false });
+  try {
+    const channel = channelService.join(groupId);
+    await channelService.setGroup(groupId);
+
+    const loadedMessages: PaginatedMessages = await channel.loadMessages(
+      page.value,
+    );
+    messages.value = loadedMessages.data;
+    page.value++;
+
+    channel.subscribe();
+    // Subscribe to new messages
+  } catch (err) {
+    console.error("Failed to change group:", err);
+  }
+}
+
+async function loadMessages(index: number, done: () => void) {
+  if (finished.value || currentGroupId.value === "") {
+    done();
+    return;
+  }
+
+  try {
+    const res = await api.get(
+      `/groups/${currentGroupId.value}/messages?page=${page.value}`,
+    );
+
+    const newMessages: SerializedMessage[] = (res.data as SerializedMessage[])
+      .map(
+        (msg) => ({
+          id: msg.id,
+          content: msg.content,
+          author: msg.author,
+          containsMention: false,
+          groupId: msg.groupId || "",
+        }),
+      );
+
+    if (!newMessages.length) {
+      finished.value = true;
+    } else {
+      messages.value.unshift(...newMessages);
+      page.value++;
+    }
+  } catch (err) {
+    console.error("Failed to load messages", err);
+    finished.value = true;
+  }
+
   done();
 }
 
@@ -200,7 +254,7 @@ async function joinGroup(args: string[]) {
       message: "Usage: /join groupName [private] [description]",
       color: "warning",
       position: "top",
-      timeout: 2000
+      timeout: 2000,
     });
     return;
   }
@@ -221,18 +275,17 @@ async function joinGroup(args: string[]) {
   }
 
   try {
-    const response = await api.post("/groups/join-or-create", {
-      name: groupName,
-      isPrivate: isPrivate,
-      description: description
-    });
+    const response = await api.post(
+      "/groups/join-or-create",
+      { name: groupName, isPrivate: isPrivate, description: description },
+    );
 
     Notify.create({
       message: response.data.message,
       color: "positive",
       icon: "check_circle",
       position: "top",
-      timeout: 2000
+      timeout: 2000,
     });
 
     await loadUserGroups();
@@ -243,21 +296,22 @@ async function joinGroup(args: string[]) {
       color: "negative",
       icon: "error",
       position: "top",
-      timeout: 2000
+      timeout: 2000,
     });
   }
 }
 
-function sendMessage() {
+async function sendMessage() {
   const inputText: string = text.value.trim();
   const allArguments: string[] = inputText.split(" ");
   if (inputText) {
     const firstArg: string = allArguments[0] as string;
     switch (firstArg) {
       case "/test":
-        console.log(localStorage.getItem("user"));
+        console.log(messages);
         break;
-      case "/quit": //to iste ako /cancel, ale bolo v zadani aj quit, cize dali sme sem obe funkcie
+      case "/quit": // to iste ako /cancel, ale bolo v zadani aj quit, cize dali
+        // sme sem obe funkcie
         void cancelGroup(allArguments.slice(1));
         break;
       case "/cancel":
@@ -282,17 +336,60 @@ function sendMessage() {
         kickUser();
         break;
       default: {
-        const containsMention = inputText.includes("@");
-        messages.value.push(
-          { text: inputText, sender: "me", isHighlighted: containsMention },
-        );
-        console.log("Message sent:", text.value);
+        // await sendMessageAPI(inputText);
+        await sendMessageUsingSocket(inputText);
         break;
       }
     }
     text.value = "";
   }
 }
+async function sendMessageUsingSocket(inputText: string) {
+  if (!currentGroupId.value) {
+    console.error("No group selected");
+    return;
+  }
+
+  try {
+    await channelService.join(currentGroupId.value).sendMessage(inputText);
+
+    // Only add message AFTER backend confirms
+    // messages.value.push(newMessage);
+  } catch (err) {
+    console.error("Failed to send message:", err);
+  }
+}
+
+/*async function sendMessageAPI(inputText: string) {
+  const containsMention = inputText.includes("@");
+
+  const newMessage: SerializedMessage = {
+    content: inputText,
+    groupId: currentGroupId.value,
+    id: Date.now(),
+    author: "me",
+    containsMention,
+  };
+
+  messages.value.push(newMessage);
+  text.value = "";
+
+  try {
+    const res = await api.post(
+      `/groups/${currentGroupId.value}/messages`,
+      { contents: inputText },
+    );
+
+    console.log(res.data);
+    newMessage.id = res.data.id;
+    newMessage.author = res.data.author;
+    newMessage.groupId = res.data.groupId;
+  } catch (err) {
+    console.error("Failed to send message", err);
+    // Optionally remove the optimistic message or mark it failed
+    messages.value = messages.value.filter((m) => m.id !== newMessage.id);
+  }
+}*/
 
 async function register(
   username: string,
@@ -336,6 +433,9 @@ async function login(
     });
 
     const { token, ...user } = response.data;
+    if (token == "[redacted]") {
+      console.log("ten token je proste redacted");
+    }
     localStorage.setItem("access_token", token);
     localStorage.setItem("user", JSON.stringify(user));
 
@@ -564,7 +664,11 @@ async function loadGroupMembersAPI(groupId: string): Promise<void> {
 
 async function loadUserGroups(): Promise<void> {
   try {
-    const response = await api.get("/auth/me");
+    const response = await api.get("/auth/me", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
+    });
     const user = response.data;
 
     if (user.groups) {
@@ -584,6 +688,9 @@ async function loadUserGroups(): Promise<void> {
           isOwner: false,
         }),
       );
+      if (groupLinks.value[0] && groupLinks.value[0].id) {
+        await changeGroup(groupLinks.value[0].id);
+      }
     }
   } catch (err) {
     const error = err as AxiosError<{ message?: string }>;
@@ -597,15 +704,15 @@ async function cancelGroup(args: string[]) {
       message: "Usage: /cancel or /quit groupName",
       color: "warning",
       position: "top",
-      timeout: 2000
+      timeout: 2000,
     });
     return;
   }
 
   const groupName = args[0];
 
-  //skupina podľa názvu v "groupLinks"
-  const group = groupLinks.value.find(g => g.title === groupName);
+  // skupina podľa názvu v "groupLinks"
+  const group = groupLinks.value.find((g) => g.title === groupName);
 
   if (!group || !group.id) {
     Notify.create({
@@ -613,7 +720,7 @@ async function cancelGroup(args: string[]) {
       color: "negative",
       icon: "error",
       position: "top",
-      timeout: 2000
+      timeout: 2000,
     });
     return;
   }
@@ -626,7 +733,7 @@ async function cancelGroup(args: string[]) {
       color: "positive",
       icon: "check_circle",
       position: "top",
-      timeout: 2000
+      timeout: 2000,
     });
 
     await loadUserGroups();
@@ -637,15 +744,18 @@ async function cancelGroup(args: string[]) {
       color: "negative",
       icon: "error",
       position: "top",
-      timeout: 2000
+      timeout: 2000,
     });
   }
 }
 
-export type { Dialogs, GroupLinkProps, Message, TypingUser, User };
+export type { Dialogs, GroupLinkProps, TypingUser, User };
 
 export {
+  cancelGroup,
+  changeGroup,
   changeStatus,
+  currentGroupId,
   currentGroupName,
   currentlyPeekedMessage,
   deleteGroup,
@@ -655,8 +765,6 @@ export {
   groupLinks,
   inviteGroup,
   joinGroup,
-  cancelGroup,
-  openCreateGroupDialog,
   joinPublicGroup,
   leaveGroup,
   leaveGroupAPI,
@@ -670,6 +778,7 @@ export {
   login,
   logout,
   messages,
+  openCreateGroupDialog,
   openDialog,
   publicGroups,
   register,

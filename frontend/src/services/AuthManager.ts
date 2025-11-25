@@ -12,6 +12,7 @@ type ChangeListener = (
 class AuthManager {
   private currentToken: string | null = this.getToken();
   private onChangeListeners: ChangeListener[] = [];
+  // private storageKey: string = "auth_token";
 
   private storageListener = (evt: StorageEvent) => {
     if (evt.key !== this.storageKey) {
@@ -84,4 +85,4 @@ class AuthManager {
   }
 }
 
-export default new AuthManager("auth_token");
+export default new AuthManager("access_token");
