@@ -46,7 +46,6 @@ app.ready(() => {
       "joinGroup",
       async (groupId: string, callback: (res: any) => void) => {
         try {
-          console.log("joinGroup triggered");
           const userId = socket.data.userId;
           const membership = await GroupUser.query()
             .where("group_id", groupId)
@@ -111,10 +110,6 @@ app.ready(() => {
       ) => {
         try {
           const userId = socket.data.userId;
-          console.log(
-            "loadMessages triggered for userId>" +
-              userId.toString(),
-          );
 
           const membership = await GroupUser.query()
             .where("group_id", groupId)

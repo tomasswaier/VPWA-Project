@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 
 import type { RawMessage, SerializedMessage } from "../contracts/Message";
 import channelService from "../services/ChannelService";
+import { messages } from "../stores/interactions";
 
 export interface ChannelsStateInterface {
   loading: boolean;
@@ -77,6 +78,7 @@ export const useChannelsStore = defineStore("channels", {
         this.messages[channel] = [];
       }
       this.messages[channel]?.push(message);
+      messages.value.push(message);
     },
 
     setActive(channel: string) {

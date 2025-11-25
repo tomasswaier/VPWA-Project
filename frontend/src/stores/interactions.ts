@@ -335,14 +335,31 @@ async function sendMessage() {
         kickUser();
         break;
       default: {
-        await sendMessageAPI(inputText);
+        // await sendMessageAPI(inputText);
+        await sendMessageUsingSocket(inputText);
         break;
       }
     }
     text.value = "";
   }
 }
-async function sendMessageAPI(inputText: string) {
+async function sendMessageUsingSocket(inputText: string) {
+  if (!currentGroupId.value) {
+    console.error("No group selected");
+    return;
+  }
+
+  try {
+    await channelService.join(currentGroupId.value).sendMessage(inputText);
+
+    // Only add message AFTER backend confirms
+    // messages.value.push(newMessage);
+  } catch (err) {
+    console.error("Failed to send message:", err);
+  }
+}
+
+/*async function sendMessageAPI(inputText: string) {
   const containsMention = inputText.includes("@");
 
   const newMessage: SerializedMessage = {
@@ -371,7 +388,7 @@ async function sendMessageAPI(inputText: string) {
     // Optionally remove the optimistic message or mark it failed
     messages.value = messages.value.filter((m) => m.id !== newMessage.id);
   }
-}
+}*/
 
 async function register(
   username: string,
