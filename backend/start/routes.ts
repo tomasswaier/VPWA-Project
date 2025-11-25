@@ -26,10 +26,15 @@ router.group(() => {
 router
   .group(() => {
     router.get("/", "#controllers/group_controller.index");
-    router.post("/join-or-create", "#controllers/group_controller.joinOrCreate");
+    router.post(
+      "/join-or-create",
+      "#controllers/group_controller.joinOrCreate",
+    );
     router.post("/:id/join", "#controllers/group_controller.join");
     router.post("/:id/leave", "#controllers/group_controller.leave");
     router.get("/:id/members", "#controllers/group_controller.members");
+    router.get(":groupId/messages", [MessagesController, "index"]);
+    router.post(":groupId/messages", [MessagesController, "store"]);
   })
   .prefix("groups")
   .use(middleware.auth());
