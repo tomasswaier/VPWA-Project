@@ -315,7 +315,7 @@ async function loadMessages(index: number, done: () => void) {
           id: msg.id,
           content: msg.content,
           author: msg.author,
-          containsMention: false,
+          containsMention: msg.containsMention,
           groupId: msg.groupId || "",
         }),
       );
@@ -500,7 +500,7 @@ async function sendMessage() {
       case "/invite":
 
         if (checkMessageCommandParams(allArguments, 2)) {
-          inviteToGroup(allArguments.slice(1));
+          void inviteToGroup(allArguments.slice(1));
         }
         break;
       case "/list":

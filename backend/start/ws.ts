@@ -13,13 +13,10 @@ app.ready(() => {
     cors: { origin: "*" },
   });
 
-  // Handle all namespaces that start with /groups/
   io.of(/^\/groups\/.+$/).on("connection", async (socket) => {
-    // Extract groupId from namespace
-    const namespace = socket.nsp.name; // e.g. "/groups/123"
+    const namespace = socket.nsp.name;
     const groupId = namespace.split("/").pop();
 
-    // Authenticate user
     try {
       const token = socket.handshake.auth?.token;
       if (!token || token === "") {
@@ -34,7 +31,6 @@ app.ready(() => {
       const userId = tokenRecord.tokenableId;
       socket.data.userId = userId;
 
-      // Check membership before allowing messages
       const membership = await GroupUser.query()
         .where("group_id", groupId!)
         .andWhere("user_id", userId.toString())
@@ -44,7 +40,6 @@ app.ready(() => {
         return socket.disconnect(true);
       }
 
-      // Handle sending messages
       socket.on("sendMessage", async (data: { content: string }, callback) => {
         try {
           const message = await MessagesController.sendMessage(
@@ -53,8 +48,24 @@ app.ready(() => {
             data.content,
           );
 
-          // Broadcast to all sockets in this namespace
-          socket.nsp.emit("message", message);
+          const allSockets = await socket.nsp.fetchSockets();
+          
+          for (const clientSocket of allSockets) {
+            const clientUserId = clientSocket.data.userId;
+            const clientUser = await User.find(clientUserId);
+            
+            if (clientUser) {
+              const words = data.content.trim().split(/\s+/);
+              const firstWord = words[0] || "";
+              const containsMention = firstWord.startsWith("@") && 
+                                     firstWord.substring(1) === clientUser.username;
+              
+              clientSocket.emit("message", {
+                ...message,
+                containsMention: containsMention,
+              });
+            }
+          }
 
           callback(message);
         } catch (err) {
@@ -63,19 +74,39 @@ app.ready(() => {
         }
       });
 
-      // Handle loading messages
       socket.on("loadMessages", async (page: number, callback) => {
         try {
+          const user = await User.find(userId);
           const messages = await MessagesController.loadMessages(
             groupId!,
             page,
           );
-          callback(messages);
+
+          const serializedMessages = messages.all().map((msg: any) => {
+            const words = msg.contents.trim().split(/\s+/);
+            const firstWord = words[0] || "";
+            const containsMention = user && firstWord.startsWith("@") && 
+                                   firstWord.substring(1) === user.username;
+
+            return {
+              id: msg.id,
+              content: msg.contents,
+              author: msg.user ? msg.user.username : "Unknown",
+              containsMention: containsMention,
+              groupId: msg.groupId,
+            };
+          });
+
+          callback({
+            data: serializedMessages,
+            meta: messages.getMeta(),
+          });
         } catch (err) {
           console.error(err);
           callback({ error: "Failed to load messages" });
         }
       });
+
       socket.on("voteKick", async (page: number, callback) => {
         try {
           const messages = await MessagesController.loadMessages(
@@ -88,9 +119,17 @@ app.ready(() => {
           callback({ error: "Failed to load messages" });
         }
       });
+
+      socket.on("disconnect", () => {
+        console.log(`User ${userId} disconnected from group ${groupId}`);
+      });
     } catch (err) {
       console.error("Socket auth error:", err);
       return socket.disconnect(true);
     }
   });
+
+  global.notifyGroupDeletion = (groupId: string) => {
+    io.of(`/groups/${groupId}`).emit("groupDeleted", { groupId });
+  };
 });
