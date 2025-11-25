@@ -191,8 +191,8 @@ async function changeGroup(groupId: string) {
   page.value = 1;
 
   try {
-    const channel = channelService.join(groupId); // will create or reuse
-    await channelService.setGroup(groupId); // join the group
+    const channel = channelService.join(groupId);
+    await channelService.setGroup(groupId);
     const loadedMessages: PaginatedMessages = await channel.loadMessages(
       page.value,
     );
@@ -297,6 +297,21 @@ async function joinGroup(args: string[]) {
     });
   }
 }
+function checkMessageCommandParams(
+  input: string[],
+  expectedCount: number,
+): boolean {
+  /*
+   * todo:make a popup which tells user what they did wrong
+   */
+  if (input.length < expectedCount) {
+    console.log("too few parameters. User /help to show all commands");
+    return false;
+  } else if (input.length > expectedCount) {
+    console.log("too many parameters. User /help to show all commands");
+  }
+  return true;
+}
 
 async function sendMessage() {
   const inputText: string = text.value.trim();
@@ -307,30 +322,117 @@ async function sendMessage() {
       case "/test":
         console.log(messages);
         break;
+      case "/help":
+        messages.value.push(
+          {
+            content: `Available commads
+          `,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
+          },
+          {
+            content:
+              `/cancel = leave group (also deletes group if you're the creator)
+          `,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
+          },
+          {
+            content: `/list = lists all public groups
+          `,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
+          },
+          {
+            content:
+              `/join [groupName] "[private]" [group description] = join public group with this groupName, join private group with groupName or create group by groupName. if argument [private] is present the created group will be private. All text unrecognized text will be treated as group description
+          `,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
+          },
+          {
+            content: `/delete = delete the current group if you are the owner
+          `,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
+          },
+          {
+            content:
+              `/revoke [userName] = group creator may use this to revoke ban of a user.
+          `,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
+          },
+          {
+            content: `Available commads
+          `,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
+          },
+          {
+            content:
+              `          /kick [userName] = casts a vote to kick user userName out of this group. If three people cast this vote the person will be kicked out.
+
+          `,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
+          },
+        );
+        break;
       case "/quit": // to iste ako /cancel, ale bolo v zadani aj quit, cize dali
         // sme sem obe funkcie
         void cancelGroup(allArguments.slice(1));
         break;
       case "/cancel":
-        void cancelGroup(allArguments.slice(1));
+        if (checkMessageCommandParams(allArguments, 1)) {
+          void cancelGroup(allArguments.slice(1));
+        }
         break;
       case "/invite":
-        inviteGroup();
+        if (checkMessageCommandParams(allArguments, 2)) {
+          inviteGroup();
+        }
         break;
       case "/list":
-        listGroupUsers();
+        if (checkMessageCommandParams(allArguments, 1)) {
+          listGroupUsers();
+        }
         break;
       case "/join":
-        void joinGroup(allArguments.slice(1));
+        if (checkMessageCommandParams(allArguments, 2)) {
+          void joinGroup(allArguments.slice(1));
+        }
         break;
       case "/delete":
-        deleteGroup();
+        if (checkMessageCommandParams(allArguments, 1)) {
+          deleteGroup();
+        }
         break;
       case "/revoke":
-        revokeUser();
+        if (checkMessageCommandParams(allArguments, 2)) {
+          revokeUser();
+        }
         break;
       case "/kick":
-        kickUser();
+        if (checkMessageCommandParams(allArguments, 2)) {
+          kickUser();
+        }
         break;
       default: {
         // await sendMessageAPI(inputText);
@@ -346,47 +448,12 @@ async function sendMessageUsingSocket(inputText: string) {
     console.error("No group selected");
     return;
   }
-
   try {
     await channelService.join(currentGroupId.value).sendMessage(inputText);
-
-    // Only add message AFTER backend confirms
-    // messages.value.push(newMessage);
   } catch (err) {
     console.error("Failed to send message:", err);
   }
 }
-
-/*async function sendMessageAPI(inputText: string) {
-  const containsMention = inputText.includes("@");
-
-  const newMessage: SerializedMessage = {
-    content: inputText,
-    groupId: currentGroupId.value,
-    id: Date.now(),
-    author: "me",
-    containsMention,
-  };
-
-  messages.value.push(newMessage);
-  text.value = "";
-
-  try {
-    const res = await api.post(
-      `/groups/${currentGroupId.value}/messages`,
-      { contents: inputText },
-    );
-
-    console.log(res.data);
-    newMessage.id = res.data.id;
-    newMessage.author = res.data.author;
-    newMessage.groupId = res.data.groupId;
-  } catch (err) {
-    console.error("Failed to send message", err);
-    // Optionally remove the optimistic message or mark it failed
-    messages.value = messages.value.filter((m) => m.id !== newMessage.id);
-  }
-}*/
 
 async function register(
   username: string,
