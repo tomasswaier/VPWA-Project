@@ -30,8 +30,8 @@
   <ConfirmAction
       :model-value="props.dialogs.userRevoke"
       @update:model-value="$emit('update-dialog','userRevoke',$event)"
-      model-message="Are you sure you want to revoke this users rights??"
-      :on-confirm="revokeUserWrapper"
+      model-message="Are you sure you want to REVOKE this users rights??"
+      :on-confirm="kickUserWrapper"
       />
   <ConfirmAction
       :model-value="props.dialogs.userKick"
@@ -141,7 +141,6 @@ async function kickUserWrapper() {
 
 // Placeholder wrappers for other actions
 function groupDeleteWrapper() {}
-function revokeUserWrapper() {}
 
 </script>
 
