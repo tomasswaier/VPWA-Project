@@ -265,7 +265,7 @@ export default class GroupController {
     }
   }
 
-  public static async voteKickInternal(params: {
+  public static async voteKick(params: {
     groupId: string;
     userTargetId: string;
     userCasterId: string;
@@ -291,7 +291,8 @@ export default class GroupController {
     const voteCount = Number(totalVotes?.$extras.count || 0);
 
     console.log("voteCoutn:" + voteCount);
-    if (voteCount >= 3) {
+    // if (voteCount >= 3) {
+    if (voteCount >= 1) {
       await GroupUserBan.create({ groupId, userId: userTargetId });
       await GroupUser.query().where({ groupId, userId: userTargetId }).delete();
       await GroupUserKick.query().where({ groupId, userTargetId }).delete();
@@ -300,22 +301,5 @@ export default class GroupController {
     }
 
     return { banned: false, message: `Vote counted (${voteCount}/3).` };
-  }
-
-  public async voteKick({ request, auth, response }: HttpContext) {
-    const { groupId, userTargetId } = request.only(["groupId", "userTargetId"]);
-    const userCasterId = auth.user?.id;
-
-    if (!userCasterId) {
-      return response.status(401).json({ error: "Unauthorized" });
-    }
-
-    const result = await GroupController.voteKickInternal({
-      groupId,
-      userTargetId,
-      userCasterId: userCasterId.toString(),
-    });
-
-    return response.json(result);
   }
 }
