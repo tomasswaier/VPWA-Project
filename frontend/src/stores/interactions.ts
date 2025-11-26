@@ -40,7 +40,7 @@ interface User {
   status: UserStatus;
 }
 const displayedMembers = ref<User[]>([]);
-const currentGroupName = ref("Trumans Group");
+const currentGroupName = ref("");
 
 interface TypingUser {
   name: string;
@@ -89,6 +89,7 @@ interface GroupLinkProps {
 interface Dialogs {
   groupLeave: boolean;
   groupList: boolean;
+  groupListPublic: boolean;
   groupCreate: boolean;
   groupDelete: boolean;
   groupInvite: boolean;
@@ -100,6 +101,7 @@ interface Dialogs {
 const dialogs: Dialogs = reactive({
   groupLeave: false,
   groupList: false,
+  groupListPublic: false,
   groupCreate: false,
   groupDelete: false,
   groupInvite: false,
@@ -111,35 +113,38 @@ const dialogs: Dialogs = reactive({
 
 const groupLinks = ref<GroupLinkProps[]>([]);
 
-const baseMemberTemplates = [
-  { name: "Johnka", status: "online" },
-  {
-    name: "Marian Emanual Chornandez Pelko De La Muerto",
-    status: "do_not_disturb",
-  },
-  { name: "Tomas Truman", status: "offline" },
-];
-
-function loadGroupMembers(index: number, done: () => void): void {
-  setTimeout(() => {
-    const batchSize = 5;
-    const newMembers = [];
-
-    for (let i = 0; i < batchSize; i++) {
-      const templateIX = (displayedMembers.value.length + i) %
-        baseMemberTemplates.length;
-      const template = baseMemberTemplates[templateIX]!;
-
-      newMembers.push({
-        username: `${template.name} #${displayedMembers.value.length + i + 1}`,
-        status: template.status as UserStatus,
-      });
-    }
-
-    displayedMembers.value.push(...newMembers);
+async function loadGroupMembers(index: number, done: () => void): Promise<void> {
+  if(!currentGroupId.value){
     done();
-  }, 300);
+    return;
+  }
+
+  try {
+    const response = await api.get(`/groups/${currentGroupId.value}/members`);
+    const members = response.data;
+
+    displayedMembers.value = members.map((member: { username: string; status: UserStatus }) => ({
+      username: member.username,
+      status: member.status,
+    }));
+
+    done();
+} catch (err){
+    const error = err as AxiosError<{ message?: string }>;
+    console.error("Error loading members:", error);
+
+    Notify.create({
+      message: error.response?.data?.message || "Failed to load group members",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
+    });
+    done();
+  }
 }
+
+
 
 async function loadPublicGroups(
   index: number,
@@ -283,6 +288,9 @@ async function changeGroup(groupId: string) {
   messages.value = [];
   page.value = 1;
 
+  const group = groupLinks.value.find(g => g.id === groupId);
+  currentGroupName.value = group?.title || "";
+
   try {
     const channel = channelService.join(groupId);
     await channelService.setGroup(groupId);
@@ -315,7 +323,7 @@ async function loadMessages(index: number, done: () => void) {
           id: msg.id,
           content: msg.content,
           author: msg.author,
-          containsMention: false,
+          containsMention: msg.containsMention,
           groupId: msg.groupId || "",
         }),
       );
@@ -488,14 +496,11 @@ async function sendMessage() {
           },
         );
         break;
-      case "/quit": // to iste ako /cancel, ale bolo v zadani aj quit, cize dali
-        // sme sem obe funkcie
+      case "/quit": // to iste ako /cancel, ale bolo v zadani aj quit, cize dali sme sem obe funkcie
         void cancelGroup(allArguments.slice(1));
         break;
       case "/cancel":
-        if (checkMessageCommandParams(allArguments, 1)) {
-          void cancelGroup(allArguments.slice(1));
-        }
+        void cancelGroup(allArguments.slice(1));
         break;
       case "/invite":
         if (checkMessageCommandParams(allArguments, 2)) {
@@ -667,6 +672,10 @@ function listGroupUsers() {
   dialogs.groupUserList = true;
 }
 
+function listPublicGroups() {
+  dialogs.groupListPublic = true;
+}
+
 function listGroups() {
   dialogs.groupList = true;
 }
@@ -821,30 +830,6 @@ async function leaveGroupAPI(groupId: string): Promise<void> {
   }
 }
 
-async function loadGroupMembersAPI(groupId: string): Promise<void> {
-  try {
-    const response = await api.get(`/groups/${groupId}/members`);
-    const members = response.data;
-
-    displayedMembers.value = members.map((
-      member: { username: string; status: UserStatus },
-    ) => ({
-      name: member.username,
-      status: member.status,
-    }));
-  } catch (err) {
-    const error = err as AxiosError<{ message?: string }>;
-    console.error("Error loading members:", error);
-
-    Notify.create({
-      message: error.response?.data?.message || "Failed to load group members",
-      color: "negative",
-      icon: "error",
-      position: "top",
-      timeout: 2000,
-    });
-  }
-}
 
 async function loadUserGroups(): Promise<void> {
   try {
@@ -884,17 +869,43 @@ async function loadUserGroups(): Promise<void> {
 
 async function cancelGroup(args: string[]) {
   if (args.length === 0) {
-    Notify.create({
-      message: "Usage: /cancel or /quit groupName",
-      color: "warning",
-      position: "top",
-      timeout: 2000,
-    });
+    if (!currentGroupId.value) {
+      Notify.create({
+        message: "No group is currently selected",
+        color: "warning",
+        position: "top",
+        timeout: 2000,
+      });
+      return;
+    }
+  
+
+  try {
+      const response = await api.post(`/groups/${currentGroupId.value}/leave`);
+
+      Notify.create({
+        message: response.data.message,
+        color: "positive",
+        icon: "check_circle",
+        position: "top",
+        timeout: 2000,
+      });
+
+      await loadUserGroups();
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>;
+      Notify.create({
+        message: error.response?.data?.message || "Failed to leave group",
+        color: "negative",
+        icon: "error",
+        position: "top",
+        timeout: 2000,
+      });
+    }
     return;
   }
 
-  const groupName = args[0];
-
+  const groupName = args.join(" ");
   const group = groupLinks.value.find((g) => g.title === groupName);
 
   if (!group || !group.id) {
@@ -954,8 +965,8 @@ export {
   joinPublicGroup,
   leaveGroupAPI,
   listGroups,
+  listPublicGroups,
   loadGroupMembers,
-  loadGroupMembersAPI,
   loadInvitations,
   loadMessages,
   loadPublicGroups,

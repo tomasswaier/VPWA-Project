@@ -16,7 +16,7 @@ app.ready(() => {
   });
 
   io.of(/^\/groups\/.+$/).on("connection", async (socket: Socket) => {
-    const namespace = socket.nsp.name; // e.g. "/groups/123"
+    const namespace = socket.nsp.name; 
     const groupId = namespace.split("/").pop();
 
     try {
@@ -33,7 +33,6 @@ app.ready(() => {
       const userId = tokenRecord.tokenableId;
       socket.data.userId = userId;
 
-      // Check group membership
       const membership = await GroupUser.query()
         .where("group_id", groupId!)
         .andWhere("user_id", userId.toString())
@@ -82,7 +81,24 @@ app.ready(() => {
             data.content,
           );
 
-          socket.nsp.emit("message", message);
+          const allSockets = await socket.nsp.fetchSockets();
+          
+          for (const clientSocket of allSockets) {
+            const clientUserId = clientSocket.data.userId;
+            const clientUser = await User.find(clientUserId);
+            
+            if (clientUser) {
+              const words = data.content.trim().split(/\s+/);
+              const firstWord = words[0] || "";
+              const containsMention = firstWord.startsWith("@") && 
+                                     firstWord.substring(1) === clientUser.username;
+              
+              clientSocket.emit("message", {
+                ...message,
+                containsMention: containsMention,
+              });
+            }
+          }
 
           callback(message);
         } catch (err) {
@@ -93,11 +109,31 @@ app.ready(() => {
 
       socket.on("loadMessages", async (page: number, callback) => {
         try {
+          const user = await User.find(userId);
           const messages = await MessagesController.loadMessages(
             groupId!,
             page,
           );
-          callback(messages);
+
+          const serializedMessages = messages.all().map((msg: any) => {
+            const words = msg.contents.trim().split(/\s+/);
+            const firstWord = words[0] || "";
+            const containsMention = user && firstWord.startsWith("@") && 
+                                   firstWord.substring(1) === user.username;
+
+            return {
+              id: msg.id,
+              content: msg.contents,
+              author: msg.user ? msg.user.username : "Unknown",
+              containsMention: containsMention,
+              groupId: msg.groupId,
+            };
+          });
+
+          callback({
+            data: serializedMessages,
+            meta: messages.getMeta(),
+          });
         } catch (err) {
           console.error(err);
           callback({ error: "Failed to load messages" });
@@ -165,4 +201,8 @@ app.ready(() => {
       socket.disconnect(true);
     }
   });
+
+  global.notifyGroupDeletion = (groupId: string) => {
+    io.of(`/groups/${groupId}`).emit("groupDeleted", { groupId });
+  };
 });

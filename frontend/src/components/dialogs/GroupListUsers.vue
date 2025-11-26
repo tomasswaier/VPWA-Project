@@ -22,40 +22,49 @@
 
       <q-card-section class="q-pt-md" style="padding: 0;">
         <q-scroll-area style="height: 60vh; width: 100%;">
-          <q-infinite-scroll :offset="250" @load="loadGroupMembers">
-            <q-list>
-              <q-item v-for="(member, index) in displayedMembers" :key="index" class="q-mb-sm">
-                <q-item-section avatar>
-                  <q-item :class="member.status == 'online' ? 'bg-light-green' : member.status == 'do_not_disturb'?'bg-red':''">
-                    <q-item-section >
-                      ME
-                    </q-item-section>
-                  </q-item>
-                </q-item-section>
+          <q-list>
+            <q-item v-if="displayedMembers.length === 0" class="q-mb-sm">
+              <q-item-section>
+                <q-item-label class="text-white text-center">Loading members...</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item v-for="(member, index) in displayedMembers" :key="index" class="q-mb-sm">
+              <q-item-section avatar>
+                <q-avatar 
+                  :class="member.status === 'online' ? 'bg-light-green' : 
+                         member.status === 'do_not_disturb' ? 'bg-red' : 
+                         member.status === 'idle' ? 'bg-yellow' : 'bg-grey'"
+                  text-color="white"
+                  size="md"
+                >
+                  {{ member.username.substring(0, 2).toUpperCase() }}
+                </q-avatar>
+              </q-item-section>
 
-                <q-item-section>
-                  <q-item-label class="text-white text-weight-medium">{{ member.username}}</q-item-label>
-                </q-item-section>
-              </q-item>
-            </q-list>
-
-            <template v-slot:loading>
-              <div class="row justify-center q-my-md">
-                <q-spinner-dots color="white" size="40px" />
-              </div>
-            </template>
-          </q-infinite-scroll>
+              <q-item-section>
+                <q-item-label class="text-white text-weight-medium">{{ member.username }}</q-item-label>
+                <q-item-label caption class="text-white">
+                  {{ member.status === 'online' ? 'Online' : 
+                     member.status === 'do_not_disturb' ? 'Do Not Disturb' : 
+                     member.status === 'idle' ? 'Idle' : 'Offline' }}
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
         </q-scroll-area>
       </q-card-section>
     </q-card>
   </q-dialog>
 </template>
+
 <script setup lang="ts">
 import { watch } from 'vue'
 import { currentGroupName, displayedMembers, loadGroupMembers } from '../../stores/interactions'
+
 interface Props {
   modelValue: boolean
 }
+
 const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
@@ -64,14 +73,11 @@ const emit = defineEmits<{
 function closeDialog() {
   emit('update:modelValue', false)
 }
+
 watch(()=>props.modelValue, (isOpen) => {
   if (isOpen) {
-    //po otvorení (pop-upu) sa načítajú členovia skupiny
-    setTimeout(() => {
-      if (displayedMembers.value.length === 0) {
-        loadGroupMembers(0, () => {});
-      }
-    }, 100);
+    displayedMembers.value = [];
+    void loadGroupMembers(0, () => {});
   }
 });
 </script>

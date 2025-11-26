@@ -13,7 +13,13 @@
           <q-tooltip class="bg-white text-primary">Close</q-tooltip>
         </q-btn>
       </q-bar>
+      
+      <q-card-section class="text-center">
+        <div class="text-h5 text-white text-weight-bold">Your Invitations</div>
+      </q-card-section>
+
       <q-separator color="white" />
+
       <q-card-section class="q-pt-md" style="padding: 0;">
         <q-scroll-area style="height: 60vh; width: 100%;">
           <q-list class="container">

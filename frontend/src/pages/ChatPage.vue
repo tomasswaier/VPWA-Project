@@ -18,10 +18,10 @@
           :name="message.author"
           :text="[message.content]"
           :sent="message.author === loggedUser!.username"
-          :id="index"
+          :id="index.toString()"
           :bg-color="message.containsMention
-            ? 'yellow-3'
-            : (message.author === 'me' ? 'orange-1' : 'secondary')"
+            ? 'yellow-6'
+            : (message.author === loggedUser!.username ? 'orange-1' : 'secondary')"
         />
       </div>
 
@@ -38,7 +38,7 @@
           <q-btn-dropdown color="primary" cover label="someone is typing...">
             <q-list>
               <q-item v-for="(user,index) in typingUsers" :key="index"  clickable @click="openDialog(user)">
-                <q-item-section :id="index" >{{user.name}}</q-item-section>
+                <q-item-section :id="index.toString()" >{{user.name}}</q-item-section>
               </q-item>
             </q-list>
           </q-btn-dropdown>
@@ -77,6 +77,7 @@ import {
 interface Props {
   dialogs: {
     groupList: boolean
+    groupListPublic: boolean
     groupUserList: boolean
     groupLeave: boolean
     groupCreate: boolean
@@ -107,10 +108,4 @@ function updateDialog(dialogName: keyof Dialogs, value: boolean) {
 </script>
 
 <style scoped>
-/*tymto osetrime to ten infinity scroll nech sa nedava furt vyssie*/
-/*#chatMessages {
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-  */
 </style>
