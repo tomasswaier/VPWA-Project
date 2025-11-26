@@ -1,5 +1,11 @@
 // import type { BootParams } from "./SocketManager";
-import { loadInvitations } from "../stores/interactions";
+import {
+  changeGroup,
+  currentGroupId,
+  groupLinks,
+  loadInvitations,
+  loadUserGroups,
+} from "../stores/interactions";
 
 import { SocketManager } from "./SocketManager";
 
@@ -18,6 +24,16 @@ export class PrivateSocketManager extends SocketManager {
     this.socket.off("kicked");
     this.socket.on("kicked", (data: { groupId: string; message: string }) => {
       console.warn("You were kicked from group:", data.groupId, data.message);
+      void loadUserGroups();
+      console.log(groupLinks);
+      if (data.groupId == currentGroupId.value) {
+        if (groupLinks.value.length > 0) {
+          void changeGroup(groupLinks.value[0]!.id!);
+        } else {
+          void changeGroup("");
+        }
+      }
+      console.log(currentGroupId.value);
     });
 
     this.socket.off("invited");

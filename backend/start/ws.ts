@@ -163,14 +163,17 @@ app.ready(() => {
               return callback({ error: "User not found" });
             }
 
-            const result = await GroupController.voteKickInternal({
+            const result = await GroupController.voteKick({
               groupId: groupId!,
               userTargetId: targetUser.id.toString(),
               userCasterId: userId.toString(),
             });
+            console.log(result);
 
+            console.log(result.banned);
             if (result.banned) {
-              io.to(`user:${targetUser.id}`).emit("kicked", {
+              console.log(targetUser.id);
+              io.of("/user").to(`user:${targetUser.id}`).emit("kicked", {
                 groupId,
                 message: `You have been banned from group "${groupId}"`,
               });
