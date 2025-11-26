@@ -8,7 +8,7 @@
         <q-item-label header> Groups </q-item-label>
         <q-item clickable @click="listGroups">
           <q-item-section >
-            <span>You have <span class="text-red">10</span> new Invitations</span>
+            <span>You have <span class="text-red">{{ invitations.length }}</span> new Invitations</span>
           </q-item-section>
           <q-item-section side >
           </q-item-section>
@@ -33,7 +33,7 @@ import { ref, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import GroupLink from 'components/GroupLink.vue';
 import HeaderToolbar from 'components/HeaderToolbar.vue';
-import { dialogs, openCreateGroupDialog, listGroups, listPublicGroups, groupLinks, loadUserGroups } from '../stores/interactions';
+import { dialogs, openCreateGroupDialog, listGroups, listPublicGroups, groupLinks, loadUserGroups, invitations, loadInvitations } from '../stores/interactions';
 import { initChannelsQuasar } from '../stores/channels';
 import type { Dialogs } from '../stores/interactions';
 
@@ -51,5 +51,6 @@ function updateDialog(dialogName: keyof Dialogs, value: boolean) {
 onMounted(() => {
   initChannelsQuasar($q);
   void loadUserGroups();
+  void loadInvitations(0, () => {});
 });
 </script>

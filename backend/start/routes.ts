@@ -37,6 +37,7 @@ router
     router.get("/:id/members", [GroupController, "members"]);
     router.get(":groupId/messages", [MessagesController, "index"]);
     router.post(":groupId/messages", [MessagesController, "store"]);
+    router.post("/:id/revoke", [GroupController, "revoke"]);
   })
   .prefix("groups")
   .use(middleware.auth());

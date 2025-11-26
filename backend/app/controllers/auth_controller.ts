@@ -35,8 +35,26 @@ export default class AuthController {
   }
 
   async me({ auth }: HttpContext) {
-    const user = auth.use("access_tokens").user;
-    await user!.load("groups");
-    return user;
-  }
+  const user = auth.use("access_tokens").user;
+  await user!.load("groups");
+
+  const groupsWithOwner = await Promise.all(
+    user!.groups.map(async (group) => {
+      const pivot = await group.related("users")
+        .pivotQuery()
+        .where("user_id", user!.id)
+        .first();
+
+      return {
+        ...group.serialize(),
+        isOwner: pivot?.is_owner || false,
+      };
+    })
+  );
+
+  return {
+    ...user!.serialize(),
+    groups: groupsWithOwner,
+  };
+}
 }

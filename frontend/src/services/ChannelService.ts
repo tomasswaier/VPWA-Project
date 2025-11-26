@@ -81,7 +81,7 @@ export class ChannelSocketManager extends SocketManager {
       );
     });
   }
-  public voteKick(username: string): Promise<SerializedMessage> {
+  public voteKick(username: string): Promise<{banned: boolean; message: string}> {
     const groupId = this.namespace.split("/").pop();
     if (!groupId || username == "") {
       return Promise.reject(new Error("No groupId"));
@@ -91,7 +91,7 @@ export class ChannelSocketManager extends SocketManager {
       this.socket.emit(
         "voteKick",
         { groupId, username },
-        (res: SerializedMessage | { error: string }) => {
+        (res: { banned: boolean; message: string } | { error: string }) => {
           if ("error" in res) {
             reject(new Error(res.error));
           } else {

@@ -28,7 +28,7 @@
                 <q-item-label class="text-white text-center">No pending invitations</q-item-label>
               </q-item-section>
             </q-item>
-            <q-item v-for="(invitation, index) in invitations" :key="index">
+            <q-item v-for="(invitation, index) in invitations" :key="invitation.id || index">
               <q-item-section>
                 <q-item-label class="text-white text-weight-medium">{{ invitation.title}}</q-item-label>
                 <q-item-label caption>{{ invitation.caption }}</q-item-label>
@@ -81,17 +81,17 @@ function closeDialog() {
 
 async function handleAcceptInvitation(groupId: string | undefined) {
   if (!groupId) return;
-  await acceptInvitation(groupId);
   invitations.value = invitations.value.filter(inv => inv.id !== groupId);
+  await acceptInvitation(groupId);
 }
 
 async function handleDeclineInvitation(groupId: string | undefined) {
   if (!groupId) return;
-  await declineInvitation(groupId);
   invitations.value = invitations.value.filter(inv => inv.id !== groupId);
+  await declineInvitation(groupId);
 }
 
-watch(()=>props.modelValue, (isOpen) => {
+watch(() => props.modelValue, (isOpen) => {
   if (isOpen) {
     invitations.value = []
     void loadInvitations(0, () => {})

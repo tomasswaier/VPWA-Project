@@ -207,99 +207,176 @@ export default class GroupController {
     }
   }
 
-  async invite({ params, request, response, auth }: HttpContext) {
-    const user = auth.use("access_tokens").user;
-    const { username } = request.body();
+async revoke({ params, request, response, auth }: HttpContext) {
+  const user = auth.use("access_tokens").user;
+  const { username } = request.body();
 
-    if (!username || username.trim() === "") {
-      return response.badRequest({ message: "Username is required" });
-    }
+  if (!username || username.trim() === "") {
+    return response.badRequest({ message: "Username is required" });
+  }
 
-    try {
-      const group = await Group.findOrFail(params.id);
-      await group.load("users");
-
-      const isMember = group.users.some((u) => u.id === user!.id);
-      if (!isMember) {
-        return response.forbidden(
-          { message: "You are not a member of this group" },
-        );
-      }
-
-      const invitedUser = await User.findBy("username", username);
-      if (!invitedUser) {
-        return response.notFound({ message: `User "${username}" not found` });
-      }
-
-      const isAlreadyMember = group.users.some((u) => u.id === invitedUser.id);
-      if (isAlreadyMember) {
-        return response.badRequest(
-          { message: `${username} is already a member` },
-        );
-      }
-
-      const db = (await import("@adonisjs/lucid/services/db")).default;
-
-      const existingInvite = await db.from("group_user_invitation")
-        .where("user_id", invitedUser.id)
+  try {
+    const group = await Group.findOrFail(params.id);
+    
+    //je private?
+    if (group.isPrivate) {
+      //som owner?
+      const pivotData = await group.related("users")
+        .pivotQuery()
+        .where("user_id", user!.id)
         .where("group_id", group.id)
         .first();
 
-      if (existingInvite) {
-        return response.badRequest(
-          { message: `${username} already has a pending invitation` },
-        );
+      const isOwner = pivotData?.is_owner || false;
+
+      if (!isOwner) {
+        return response.forbidden({ message: "Only the group owner can revoke bans in private groups" });
       }
-
-      await db.table("group_user_invitation").insert({
-        user_id: invitedUser.id,
-        group_id: group.id,
-      });
-
-      return response.ok({ message: `Invitation sent to ${username}` });
-    } catch (error) {
-      console.error("Error inviting user:", error);
-      return response.internalServerError(
-        { message: "Failed to send invitation" },
-      );
     }
+
+    const targetUser = await User.findBy("username", username);
+    if (!targetUser) {
+      return response.notFound({ message: `User "${username}" not found` });
+    }
+
+    await GroupUserBan.query()
+      .where("group_id", group.id)
+      .where("user_id", targetUser.id)
+      .delete();
+
+    return response.ok({ message: `Ban revoked for ${username}` });
+  } catch (error) {
+    console.error("Error revoking ban:", error);
+    return response.internalServerError({ message: "Failed to revoke ban" });
+    }
+}
+
+
+async invite({ params, request, response, auth }: HttpContext) {
+  const user = auth.use("access_tokens").user;
+  const { username } = request.body();
+
+  if (!username || username.trim() === "") {
+    return response.badRequest({ message: "Username is required" });
   }
+
+  try {
+    const group = await Group.findOrFail(params.id);
+    await group.load("users");
+
+    const isMember = group.users.some((u) => u.id === user!.id);
+    if (!isMember) {
+      return response.forbidden({ message: "You are not a member of this group" });
+    }
+
+    const pivotData = await group.related("users")
+      .pivotQuery()
+      .where("user_id", user!.id)
+      .where("group_id", group.id)
+      .first();
+
+    const isOwner = pivotData?.is_owner || false;
+
+    if (group.isPrivate && !isOwner) {
+      return response.forbidden({ message: "Only the group owner can invite users to private groups" });
+    }
+
+    const invitedUser = await User.findBy("username", username);
+    if (!invitedUser) {
+      return response.notFound({ message: `User "${username}" not found` });
+    }
+
+    const isAlreadyMember = group.users.some((u) => u.id === invitedUser.id);
+    if (isAlreadyMember) {
+      return response.badRequest({ message: `${username} is already a member` });
+    }
+
+    //zruš ban ak invite
+    if (isOwner) {
+      await GroupUserBan.query()
+        .where("group_id", group.id)
+        .where("user_id", invitedUser.id)
+        .delete();
+    }
+
+    const db = (await import("@adonisjs/lucid/services/db")).default;
+
+    const existingInvite = await db.from("group_user_invitation")
+      .where("user_id", invitedUser.id)
+      .where("group_id", group.id)
+      .first();
+
+    if (existingInvite) {
+      return response.badRequest({ message: `${username} already has a pending invitation` });
+    }
+
+    await db.table("group_user_invitation").insert({
+      user_id: invitedUser.id,
+      group_id: group.id,
+    });
+
+    return response.ok({ message: `Invitation sent to ${username}` });
+  } catch (error) {
+    console.error("Error inviting user:", error);
+    return response.internalServerError({ message: "Failed to send invitation" });
+  }
+}
 
   public static async voteKickInternal(params: {
-    groupId: string;
-    userTargetId: string;
-    userCasterId: string;
-  }): Promise<{ banned: boolean; message: string }> {
-    const { groupId, userTargetId, userCasterId } = params;
+  groupId: string;
+  userTargetId: string;
+  userCasterId: string;
+}): Promise<{ banned: boolean; message: string }> {
+  const { groupId, userCasterId, userTargetId } = params;
 
-    // 1️⃣ Prevent duplicate votes
-    const existingVote = await GroupUserKick.query()
-      .where({ groupId, userCasterId, userTargetId })
-      .first();
-
-    if (existingVote) {
-      return { banned: false, message: "You already voted to kick this user." };
-    }
-
-    await GroupUserKick.create({ groupId, userCasterId, userTargetId });
-
-    const totalVotes = await GroupUserKick.query()
-      .where({ groupId, userTargetId })
-      .count("* as count")
-      .first();
-
-    const voteCount = Number(totalVotes?.$extras.count || 0);
-
-    if (voteCount >= 3) {
-      await GroupUserBan.create({ groupId, userId: userTargetId });
-      await GroupUser.query().where({ groupId, userId: userTargetId }).delete();
-      await GroupUserKick.query().where({ groupId, userTargetId }).delete();
-
-      return { banned: true, message: "User has been banned from this group." };
-    }
-
-    return { banned: false, message: `Vote counted (${voteCount}/3).` };
+  const group = await Group.findOrFail(groupId);
+  
+  if (group.isPrivate) {
+    return { banned: false, message: "/kick cannot be used in private groups" };
   }
+
+  const pivotData = await group.related("users")
+    .pivotQuery()
+    .where("user_id", userCasterId)
+    .where("group_id", groupId)
+    .first();
+
+  const isOwner = pivotData?.is_owner || false;
+
+  if (isOwner) {
+    await GroupUserBan.create({ groupId, userId: userTargetId });
+    await GroupUser.query().where({ groupId, userId: userTargetId }).delete();
+    await GroupUserKick.query().where({ groupId, userTargetId }).delete();
+    return { banned: true, message: "User has been banned by admin." };
+  }
+
+  const existingVote = await GroupUserKick.query()
+    .where({ groupId, userCasterId, userTargetId })
+    .first();
+
+  if (existingVote) {
+    return { banned: false, message: "You already voted to kick this user." };
+  }
+
+  await GroupUserKick.create({ groupId, userCasterId, userTargetId });
+
+  const totalVotes = await GroupUserKick.query()
+    .where({ groupId, userTargetId })
+    .count("* as count")
+    .first();
+
+  const voteCount = Number(totalVotes?.$extras.count || 0);
+
+  if (voteCount >= 3) {
+    await GroupUserBan.create({ groupId, userId: userTargetId });
+    await GroupUser.query().where({ groupId, userId: userTargetId }).delete();
+    await GroupUserKick.query().where({ groupId, userTargetId }).delete();
+
+    return { banned: true, message: "User has been banned from this group." };
+  }
+
+  return { banned: false, message: `Vote counted (${voteCount}/3).` };
+}
 
   public async voteKick({ request, auth, response }: HttpContext) {
     const { groupId, userTargetId } = request.only(["groupId", "userTargetId"]);

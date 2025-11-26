@@ -18,6 +18,9 @@ const currentlyPeekedMessage = ref("");
 const notificationsEnabled = ref(true);
 const mentionOnlyNotifications = ref(false);
 
+const currentGroupIsPrivate = ref(false);
+const currentGroupIsOwner = ref(false);
+
 export interface PaginatedMessages {
   data: SerializedMessage[];
   meta: {
@@ -323,6 +326,105 @@ async function acceptInvitation(groupId: string): Promise<void> {
   }
 }
 
+//kick pre private skupiny
+async function revokeUserPrivate(username: string) {
+  if (!currentGroupId.value) {
+    Notify.create({
+      message: "No group selected",
+      color: "warning",
+      position: "top",
+      timeout: 2000,
+    });
+    return;
+  }
+
+  if (!currentGroupIsPrivate.value) {
+    Notify.create({
+      message: "/revoke can only be used in private groups",
+      color: "negative",
+      position: "top",
+      timeout: 2000,
+    });
+    return;
+  }
+
+  if (!currentGroupIsOwner.value) {
+    Notify.create({
+      message: "Only the group owner can remove users from private groups",
+      color: "negative",
+      position: "top",
+      timeout: 2000,
+    });
+    return;
+  }
+
+  try {
+    const response = await api.post(`/groups/${currentGroupId.value}/revoke`, {
+      username: username,
+    });
+
+    Notify.create({
+      message: response.data.message || `${username} removed from group`,
+      color: "positive",
+      icon: "check_circle",
+      position: "top",
+      timeout: 2000,
+    });
+  } catch (err) {
+    const error = err as AxiosError<{ message?: string }>;
+    Notify.create({
+      message: error.response?.data?.message || "Failed to remove user",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
+    });
+  }
+}
+
+//kick v public groupe (3 ludia aspon)
+async function kickUserByName(username: string) {
+  if (!currentGroupId.value) {
+    Notify.create({
+      message: "No group selected",
+      color: "warning",
+      position: "top",
+      timeout: 2000,
+    });
+    return;
+  }
+
+  if (currentGroupIsPrivate.value) {
+    Notify.create({
+      message: "/kick cannot be used in private groups. Use /revoke instead.",
+      color: "negative",
+      position: "top",
+      timeout: 2000,
+    });
+    return;
+  }
+
+  try {
+    const channel = channelService.join(currentGroupId.value);
+    const result = await channel.voteKick(username);
+
+    Notify.create({
+      message: result.message || "Vote registered",
+      color: "positive",
+      position: "top",
+      timeout: 2000,
+    });
+  } catch (err) {
+    Notify.create({
+      message: (err as Error).message || "Failed to vote kick",
+      color: "negative",
+      position: "top",
+      timeout: 2000,
+    });
+  }
+}
+
+
 async function declineInvitation(groupId: string): Promise<void> {
   try {
     const response = await api.post(`/groups/${groupId}/decline-invitation`);
@@ -360,6 +462,8 @@ async function changeGroup(groupId: string) {
 
   const group = groupLinks.value.find(g => g.id === groupId);
   currentGroupName.value = group?.title || "";
+  currentGroupIsPrivate.value = group?.isPrivate || false;
+  currentGroupIsOwner.value = group?.isOwner || false;
 
   try {
     const channel = channelService.join(groupId);
@@ -522,13 +626,27 @@ async function sendMessage() {
         }
         break;
       case "/revoke":
-        if (checkMessageCommandParams(allArguments, 2)) {
-          revokeUser();
+        if (allArguments.length >= 2) {
+          void revokeUserPrivate(allArguments[1]!);
+        } else {
+          Notify.create({
+            message: "Usage: /revoke username",
+            color: "warning",
+            position: "top",
+            timeout: 2000,
+          });
         }
         break;
       case "/kick":
-        if (checkMessageCommandParams(allArguments, 2)) {
-          kickUser();
+        if (allArguments.length >= 2) {
+          void kickUserByName(allArguments[1]!);
+        } else {
+          Notify.create({
+            message: "Usage: /kick username",
+            color: "warning",
+            position: "top",
+            timeout: 2000,
+          });
         }
         break;
       case "/notifications":
@@ -710,7 +828,7 @@ function deleteGroup() {
 async function inviteToGroup(args: string[]) {
   if (args.length != 1) {
     Notify.create({
-      message: "Usage: /invite username ",
+      message: "Usage: /invite username",
       color: "warning",
     });
     return;
@@ -720,8 +838,18 @@ async function inviteToGroup(args: string[]) {
 
   if (!username || username == "") {
     Notify.create({
-      message: `No username specified`,
+      message: "No username specified",
       color: "negative",
+    });
+    return;
+  }
+
+  if (currentGroupIsPrivate.value && !currentGroupIsOwner.value) {
+    Notify.create({
+      message: "Only the group owner can invite users to private groups",
+      color: "negative",
+      position: "top",
+      timeout: 2000,
     });
     return;
   }
@@ -746,14 +874,14 @@ function openDialog(user: TypingUser) {
   currentlyPeekedMessage.value = user.message;
   dialogs.userMessagePeek = true;
 }
-
+/*
 function kickUser() {
   dialogs.userKick = true;
 }
 
 function revokeUser() {
   dialogs.userRevoke = true;
-}
+}*/
 
 function simulateIncomingInvite(userName: string, groupName: string) {
   Notify.create({
@@ -856,6 +984,8 @@ async function loadUserGroups(): Promise<void> {
     });
     const user = response.data;
 
+    console.log("User groups from API:", user.groups);
+
     if (user.groups) {
       groupLinks.value = user.groups.map(
         (group: {
@@ -864,14 +994,18 @@ async function loadUserGroups(): Promise<void> {
           description: string | null;
           isPrivate: boolean;
           is_private: boolean;
-        }) => ({
-          id: group.id,
-          title: group.name,
-          caption: group.description || "",
-          link: "",
-          isPrivate: group.isPrivate || group.is_private,
-          isOwner: false,
-        }),
+          isOwner?: boolean ;
+        }) => {
+          console.log("Group:", group.name, "isOwner:", group.isOwner);
+          return {
+            id: group.id,
+            title: group.name,
+            caption: group.description || "",
+            link: "",
+            isPrivate: group.isPrivate || group.is_private,
+            isOwner: group.isOwner || false,
+          };
+        },
       );
       if (groupLinks.value[0] && groupLinks.value[0].id) {
         await changeGroup(groupLinks.value[0].id);
@@ -966,6 +1100,8 @@ export {
   changeGroup,
   changeStatus,
   currentGroupId,
+  currentGroupIsOwner,
+  currentGroupIsPrivate,
   currentGroupName,
   currentlyPeekedMessage,
   declineInvitation,
@@ -979,6 +1115,7 @@ export {
   inviteToGroup,
   joinGroup,
   joinPublicGroup,
+  kickUserByName,
   leaveGroupAPI,
   listGroups,
   listPublicGroups,
@@ -999,6 +1136,7 @@ export {
   register,
   requestNotificationPermission,
   resetGroupMembers,
+  revokeUserPrivate,
   sendMessage,
   setMentionOnlyNotifications,
   setNotificationsEnabled,
