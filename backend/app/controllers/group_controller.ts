@@ -207,6 +207,29 @@ export default class GroupController {
     }
   }
 
+  private static async isOwner(
+    groupId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const pivotRecord = await GroupUser.query()
+      .where("group_id", groupId)
+      .andWhere("user_id", userId)
+      .first();
+
+    return pivotRecord?.isOwner ?? false;
+  }
+  private static async isBanned(
+    groupId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const bannedRecord = await GroupUserBan.query()
+      .where("group_id", groupId)
+      .andWhere("user_id", userId)
+      .first();
+
+    return !!bannedRecord; // true if record exists, false otherwise
+  }
+
   async invite({ params, request, response, auth }: HttpContext) {
     const user = auth.use("access_tokens").user;
     const { username } = request.body();
@@ -229,6 +252,27 @@ export default class GroupController {
       const invitedUser = await User.findBy("username", username);
       if (!invitedUser) {
         return response.notFound({ message: `User "${username}" not found` });
+      }
+      const isGroupOwner = await GroupController.isOwner(
+        group.id,
+        invitedUser.id,
+      );
+      const isUserBanned = await GroupController.isBanned(
+        group.id,
+        invitedUser.id,
+      );
+      if (group.isPrivate && !isGroupOwner) {
+        return response.forbidden(
+          { message: "You are not owner of this group" },
+        );
+      } else if (group.isPrivate && isGroupOwner && isUserBanned) {
+        await GroupUserBan.query()
+          .where({ groupId: group.id, userId: invitedUser.id })
+          .delete();
+      } else if (isUserBanned) {
+        return response.forbidden(
+          { message: `${username} is banned from this group` },
+        );
       }
 
       const isAlreadyMember = group.users.some((u) => u.id === invitedUser.id);
@@ -279,6 +323,16 @@ export default class GroupController {
     if (existingVote) {
       return { banned: false, message: "You already voted to kick this user." };
     }
+    const group: Group = await Group.findOrFail(groupId);
+    const isCasterOwner: boolean = await this.isOwner(groupId, userCasterId);
+    const isTargetOwner: boolean = await this.isOwner(groupId, userTargetId);
+
+    if ((group.isPrivate && !isCasterOwner) || isTargetOwner) {
+      return {
+        banned: false,
+        message: "You do not have authorization to kick this user.",
+      };
+    }
 
     await GroupUserKick.create({ groupId, userCasterId, userTargetId });
 
@@ -291,8 +345,10 @@ export default class GroupController {
     const voteCount = Number(totalVotes?.$extras.count || 0);
 
     console.log("voteCoutn:" + voteCount);
-    // if (voteCount >= 3) {
-    if (voteCount >= 1) {
+    if (
+      (group.isPrivate && isCasterOwner && voteCount >= 1) ||
+      voteCount >= 3
+    ) {
       await GroupUserBan.create({ groupId, userId: userTargetId });
       await GroupUser.query().where({ groupId, userId: userTargetId }).delete();
       await GroupUserKick.query().where({ groupId, userTargetId }).delete();
