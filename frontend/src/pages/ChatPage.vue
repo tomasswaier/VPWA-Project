@@ -77,6 +77,7 @@ import {
 interface Props {
   dialogs: {
     groupList: boolean
+    groupListPublic: boolean
     groupUserList: boolean
     groupLeave: boolean
     groupCreate: boolean

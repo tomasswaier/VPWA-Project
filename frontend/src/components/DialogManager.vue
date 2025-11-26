@@ -7,6 +7,10 @@
     :model-value="props.dialogs.groupList"
     @update:model-value="$emit('update-dialog','groupList',$event)"
   />
+  <GroupListPublic
+    :model-value="props.dialogs.groupListPublic"
+    @update:model-value="$emit('update-dialog','groupListPublic',$event)"
+  />
 
   <GroupLeave
       :model-value="props.dialogs.groupLeave"
@@ -44,6 +48,7 @@
 <script setup lang="ts">
 import GroupListUsers from 'components/dialogs/GroupListUsers.vue';
 import GroupList from 'components/dialogs/GroupList.vue';
+import GroupListPublic from 'components/dialogs/GroupListPublic.vue';
 import GroupLeave from 'components/dialogs/GroupLeave.vue';
 import GroupCreate from 'components/dialogs/GroupCreate.vue';
 import UserMessagePeek from 'components/dialogs/UserMessagePeek.vue';
@@ -53,6 +58,7 @@ import type{User} from "../stores/interactions"
 interface Props {
   dialogs: {
     groupList: boolean
+    groupListPublic: boolean
     groupUserList: boolean
     groupLeave: boolean
     groupCreate: boolean
