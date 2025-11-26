@@ -22,6 +22,7 @@ export class PrivateSocketManager extends SocketManager {
 
     this.socket.off("invited");
     this.socket.on("invited", (data: { groupId: string; inviter: string }) => {
+      console.log("I've been invited !!!!");
       console.log(data);
       void loadInvitations(0, () => {});
     });

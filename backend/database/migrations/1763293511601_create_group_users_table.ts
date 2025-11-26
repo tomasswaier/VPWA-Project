@@ -5,6 +5,7 @@ export default class GroupUsers extends BaseSchema {
 
   public async up() {
     this.schema.createTable(this.tableName, (table) => {
+      table.uuid("id").primary().defaultTo(this.raw("gen_random_uuid()"));
       table.uuid("user_id").notNullable();
       table.uuid("group_id").notNullable();
       table.boolean("is_owner").defaultTo(false);

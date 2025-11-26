@@ -16,7 +16,7 @@ app.ready(() => {
   });
 
   io.of(/^\/groups\/.+$/).on("connection", async (socket: Socket) => {
-    const namespace = socket.nsp.name; 
+    const namespace = socket.nsp.name;
     const groupId = namespace.split("/").pop();
 
     try {
@@ -82,17 +82,17 @@ app.ready(() => {
           );
 
           const allSockets = await socket.nsp.fetchSockets();
-          
+
           for (const clientSocket of allSockets) {
             const clientUserId = clientSocket.data.userId;
             const clientUser = await User.find(clientUserId);
-            
+
             if (clientUser) {
               const words = data.content.trim().split(/\s+/);
               const firstWord = words[0] || "";
-              const containsMention = firstWord.startsWith("@") && 
-                                     firstWord.substring(1) === clientUser.username;
-              
+              const containsMention = firstWord.startsWith("@") &&
+                firstWord.substring(1) === clientUser.username;
+
               clientSocket.emit("message", {
                 ...message,
                 containsMention: containsMention,
@@ -118,8 +118,8 @@ app.ready(() => {
           const serializedMessages = messages.all().map((msg: any) => {
             const words = msg.contents.trim().split(/\s+/);
             const firstWord = words[0] || "";
-            const containsMention = user && firstWord.startsWith("@") && 
-                                   firstWord.substring(1) === user.username;
+            const containsMention = user && firstWord.startsWith("@") &&
+              firstWord.substring(1) === user.username;
 
             return {
               id: msg.id,
@@ -142,25 +142,44 @@ app.ready(() => {
 
       socket.on(
         "voteKick",
-        async (data: { userTargetId: string }, callback) => {
+        async (
+          data: { username: string },
+          callback: (response: any) => void,
+        ) => {
           try {
+            if (!data.username) {
+              return callback({ error: "Missing username" });
+            }
+
+            // Find user by username
+            const targetUser = await User.query()
+              .where(
+                "username",
+                data.username,
+              )
+              .first();
+
+            if (!targetUser) {
+              return callback({ error: "User not found" });
+            }
+
             const result = await GroupController.voteKickInternal({
               groupId: groupId!,
-              userTargetId: data.userTargetId,
+              userTargetId: targetUser.id.toString(),
               userCasterId: userId.toString(),
             });
 
             if (result.banned) {
-              io.to(`user:${data.userTargetId}`).emit("kicked", {
+              io.to(`user:${targetUser.id}`).emit("kicked", {
                 groupId,
-                message: "You have been banned from this group",
+                message: `You have been banned from group "${groupId}"`,
               });
             }
 
             callback(result);
           } catch (err) {
             console.error(err);
-            callback({ error: "Failed to vote kick" });
+            callback({ error: "Failed to process vote kick" });
           }
         },
       );

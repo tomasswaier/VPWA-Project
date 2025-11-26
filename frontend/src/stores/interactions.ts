@@ -11,6 +11,8 @@ const page = ref(1);
 const finished = ref(false);
 const messages = ref<SerializedMessage[]>([]);
 const currentGroupId = ref("");
+const targetUser = ref(""); // this is for target user to kick or do something
+// else like revoke ... I am so sorry
 
 const text = ref("");
 const currentlyPeekedMessage = ref("");
@@ -113,8 +115,11 @@ const dialogs: Dialogs = reactive({
 
 const groupLinks = ref<GroupLinkProps[]>([]);
 
-async function loadGroupMembers(index: number, done: () => void): Promise<void> {
-  if(!currentGroupId.value){
+async function loadGroupMembers(
+  index: number,
+  done: () => void,
+): Promise<void> {
+  if (!currentGroupId.value) {
     done();
     return;
   }
@@ -123,13 +128,15 @@ async function loadGroupMembers(index: number, done: () => void): Promise<void> 
     const response = await api.get(`/groups/${currentGroupId.value}/members`);
     const members = response.data;
 
-    displayedMembers.value = members.map((member: { username: string; status: UserStatus }) => ({
+    displayedMembers.value = members.map((
+      member: { username: string; status: UserStatus },
+    ) => ({
       username: member.username,
       status: member.status,
     }));
 
     done();
-} catch (err){
+  } catch (err) {
     const error = err as AxiosError<{ message?: string }>;
     console.error("Error loading members:", error);
 
@@ -143,8 +150,6 @@ async function loadGroupMembers(index: number, done: () => void): Promise<void> 
     done();
   }
 }
-
-
 
 async function loadPublicGroups(
   index: number,
@@ -288,7 +293,7 @@ async function changeGroup(groupId: string) {
   messages.value = [];
   page.value = 1;
 
-  const group = groupLinks.value.find(g => g.id === groupId);
+  const group = groupLinks.value.find((g) => g.id === groupId);
   currentGroupName.value = group?.title || "";
 
   try {
@@ -496,7 +501,8 @@ async function sendMessage() {
           },
         );
         break;
-      case "/quit": // to iste ako /cancel, ale bolo v zadani aj quit, cize dali sme sem obe funkcie
+      case "/quit": // to iste ako /cancel, ale bolo v zadani aj quit, cize dali
+        // sme sem obe funkcie
         void cancelGroup(allArguments.slice(1));
         break;
       case "/cancel":
@@ -517,11 +523,6 @@ async function sendMessage() {
           void joinGroup(allArguments.slice(1));
         }
         break;
-      case "/delete":
-        if (checkMessageCommandParams(allArguments, 1)) {
-          deleteGroup();
-        }
-        break;
       case "/revoke":
         if (checkMessageCommandParams(allArguments, 2)) {
           revokeUser();
@@ -529,6 +530,7 @@ async function sendMessage() {
         break;
       case "/kick":
         if (checkMessageCommandParams(allArguments, 2)) {
+          targetUser.value = allArguments[1]!;
           kickUser();
         }
         break;
@@ -830,7 +832,6 @@ async function leaveGroupAPI(groupId: string): Promise<void> {
   }
 }
 
-
 async function loadUserGroups(): Promise<void> {
   try {
     const response = await api.get("/auth/me", {
@@ -878,9 +879,8 @@ async function cancelGroup(args: string[]) {
       });
       return;
     }
-  
 
-  try {
+    try {
       const response = await api.post(`/groups/${currentGroupId.value}/leave`);
 
       Notify.create({
@@ -982,6 +982,7 @@ export {
   resetGroupMembers,
   sendMessage,
   simulateIncomingInvite,
+  targetUser,
   text,
   typingUsers,
 };
