@@ -1,5 +1,5 @@
 import type { AxiosError } from "axios";
-import { Notify } from "quasar";
+import { Notify} from "quasar";
 import { reactive, ref } from "vue";
 
 import { api } from "../boot/axios";
@@ -14,6 +14,10 @@ const currentGroupId = ref("");
 
 const text = ref("");
 const currentlyPeekedMessage = ref("");
+
+const notificationsEnabled = ref(true);
+const mentionOnlyNotifications = ref(false);
+
 export interface PaginatedMessages {
   data: SerializedMessage[];
   meta: {
@@ -28,7 +32,6 @@ const loggedUser = ref<User | null>(null);
 function initLoggedUser() {
   if (localStorage.getItem("user") != "") {
     const user: User = JSON.parse(localStorage.getItem("user")!);
-
     loggedUser.value = { username: user?.username, status: user?.status };
   }
 }
@@ -67,11 +70,7 @@ interface LoginResponse {
 
 const typingUsers = ref<TypingUser[]>([
   { name: "Johnka", message: "I have yet to introduce myself moew moew moe w" },
-  {
-    name: "Emanuel",
-    message:
-      "Ja som Emanuel Emanuel som ja a ja ak budem Emanuel tak budem Emanuel",
-  },
+  { name: "Emanuel", message: "Ja som Emanuel Emanuel som ja a ja ak budem Emanuel tak budem Emanuel" },
 ]);
 
 const publicGroups = ref<GroupLinkProps[]>([]);
@@ -113,8 +112,89 @@ const dialogs: Dialogs = reactive({
 
 const groupLinks = ref<GroupLinkProps[]>([]);
 
+async function requestNotificationPermission(): Promise<boolean> {
+  if (!("Notification" in window)) {
+    return false;
+  }
+  if (Notification.permission === "granted") {
+    return true;
+  }
+  if (Notification.permission !== "denied") {
+    const permission = await Notification.requestPermission();
+    return permission === "granted";
+  }
+  return false;
+}
+
+function showNativeNotification(title: string, body: string, onClick?: () => void) {
+  if (!("Notification" in window)) return;
+  if (Notification.permission !== "granted") return;
+
+  const notification = new Notification(title, {
+    body: body,
+    icon: "/favicon.ico",
+    tag: "chat-notification",
+  });
+
+  if (onClick) {
+    notification.onclick = () => {
+      window.focus();
+      onClick();
+      notification.close();
+    };
+  }
+
+  setTimeout(() => notification.close(), 5000);
+}
+
+function shouldShowNotification(message: SerializedMessage, appVisible: boolean): boolean {
+  if (!notificationsEnabled.value) return false;
+  if (appVisible) return false;
+  if (loggedUser.value?.status === "do_not_disturb") return false;
+  if (message.author === loggedUser.value?.username) return false;
+  if (loggedUser.value?.status === "idle" && !message.containsMention) return false;
+  if (mentionOnlyNotifications.value && !message.containsMention) return false;
+  return true;
+}
+
+function handleIncomingMessage(message: SerializedMessage, appVisible: boolean) {
+  console.log("handleIncomingMessage called", {
+    message,
+    appVisible,
+    status: loggedUser.value?.status,
+    notificationsEnabled: notificationsEnabled.value,
+    shouldShow: shouldShowNotification(message, appVisible)
+  });
+
+  if (shouldShowNotification(message, appVisible)) {
+    const bodyPreview = message.content.length > 50 
+      ? message.content.substring(0, 50) + "..." 
+      : message.content;
+    showNativeNotification(
+      `${message.author}`,
+      bodyPreview,
+      () => {
+        if (message.groupId && message.groupId !== currentGroupId.value) {
+          void changeGroup(message.groupId);
+        }
+      }
+    );
+  }
+}
+
+function setNotificationsEnabled(enabled: boolean) {
+  notificationsEnabled.value = enabled;
+  if (enabled) {
+    void requestNotificationPermission();
+  }
+}
+
+function setMentionOnlyNotifications(enabled: boolean) {
+  mentionOnlyNotifications.value = enabled;
+}
+
 async function loadGroupMembers(index: number, done: () => void): Promise<void> {
-  if(!currentGroupId.value){
+  if (!currentGroupId.value) {
     done();
     return;
   }
@@ -129,7 +209,7 @@ async function loadGroupMembers(index: number, done: () => void): Promise<void> 
     }));
 
     done();
-} catch (err){
+  } catch (err) {
     const error = err as AxiosError<{ message?: string }>;
     console.error("Error loading members:", error);
 
@@ -144,16 +224,9 @@ async function loadGroupMembers(index: number, done: () => void): Promise<void> 
   }
 }
 
-
-
-async function loadPublicGroups(
-  index: number,
-  done: () => void,
-): Promise<void> {
+async function loadPublicGroups(index: number, done: () => void): Promise<void> {
   try {
-    console.log("Calling API /groups...");
     const response = await api.get("/groups");
-    console.log("Response:", response);
     const groups = response.data;
 
     publicGroups.value = groups.map((group: {
@@ -174,7 +247,6 @@ async function loadPublicGroups(
   } catch (err) {
     const error = err as AxiosError<{ message?: string }>;
     console.error("Full error:", err);
-    console.error("Error response:", error.response);
 
     Notify.create({
       message: error.response?.data?.message || "Failed to load groups",
@@ -188,10 +260,7 @@ async function loadPublicGroups(
   }
 }
 
-async function loadInvitations(
-  index: number,
-  done: () => void,
-): Promise<void> {
+async function loadInvitations(index: number, done: () => void): Promise<void> {
   try {
     const response = await api.get("/groups/invitations");
     const invites = response.data;
@@ -282,6 +351,7 @@ async function declineInvitation(groupId: string): Promise<void> {
 function resetGroupMembers(): void {
   displayedMembers.value = [];
 }
+
 async function changeGroup(groupId: string) {
   currentGroupId.value = groupId;
   finished.value = false;
@@ -294,9 +364,7 @@ async function changeGroup(groupId: string) {
   try {
     const channel = channelService.join(groupId);
     await channelService.setGroup(groupId);
-    const loadedMessages: PaginatedMessages = await channel.loadMessages(
-      page.value,
-    );
+    const loadedMessages: PaginatedMessages = await channel.loadMessages(page.value);
     messages.value = loadedMessages.data;
     page.value++;
 
@@ -313,20 +381,15 @@ async function loadMessages(index: number, done: () => void) {
   }
 
   try {
-    const res = await api.get(
-      `/groups/${currentGroupId.value}/messages?page=${page.value}`,
-    );
+    const res = await api.get(`/groups/${currentGroupId.value}/messages?page=${page.value}`);
 
-    const newMessages: SerializedMessage[] = (res.data as SerializedMessage[])
-      .map(
-        (msg) => ({
-          id: msg.id,
-          content: msg.content,
-          author: msg.author,
-          containsMention: msg.containsMention,
-          groupId: msg.groupId || "",
-        }),
-      );
+    const newMessages: SerializedMessage[] = (res.data as SerializedMessage[]).map((msg) => ({
+      id: msg.id,
+      content: msg.content,
+      author: msg.author,
+      containsMention: msg.containsMention,
+      groupId: msg.groupId || "",
+    }));
 
     if (!newMessages.length) {
       finished.value = true;
@@ -373,10 +436,11 @@ async function joinGroup(args: string[]) {
   }
 
   try {
-    const response = await api.post(
-      "/groups/join-or-create",
-      { name: groupName, isPrivate: isPrivate, description: description },
-    );
+    const response = await api.post("/groups/join-or-create", {
+      name: groupName,
+      isPrivate: isPrivate,
+      description: description,
+    });
 
     Notify.create({
       message: response.data.message,
@@ -398,13 +462,8 @@ async function joinGroup(args: string[]) {
     });
   }
 }
-function checkMessageCommandParams(
-  input: string[],
-  expectedCount: number,
-): boolean {
-  /*
-   * todo:make a popup which tells user what they did wrong
-   */
+
+function checkMessageCommandParams(input: string[], expectedCount: number): boolean {
   if (input.length < expectedCount) {
     console.log("too few parameters. User /help to show all commands");
     return false;
@@ -425,78 +484,18 @@ async function sendMessage() {
         break;
       case "/help":
         messages.value.push(
-          {
-            content: `Available commads
-          `,
-            groupId: currentGroupId.value,
-            id: 0,
-            author: "",
-            containsMention: false,
-          },
-          {
-            content:
-              `/cancel = leave group (also deletes group if you're the creator)
-          `,
-            groupId: currentGroupId.value,
-            id: 0,
-            author: "",
-            containsMention: false,
-          },
-          {
-            content: `/list = lists all public groups
-          `,
-            groupId: currentGroupId.value,
-            id: 0,
-            author: "",
-            containsMention: false,
-          },
-          {
-            content:
-              `/join [groupName] "[private]" [group description] = join public group with this groupName, join private group with groupName or create group by groupName. if argument [private] is present the created group will be private. All text unrecognized text will be treated as group description
-          `,
-            groupId: currentGroupId.value,
-            id: 0,
-            author: "",
-            containsMention: false,
-          },
-          {
-            content: `/delete = delete the current group if you are the owner
-          `,
-            groupId: currentGroupId.value,
-            id: 0,
-            author: "",
-            containsMention: false,
-          },
-          {
-            content:
-              `/revoke [userName] = group creator may use this to revoke ban of a user.
-          `,
-            groupId: currentGroupId.value,
-            id: 0,
-            author: "",
-            containsMention: false,
-          },
-          {
-            content: `Available commads
-          `,
-            groupId: currentGroupId.value,
-            id: 0,
-            author: "",
-            containsMention: false,
-          },
-          {
-            content:
-              `          /kick [userName] = casts a vote to kick user userName out of this group. If three people cast this vote the person will be kicked out.
-
-          `,
-            groupId: currentGroupId.value,
-            id: 0,
-            author: "",
-            containsMention: false,
-          },
+          { content: `Available commads`, groupId: currentGroupId.value, id: 0, author: "", containsMention: false },
+          { content: `/cancel = leave group (also deletes group if you're the creator)`, groupId: currentGroupId.value, id: 0, author: "", containsMention: false },
+          { content: `/list = lists all public groups`, groupId: currentGroupId.value, id: 0, author: "", containsMention: false },
+          { content: `/join [groupName] "[private]" [group description] = join public group with this groupName, join private group with groupName or create group by groupName. if argument [private] is present the created group will be private. All text unrecognized text will be treated as group description`, groupId: currentGroupId.value, id: 0, author: "", containsMention: false },
+          { content: `/delete = delete the current group if you are the owner`, groupId: currentGroupId.value, id: 0, author: "", containsMention: false },
+          { content: `/revoke [userName] = group creator may use this to revoke ban of a user.`, groupId: currentGroupId.value, id: 0, author: "", containsMention: false },
+          { content: `/kick [userName] = casts a vote to kick user userName out of this group. If three people cast this vote the person will be kicked out.`, groupId: currentGroupId.value, id: 0, author: "", containsMention: false },
+          { content: `/notifications on|off = enable or disable notifications`, groupId: currentGroupId.value, id: 0, author: "", containsMention: false },
+          { content: `/mentions on|off = receive notifications only for mentions`, groupId: currentGroupId.value, id: 0, author: "", containsMention: false },
         );
         break;
-      case "/quit": // to iste ako /cancel, ale bolo v zadani aj quit, cize dali sme sem obe funkcie
+      case "/quit":
         void cancelGroup(allArguments.slice(1));
         break;
       case "/cancel":
@@ -532,6 +531,24 @@ async function sendMessage() {
           kickUser();
         }
         break;
+      case "/notifications":
+        if (allArguments[1] === "on") {
+          setNotificationsEnabled(true);
+          Notify.create({ message: "Notifications enabled", color: "positive", position: "top", timeout: 2000 });
+        } else if (allArguments[1] === "off") {
+          setNotificationsEnabled(false);
+          Notify.create({ message: "Notifications disabled", color: "info", position: "top", timeout: 2000 });
+        }
+        break;
+      case "/mentions":
+        if (allArguments[1] === "on") {
+          setMentionOnlyNotifications(true);
+          Notify.create({ message: "Mention-only notifications enabled", color: "positive", position: "top", timeout: 2000 });
+        } else if (allArguments[1] === "off") {
+          setMentionOnlyNotifications(false);
+          Notify.create({ message: "Mention-only notifications disabled", color: "info", position: "top", timeout: 2000 });
+        }
+        break;
       default: {
         await sendMessageUsingSocket(inputText);
         break;
@@ -540,6 +557,7 @@ async function sendMessage() {
     text.value = "";
   }
 }
+
 async function sendMessageUsingSocket(inputText: string) {
   if (!currentGroupId.value) {
     console.error("No group selected");
@@ -583,10 +601,7 @@ async function register(
   }
 }
 
-async function login(
-  username: string,
-  password: string,
-) {
+async function login(username: string, password: string) {
   try {
     const response = await api.post<LoginResponse>("/auth/login", {
       username: username,
@@ -608,6 +623,8 @@ async function login(
       status: response.data.status as UserStatus,
     };
 
+    void requestNotificationPermission();
+
     await router.push("/");
     return user;
   } catch (err) {
@@ -621,6 +638,7 @@ async function login(
     }
   }
 }
+
 async function logout() {
   try {
     await api.post("/auth/logout");
@@ -640,6 +658,7 @@ async function logout() {
     }
   }
 }
+
 async function changeStatus(status: string) {
   try {
     const result = await api.post("user/changeStatus", { status }, {
@@ -698,8 +717,6 @@ async function inviteToGroup(args: string[]) {
   }
 
   const username = args[0];
-  // const groupName = currentGroupId; // args.slice(1).join(" ");
-  //  const group = groupLinks.value.find((g) => g.title === groupName);
 
   if (!username || username == "") {
     Notify.create({
@@ -710,7 +727,7 @@ async function inviteToGroup(args: string[]) {
   }
 
   try {
-    const channel = channelService.join(currentGroupId.value); // ChannelSocketManager
+    const channel = channelService.join(currentGroupId.value);
     const response = await channel.inviteUser(username);
 
     Notify.create({
@@ -830,7 +847,6 @@ async function leaveGroupAPI(groupId: string): Promise<void> {
   }
 }
 
-
 async function loadUserGroups(): Promise<void> {
   try {
     const response = await api.get("/auth/me", {
@@ -878,9 +894,8 @@ async function cancelGroup(args: string[]) {
       });
       return;
     }
-  
 
-  try {
+    try {
       const response = await api.post(`/groups/${currentGroupId.value}/leave`);
 
       Notify.create({
@@ -959,6 +974,7 @@ export {
   displayedMembers,
   getUsernameAbbr,
   groupLinks,
+  handleIncomingMessage,
   invitations,
   inviteToGroup,
   joinGroup,
@@ -974,13 +990,18 @@ export {
   loggedUser,
   login,
   logout,
+  mentionOnlyNotifications,
   messages,
+  notificationsEnabled,
   openCreateGroupDialog,
   openDialog,
   publicGroups,
   register,
+  requestNotificationPermission,
   resetGroupMembers,
   sendMessage,
+  setMentionOnlyNotifications,
+  setNotificationsEnabled,
   simulateIncomingInvite,
   text,
   typingUsers,

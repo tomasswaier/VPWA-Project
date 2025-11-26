@@ -30,11 +30,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useQuasar } from 'quasar';
 import GroupLink from 'components/GroupLink.vue';
 import HeaderToolbar from 'components/HeaderToolbar.vue';
 import { dialogs, openCreateGroupDialog, listGroups, listPublicGroups, groupLinks, loadUserGroups } from '../stores/interactions';
+import { initChannelsQuasar } from '../stores/channels';
 import type { Dialogs } from '../stores/interactions';
 
+const $q = useQuasar();
 const leftDrawerOpen = ref(false);
 
 function toggleDrawer() {
@@ -46,6 +49,7 @@ function updateDialog(dialogName: keyof Dialogs, value: boolean) {
 }
 
 onMounted(() => {
+  initChannelsQuasar($q);
   void loadUserGroups();
 });
 </script>
