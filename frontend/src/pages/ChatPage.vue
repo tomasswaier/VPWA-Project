@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch, nextTick } from 'vue';
 import DialogManager from 'components/DialogManager.vue';
 import type { Dialogs } from '../stores/interactions';
 import {
@@ -90,9 +90,8 @@ interface Props {
   }
 }
 
-
 const props = defineProps<Props>();
-const someoneTyping=true;
+const someoneTyping = true;
 
 interface Emits {
   (e: 'update-dialog', dialogName: keyof Dialogs, value: boolean): void
@@ -105,6 +104,21 @@ const chatContainer = ref<HTMLElement | null>(null);
 function updateDialog(dialogName: keyof Dialogs, value: boolean) {
   emit('update-dialog', dialogName, value);
 }
+
+function scrollToBottom() {
+  if (chatContainer.value) {
+    void nextTick(() => {
+      chatContainer.value!.scrollTop = chatContainer.value!.scrollHeight;
+    });
+  }
+}
+
+watch(
+  () => messages.value.length,
+  () => {
+    scrollToBottom();
+  }
+);
 </script>
 
 <style scoped>

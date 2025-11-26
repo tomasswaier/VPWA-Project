@@ -82,7 +82,7 @@ function closeDialog() {
 async function handleAcceptInvitation(groupId: string | undefined) {
   if (!groupId) return;
   await acceptInvitation(groupId);
-  closeDialog();
+  invitations.value = invitations.value.filter(inv => inv.id !== groupId);
 }
 
 async function handleDeclineInvitation(groupId: string | undefined) {

@@ -64,7 +64,7 @@
                   <q-icon name="do_not_disturb" color="yellow" size="xs" />
                 </q-item-section>
                 <q-item-section>
-                  <q-item-label>Do Not Disturb</q-item-label>
+                  <q-item-label>Idle</q-item-label>
                 </q-item-section>
               </q-item>
               <q-item clickable v-ripple @click="changeStatus('do_not_disturb')" :active="loggedUser?.status == 'do_not_disturb'">

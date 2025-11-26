@@ -1,14 +1,21 @@
 import { defineStore } from "pinia";
 
 import type { RawMessage, SerializedMessage } from "../contracts/Message";
+import type { QVueGlobals } from "quasar";
 import channelService from "../services/ChannelService";
-import { messages } from "../stores/interactions";
+import { messages, handleIncomingMessage } from "../stores/interactions";
 
 export interface ChannelsStateInterface {
   loading: boolean;
   error: Error | null;
   messages: { [channel: string]: SerializedMessage[] };
   active: string | null;
+}
+
+let $q: QVueGlobals | null = null;
+
+export function initChannelsQuasar(quasar: QVueGlobals) {
+  $q = quasar;
 }
 
 export const useChannelsStore = defineStore("channels", {
@@ -36,9 +43,8 @@ export const useChannelsStore = defineStore("channels", {
       try {
         this.loading = true;
         this.error = null;
-        // const messages = await channelService.join(channel).loadMessages();
         const response = await channelService.join(channel).loadMessages();
-        this.messages[channel] = response.data; // not response
+        this.messages[channel] = response.data;
       } catch (err: unknown) {
         if (err instanceof Error) {
           this.error = err;
@@ -65,13 +71,9 @@ export const useChannelsStore = defineStore("channels", {
     async addMessage(
       { channel, message }: { channel: string; message: RawMessage },
     ) {
-      // const newMessage =
-      await channelService.in(channel)?.sendMessage(
-        message,
-      );
-
-      // this.messages[channel]!.push(newMessage!);
+      await channelService.in(channel)?.sendMessage(message);
     },
+
     receiveMessage(
       { channel, message }: { channel: string; message: SerializedMessage },
     ) {
@@ -79,8 +81,10 @@ export const useChannelsStore = defineStore("channels", {
         this.messages[channel] = [];
       }
       this.messages[channel]?.push(message);
-      console.log(message);
       messages.value.push(message);
+
+      const appVisible = $q?.appVisible ?? true;
+      handleIncomingMessage(message, appVisible);
     },
 
     setActive(channel: string) {
