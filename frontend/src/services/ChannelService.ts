@@ -6,6 +6,12 @@ import type { PaginatedMessages } from "../stores/interactions";
 import { SocketManager } from "./SocketManager";
 
 // import type { BootParams } from "./SocketManager";
+interface InviteResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
 type JoinGroupResponse = {
   success: true;
 } | { error: string };
@@ -13,6 +19,18 @@ type JoinGroupResponse = {
 export class ChannelSocketManager extends SocketManager {
   constructor(groupId: string) {
     super(`/groups/${groupId}`); // namespace per groupId
+  }
+  public inviteUser(
+    username: string,
+  ): Promise<{ success: boolean; message?: string }> {
+    return new Promise((resolve, reject) => {
+      this.socket.emit("inviteUser", { username }, (res: InviteResponse) => {
+        if (res.error) {
+          return reject(new Error(res.error));
+        }
+        resolve(res);
+      });
+    });
   }
 
   public subscribe(): void {

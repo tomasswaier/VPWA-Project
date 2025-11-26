@@ -1,5 +1,6 @@
 import { boot } from "quasar/wrappers";
 import type { Manager } from "socket.io-client";
+import PrivateService from "src/services/PrivateService";
 import { SocketManager } from "src/services/SocketManager";
 
 declare module "@vue/runtime-core" {
@@ -16,5 +17,6 @@ export default boot((params) => {
   // boot socket manager here to allow to subscribe sockets to events and use
   // store
   SocketManager.boot(params);
+  PrivateService.boot();
 });
 export { io };
