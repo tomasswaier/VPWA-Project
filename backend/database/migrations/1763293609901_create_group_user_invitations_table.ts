@@ -12,7 +12,7 @@ export default class GroupUserInvitations extends BaseSchema {
 
       table.foreign("group_id").references("groups.id").onDelete("CASCADE");
 
-      table.primary(["user_id", "group_id"]);
+      // table.primary(["user_id", "group_id"]);
     });
   }
 

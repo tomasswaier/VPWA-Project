@@ -498,9 +498,8 @@ async function sendMessage() {
         }
         break;
       case "/invite":
-
         if (checkMessageCommandParams(allArguments, 2)) {
-          inviteToGroup(allArguments.slice(1));
+          void inviteToGroup(allArguments.slice(1));
         }
         break;
       case "/list":
@@ -681,52 +680,38 @@ function deleteGroup() {
 }
 
 async function inviteToGroup(args: string[]) {
-  if (args.length < 2) {
+  if (args.length != 1) {
     Notify.create({
-      message: "Usage: /invite username groupName",
+      message: "Usage: /invite username ",
       color: "warning",
-      position: "top",
-      timeout: 2000,
     });
     return;
   }
 
   const username = args[0];
-  const groupName = args.slice(1).join(" ");
+  // const groupName = currentGroupId; // args.slice(1).join(" ");
+  //  const group = groupLinks.value.find((g) => g.title === groupName);
 
-  const group = groupLinks.value.find((g) => g.title === groupName);
-
-  if (!group || !group.id) {
+  if (!username || username == "") {
     Notify.create({
-      message: `Group "${groupName}" not found`,
+      message: `No username specified`,
       color: "negative",
-      icon: "error",
-      position: "top",
-      timeout: 2000,
     });
     return;
   }
 
   try {
-    const response = await api.post(`/groups/${group.id}/invite`, {
-      username: username,
-    });
+    const channel = channelService.join(currentGroupId.value); // ChannelSocketManager
+    const response = await channel.inviteUser(username);
 
     Notify.create({
-      message: response.data.message || `Invitation sent to ${username}`,
+      message: response.message || `Invitation sent to ${username}`,
       color: "positive",
-      icon: "mail",
-      position: "top",
-      timeout: 2500,
     });
   } catch (err) {
-    const error = err as AxiosError<{ message?: string }>;
     Notify.create({
-      message: error.response?.data?.message || "Failed to send invitation",
+      message: (err as Error).message || "Failed to send invitation",
       color: "negative",
-      icon: "error",
-      position: "top",
-      timeout: 2000,
     });
   }
 }
