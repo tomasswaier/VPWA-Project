@@ -14,7 +14,6 @@ app.ready(async () => {
 
       const threshold = DateTime.now().minus({ days: 30 });
 
-      // Find groups with no messages in last 30 days
       const oldGroups = await Group.query().whereNotIn(
         "id",
         (q) =>

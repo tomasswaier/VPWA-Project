@@ -322,7 +322,7 @@ export default class GroupController {
     }
     const targetIsMember = await GroupUser.query()
       .where("group_id", groupId)
-      .andWhere("user_id", userId)
+      .andWhere("user_id", targetId)
       .first();
     if (!targetIsMember) {
       return false;
@@ -347,18 +347,18 @@ export default class GroupController {
     const group: Group = await Group.findOrFail(groupId);
     const isCasterOwner: boolean = await this.isOwner(groupId, userCasterId);
     const isTargetOwner: boolean = await this.isOwner(groupId, userTargetId);
-    if (
-      await GroupController.confirmUserMembership(
-        groupId,
-        userCasterId,
-        userTargetId,
-      )
-    ) {
-      return {
-        banned: false,
-        message: "Not everyone is part of this channel",
-      };
-    }
+    // if (
+    //   !await GroupController.confirmUserMembership(
+    //     groupId,
+    //     userCasterId,
+    //     userTargetId,
+    //   )
+    //) {
+    //   return {
+    //     banned: false,
+    //     message: "Not everyone is part of this channel",
+    //   };
+    // }
 
     if ((group.isPrivate && !isCasterOwner) || isTargetOwner) {
       return {
