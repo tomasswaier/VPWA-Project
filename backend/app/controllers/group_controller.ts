@@ -308,6 +308,27 @@ export default class GroupController {
       );
     }
   }
+  private static async confirmUserMembership(
+    groupId: string,
+    userId: string,
+    targetId: string,
+  ) {
+    const userIsMember = await GroupUser.query()
+      .where("group_id", groupId)
+      .andWhere("user_id", userId)
+      .first();
+    if (!userIsMember) {
+      return false;
+    }
+    const targetIsMember = await GroupUser.query()
+      .where("group_id", groupId)
+      .andWhere("user_id", userId)
+      .first();
+    if (!targetIsMember) {
+      return false;
+    }
+    return true;
+  }
 
   public static async voteKick(params: {
     groupId: string;
@@ -326,6 +347,18 @@ export default class GroupController {
     const group: Group = await Group.findOrFail(groupId);
     const isCasterOwner: boolean = await this.isOwner(groupId, userCasterId);
     const isTargetOwner: boolean = await this.isOwner(groupId, userTargetId);
+    if (
+      await GroupController.confirmUserMembership(
+        groupId,
+        userCasterId,
+        userTargetId,
+      )
+    ) {
+      return {
+        banned: false,
+        message: "Not everyone is part of this channel",
+      };
+    }
 
     if ((group.isPrivate && !isCasterOwner) || isTargetOwner) {
       return {
@@ -345,10 +378,7 @@ export default class GroupController {
     const voteCount = Number(totalVotes?.$extras.count || 0);
 
     console.log("voteCoutn:" + voteCount);
-    if (
-      (group.isPrivate && isCasterOwner && voteCount >= 1) ||
-      voteCount >= 3
-    ) {
+    if ((isCasterOwner && voteCount >= 1) || voteCount >= 3) {
       await GroupUserBan.create({ groupId, userId: userTargetId });
       await GroupUser.query().where({ groupId, userId: userTargetId }).delete();
       await GroupUserKick.query().where({ groupId, userTargetId }).delete();

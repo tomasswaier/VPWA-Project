@@ -3,16 +3,16 @@ import MessagesController from "#controllers/messages_controller";
 import GroupUser from "#models/group_user";
 import GroupUserInvitation from "#models/group_user_invitation";
 import User from "#models/user";
-import { Secret } from "@adonisjs/core/helpers";
+import {Secret} from "@adonisjs/core/helpers";
 import app from "@adonisjs/core/services/app";
 import server from "@adonisjs/core/services/server";
-import { Server, Socket } from "socket.io";
+import {Server, Socket} from "socket.io";
 
 app.ready(() => {
   console.info("WS is running");
 
   const io = new Server(server.getNodeServer(), {
-    cors: { origin: "*" },
+    cors : {origin : "*"},
   });
 
   io.of(/^\/groups\/.+$/).on("connection", async (socket: Socket) => {
@@ -34,51 +34,51 @@ app.ready(() => {
       socket.data.userId = userId;
 
       const membership = await GroupUser.query()
-        .where("group_id", groupId!)
-        .andWhere("user_id", userId.toString())
-        .first();
+                             .where("group_id", groupId!)
+                             .andWhere("user_id", userId.toString())
+                             .first();
       if (!membership) {
         return socket.disconnect(true);
       }
 
       socket.on(
-        "inviteUser",
-        async (data: { username: string }, callback: (res: any) => void) => {
-          try {
-            const { username } = data;
+          "inviteUser",
+          async (data: {username: string}, callback: (res: any) => void) => {
+            try {
+              const {username} = data;
 
-            const targetUser = await User.query().where("username", username)
-              .first();
-            if (!targetUser) {
-              return callback({ error: `User "${username}" not found` });
+              const targetUser =
+                  await User.query().where("username", username).first();
+              if (!targetUser) {
+                return callback({error : `User "${username}" not found`});
+              }
+
+              await GroupUserInvitation.create({
+                userId : targetUser.id,
+                groupId,
+              });
+
+              io.of("/user").to(`user:${targetUser.id}`).emit("invited", {
+                groupId,
+                inviterId : userId,
+              });
+
+              callback(
+                  {success : true, message : `Invitation sent to ${username}`},
+              );
+            } catch (err) {
+              console.error("Failed to invite user:", err);
+              callback({error : "Failed to send invitation"});
             }
-
-            await GroupUserInvitation.create({
-              userId: targetUser.id,
-              groupId,
-            });
-
-            io.of("/user").to(`user:${targetUser.id}`).emit("invited", {
-              groupId,
-              inviterId: userId,
-            });
-
-            callback(
-              { success: true, message: `Invitation sent to ${username}` },
-            );
-          } catch (err) {
-            console.error("Failed to invite user:", err);
-            callback({ error: "Failed to send invitation" });
-          }
-        },
+          },
       );
 
-      socket.on("sendMessage", async (data: { content: string }, callback) => {
+      socket.on("sendMessage", async (data: {content: string}, callback) => {
         try {
           const message = await MessagesController.sendMessage(
-            userId.toString(),
-            groupId!,
-            data.content,
+              userId.toString(),
+              groupId!,
+              data.content,
           );
 
           const allSockets = await socket.nsp.fetchSockets();
@@ -90,12 +90,13 @@ app.ready(() => {
             if (clientUser) {
               const words = data.content.trim().split(/\s+/);
               const firstWord = words[0] || "";
-              const containsMention = firstWord.startsWith("@") &&
-                firstWord.substring(1) === clientUser.username;
+              const containsMention =
+                  firstWord.startsWith("@") &&
+                  firstWord.substring(1) === clientUser.username;
 
               clientSocket.emit("message", {
                 ...message,
-                containsMention: containsMention,
+                containsMention : containsMention,
               });
             }
           }
@@ -103,7 +104,7 @@ app.ready(() => {
           callback(message);
         } catch (err) {
           console.error(err);
-          callback({ error: "Failed to send message" });
+          callback({error : "Failed to send message"});
         }
       });
 
@@ -111,81 +112,82 @@ app.ready(() => {
         try {
           const user = await User.find(userId);
           const messages = await MessagesController.loadMessages(
-            groupId!,
-            page,
+              groupId!,
+              page,
           );
 
           const serializedMessages = messages.all().map((msg: any) => {
             const words = msg.contents.trim().split(/\s+/);
             const firstWord = words[0] || "";
             const containsMention = user && firstWord.startsWith("@") &&
-              firstWord.substring(1) === user.username;
+                                    firstWord.substring(1) === user.username;
 
             return {
-              id: msg.id,
-              content: msg.contents,
-              author: msg.user ? msg.user.username : "Unknown",
-              containsMention: containsMention,
-              groupId: msg.groupId,
+              id : msg.id,
+              content : msg.contents,
+              author : msg.user ? msg.user.username : "Unknown",
+              containsMention : containsMention,
+              groupId : msg.groupId,
             };
           });
 
           callback({
-            data: serializedMessages,
-            meta: messages.getMeta(),
+            data : serializedMessages,
+            meta : messages.getMeta(),
           });
         } catch (err) {
           console.error(err);
-          callback({ error: "Failed to load messages" });
+          callback({error : "Failed to load messages"});
         }
       });
 
       socket.on(
-        "voteKick",
-        async (
-          data: { username: string },
-          callback: (response: any) => void,
-        ) => {
-          try {
-            if (!data.username) {
-              return callback({ error: "Missing username" });
-            }
+          "voteKick",
+          async (
+              data: {username: string},
+              callback: (response: any) => void,
+              ) => {
+            try {
+              if (!data.username) {
+                return callback({error : "Missing username"});
+              }
 
-            // Find user by username
-            const targetUser = await User.query()
-              .where(
-                "username",
-                data.username,
-              )
-              .first();
+              // Find user by username
+              const targetUser = await User.query()
+                                     .where(
+                                         "username",
+                                         data.username,
+                                         )
+                                     .first();
 
-            if (!targetUser) {
-              return callback({ error: "User not found" });
-            }
+              if (!targetUser) {
+                return callback({error : "User not found"});
+              }
 
-            const result = await GroupController.voteKick({
-              groupId: groupId!,
-              userTargetId: targetUser.id.toString(),
-              userCasterId: userId.toString(),
-            });
-            console.log(result);
-
-            console.log(result.banned);
-            if (result.banned) {
-              console.log(targetUser.id);
-              io.of("/user").to(`user:${targetUser.id}`).emit("kicked", {
-                groupId,
-                message: `You have been banned from group "${groupId}"`,
+              const result = await GroupController.voteKick({
+                groupId : groupId!,
+                userTargetId : targetUser.id.toString(),
+                userCasterId : userId.toString(),
               });
-            }
+              console.log(result);
 
-            callback(result);
-          } catch (err) {
-            console.error(err);
-            callback({ error: "Failed to process vote kick" });
-          }
-        },
+              console.log(result.banned);
+              if (result.banned) {
+                console.log(targetUser.id);
+                io.of("/user").to(`user:${targetUser.id}`).emit("kicked", {
+                  groupId,
+                  message : `You have been banned from group "${groupId}"`,
+                });
+              }
+
+              callback(result);
+            } catch (err) {
+              console.error(err);
+              callback({error : "Failed to process vote kick"});
+            }
+          },
       );
+
     } catch (err) {
       console.error("Socket auth error:", err);
       socket.disconnect(true);
@@ -215,7 +217,7 @@ app.ready(() => {
 
       socket.on("ackNotification", (notificationId: string) => {
         console.log(
-          `User ${userId} acknowledged notification ${notificationId}`,
+            `User ${userId} acknowledged notification ${notificationId}`,
         );
       });
     } catch (err) {
@@ -225,6 +227,6 @@ app.ready(() => {
   });
 
   global.notifyGroupDeletion = (groupId: string) => {
-    io.of(`/groups/${groupId}`).emit("groupDeleted", { groupId });
+    io.of(`/groups/${groupId}`).emit("groupDeleted", {groupId});
   };
 });

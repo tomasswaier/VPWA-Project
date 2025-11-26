@@ -1,9 +1,9 @@
-import type {AxiosError} from "axios";
-import {Notify} from "quasar";
-import {reactive, ref} from "vue";
+import type { AxiosError } from "axios";
+import { Notify } from "quasar";
+import { reactive, ref } from "vue";
 
-import {api} from "../boot/axios";
-import type {SerializedMessage} from "../contracts/Message";
+import { api } from "../boot/axios";
+import type { SerializedMessage } from "../contracts/Message";
 import router from "../router";
 import channelService from "../services/ChannelService";
 
@@ -23,21 +23,23 @@ const mentionOnlyNotifications = ref(false);
 export interface PaginatedMessages {
   data: SerializedMessage[];
   meta: {
-    total: number; perPage : number; currentPage : number;
-    [k: string] : unknown;
+    total: number;
+    perPage: number;
+    currentPage: number;
+    [k: string]: unknown;
   };
 }
 
-const loggedUser = ref<User|null>(null);
+const loggedUser = ref<User | null>(null);
 function initLoggedUser() {
   if (localStorage.getItem("user") != "") {
     const user: User = JSON.parse(localStorage.getItem("user")!);
-    loggedUser.value = {username : user?.username, status : user?.status};
+    loggedUser.value = { username: user?.username, status: user?.status };
   }
 }
 initLoggedUser();
 
-export type UserStatus = "online"|"do_not_disturb"|"offline"|"idle";
+export type UserStatus = "online" | "do_not_disturb" | "offline" | "idle";
 interface User {
   username: string;
   status: UserStatus;
@@ -69,11 +71,11 @@ interface LoginResponse {
 }
 
 const typingUsers = ref<TypingUser[]>([
-  {name : "Johnka", message : "I have yet to introduce myself moew moew moe w"},
+  { name: "Johnka", message: "I have yet to introduce myself moew moew moe w" },
   {
-    name : "Emanuel",
-    message :
-        "Ja som Emanuel Emanuel som ja a ja ak budem Emanuel tak budem Emanuel"
+    name: "Emanuel",
+    message:
+      "Ja som Emanuel Emanuel som ja a ja ak budem Emanuel tak budem Emanuel",
   },
 ]);
 
@@ -102,16 +104,16 @@ interface Dialogs {
   userMessagePeek: boolean;
 }
 const dialogs: Dialogs = reactive({
-  groupLeave : false,
-  groupList : false,
-  groupListPublic : false,
-  groupCreate : false,
-  groupDelete : false,
-  groupInvite : false,
-  groupUserList : false,
-  userKick : false,
-  userRevoke : false,
-  userMessagePeek : false,
+  groupLeave: false,
+  groupList: false,
+  groupListPublic: false,
+  groupCreate: false,
+  groupDelete: false,
+  groupInvite: false,
+  groupUserList: false,
+  userKick: false,
+  userRevoke: false,
+  userMessagePeek: false,
 });
 
 const groupLinks = ref<GroupLinkProps[]>([]);
@@ -130,17 +132,22 @@ async function requestNotificationPermission(): Promise<boolean> {
   return false;
 }
 
-function showNativeNotification(title: string, body: string,
-                                onClick?: () => void) {
-  if (!("Notification" in window))
+function showNativeNotification(
+  title: string,
+  body: string,
+  onClick?: () => void,
+) {
+  if (!("Notification" in window)) {
     return;
-  if (Notification.permission !== "granted")
+  }
+  if (Notification.permission !== "granted") {
     return;
+  }
 
   const notification = new Notification(title, {
-    body : body,
-    icon : "/favicon.ico",
-    tag : "chat-notification",
+    body: body,
+    icon: "/favicon.ico",
+    tag: "chat-notification",
   });
 
   if (onClick) {
@@ -154,37 +161,47 @@ function showNativeNotification(title: string, body: string,
   setTimeout(() => notification.close(), 5000);
 }
 
-function shouldShowNotification(message: SerializedMessage,
-                                appVisible: boolean): boolean {
-  if (!notificationsEnabled.value)
+function shouldShowNotification(
+  message: SerializedMessage,
+  appVisible: boolean,
+): boolean {
+  if (!notificationsEnabled.value) {
     return false;
-  if (appVisible)
+  }
+  if (appVisible) {
     return false;
-  if (loggedUser.value?.status === "do_not_disturb")
+  }
+  if (loggedUser.value?.status === "do_not_disturb") {
     return false;
-  if (message.author === loggedUser.value?.username)
+  }
+  if (message.author === loggedUser.value?.username) {
     return false;
-  if (loggedUser.value?.status === "idle" && !message.containsMention)
+  }
+  if (loggedUser.value?.status === "idle" && !message.containsMention) {
     return false;
-  if (mentionOnlyNotifications.value && !message.containsMention)
+  }
+  if (mentionOnlyNotifications.value && !message.containsMention) {
     return false;
+  }
   return true;
 }
 
-function handleIncomingMessage(message: SerializedMessage,
-                               appVisible: boolean) {
+function handleIncomingMessage(
+  message: SerializedMessage,
+  appVisible: boolean,
+) {
   console.log("handleIncomingMessage called", {
     message,
     appVisible,
-    status : loggedUser.value?.status,
-    notificationsEnabled : notificationsEnabled.value,
-    shouldShow : shouldShowNotification(message, appVisible)
+    status: loggedUser.value?.status,
+    notificationsEnabled: notificationsEnabled.value,
+    shouldShow: shouldShowNotification(message, appVisible),
   });
 
   if (shouldShowNotification(message, appVisible)) {
     const bodyPreview = message.content.length > 50
-                            ? message.content.substring(0, 50) + "..."
-                            : message.content;
+      ? message.content.substring(0, 50) + "..."
+      : message.content;
     showNativeNotification(`${message.author}`, bodyPreview, () => {
       if (message.groupId && message.groupId !== currentGroupId.value) {
         void changeGroup(message.groupId);
@@ -204,8 +221,10 @@ function setMentionOnlyNotifications(enabled: boolean) {
   mentionOnlyNotifications.value = enabled;
 }
 
-async function loadGroupMembers(index: number,
-                                done: () => void): Promise<void> {
+async function loadGroupMembers(
+  index: number,
+  done: () => void,
+): Promise<void> {
   if (!currentGroupId.value) {
     done();
     return;
@@ -215,62 +234,62 @@ async function loadGroupMembers(index: number,
     const response = await api.get(`/groups/${currentGroupId.value}/members`);
     const members = response.data;
 
-    displayedMembers.value =
-        members.map((
-                        member: {username: string; status : UserStatus},
-                        ) => ({
-                      username : member.username,
-                      status : member.status,
-                    }));
+    displayedMembers.value = members.map((
+      member: { username: string; status: UserStatus },
+    ) => ({
+      username: member.username,
+      status: member.status,
+    }));
 
     done();
   } catch (err) {
-    const error = err as AxiosError<{message?: string}>;
+    const error = err as AxiosError<{ message?: string }>;
     console.error("Error loading members:", error);
 
     Notify.create({
-      message : error.response?.data?.message || "Failed to load group members",
-      color : "negative",
-      icon : "error",
-      position : "top",
-      timeout : 2000,
+      message: error.response?.data?.message || "Failed to load group members",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
     });
     done();
   }
 }
 
 async function loadPublicGroups(
-    index: number,
-    done: () => void,
-    ): Promise<void> {
+  index: number,
+  done: () => void,
+): Promise<void> {
   try {
     const response = await api.get("/groups");
     const groups = response.data;
 
-    publicGroups.value =
-        groups.map((group: {
-                     id: string; name : string; description : string | null;
-                     isPrivate : boolean;
-                   }) => ({
-                     id : group.id || "",
-                     title : group.name,
-                     caption : group.description || "",
-                     link : "",
-                     isPrivate : group.isPrivate,
-                     isOwner : false,
-                   }));
+    publicGroups.value = groups.map((group: {
+      id: string;
+      name: string;
+      description: string | null;
+      isPrivate: boolean;
+    }) => ({
+      id: group.id || "",
+      title: group.name,
+      caption: group.description || "",
+      link: "",
+      isPrivate: group.isPrivate,
+      isOwner: false,
+    }));
 
     done();
   } catch (err) {
-    const error = err as AxiosError<{message?: string}>;
+    const error = err as AxiosError<{ message?: string }>;
     console.error("Full error:", err);
 
     Notify.create({
-      message : error.response?.data?.message || "Failed to load groups",
-      color : "negative",
-      icon : "error",
-      position : "top",
-      timeout : 2000,
+      message: error.response?.data?.message || "Failed to load groups",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
     });
 
     done();
@@ -282,30 +301,31 @@ async function loadInvitations(index: number, done: () => void): Promise<void> {
     const response = await api.get("/groups/invitations");
     const invites = response.data;
 
-    invitations.value =
-        invites.map((invite: {
-                      id: string; name : string; description : string | null;
-                      isPrivate : boolean;
-                    }) => ({
-                      id : invite.id || "",
-                      title : invite.name,
-                      caption : invite.description || "",
-                      link : "",
-                      isPrivate : invite.isPrivate,
-                      isOwner : false,
-                    }));
+    invitations.value = invites.map((invite: {
+      id: string;
+      name: string;
+      description: string | null;
+      isPrivate: boolean;
+    }) => ({
+      id: invite.id || "",
+      title: invite.name,
+      caption: invite.description || "",
+      link: "",
+      isPrivate: invite.isPrivate,
+      isOwner: false,
+    }));
 
     done();
   } catch (err) {
-    const error = err as AxiosError<{message?: string}>;
+    const error = err as AxiosError<{ message?: string }>;
     console.error("Full error:", err);
 
     Notify.create({
-      message : error.response?.data?.message || "Failed to load invitations",
-      color : "negative",
-      icon : "error",
-      position : "top",
-      timeout : 2000,
+      message: error.response?.data?.message || "Failed to load invitations",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
     });
 
     done();
@@ -317,24 +337,24 @@ async function acceptInvitation(groupId: string): Promise<void> {
     const response = await api.post(`/groups/${groupId}/accept-invitation`);
 
     Notify.create({
-      message : response.data.message || "Invitation accepted!",
-      color : "positive",
-      icon : "check_circle",
-      position : "top",
-      timeout : 2000,
+      message: response.data.message || "Invitation accepted!",
+      color: "positive",
+      icon: "check_circle",
+      position: "top",
+      timeout: 2000,
     });
 
     await loadUserGroups();
   } catch (err) {
-    const error = err as AxiosError<{message?: string}>;
+    const error = err as AxiosError<{ message?: string }>;
     console.error("Error accepting invitation:", error);
 
     Notify.create({
-      message : error.response?.data?.message || "Failed to accept invitation",
-      color : "negative",
-      icon : "error",
-      position : "top",
-      timeout : 2000,
+      message: error.response?.data?.message || "Failed to accept invitation",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
     });
   }
 }
@@ -344,27 +364,29 @@ async function declineInvitation(groupId: string): Promise<void> {
     const response = await api.post(`/groups/${groupId}/decline-invitation`);
 
     Notify.create({
-      message : response.data.message || "Invitation declined",
-      color : "info",
-      icon : "cancel",
-      position : "top",
-      timeout : 2000,
+      message: response.data.message || "Invitation declined",
+      color: "info",
+      icon: "cancel",
+      position: "top",
+      timeout: 2000,
     });
   } catch (err) {
-    const error = err as AxiosError<{message?: string}>;
+    const error = err as AxiosError<{ message?: string }>;
     console.error("Error declining invitation:", error);
 
     Notify.create({
-      message : error.response?.data?.message || "Failed to decline invitation",
-      color : "negative",
-      icon : "error",
-      position : "top",
-      timeout : 2000,
+      message: error.response?.data?.message || "Failed to decline invitation",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
     });
   }
 }
 
-function resetGroupMembers(): void { displayedMembers.value = []; }
+function resetGroupMembers(): void {
+  displayedMembers.value = [];
+}
 
 async function changeGroup(groupId: string) {
   currentGroupId.value = groupId;
@@ -378,8 +400,9 @@ async function changeGroup(groupId: string) {
   try {
     const channel = channelService.join(groupId);
     await channelService.setGroup(groupId);
-    const loadedMessages: PaginatedMessages =
-        await channel.loadMessages(page.value);
+    const loadedMessages: PaginatedMessages = await channel.loadMessages(
+      page.value,
+    );
     messages.value = loadedMessages.data;
     page.value++;
 
@@ -397,17 +420,17 @@ async function loadMessages(index: number, done: () => void) {
 
   try {
     const res = await api.get(
-        `/groups/${currentGroupId.value}/messages?page=${page.value}`);
+      `/groups/${currentGroupId.value}/messages?page=${page.value}`,
+    );
 
-    const newMessages: SerializedMessage[] =
-        (res.data as SerializedMessage[]).map((msg) => ({
-                                                id : msg.id,
-                                                content : msg.content,
-                                                author : msg.author,
-                                                containsMention :
-                                                    msg.containsMention,
-                                                groupId : msg.groupId || "",
-                                              }));
+    const newMessages: SerializedMessage[] = (res.data as SerializedMessage[])
+      .map((msg) => ({
+        id: msg.id,
+        content: msg.content,
+        author: msg.author,
+        containsMention: msg.containsMention,
+        groupId: msg.groupId || "",
+      }));
 
     if (!newMessages.length) {
       finished.value = true;
@@ -430,10 +453,10 @@ function getUsernameAbbr(username: string) {
 async function joinGroup(args: string[]) {
   if (args.length === 0) {
     Notify.create({
-      message : "Usage: /join groupName [private] [description]",
-      color : "warning",
-      position : "top",
-      timeout : 2000,
+      message: "Usage: /join groupName [private] [description]",
+      color: "warning",
+      position: "top",
+      timeout: 2000,
     });
     return;
   }
@@ -455,34 +478,36 @@ async function joinGroup(args: string[]) {
 
   try {
     const response = await api.post("/groups/join-or-create", {
-      name : groupName,
-      isPrivate : isPrivate,
-      description : description,
+      name: groupName,
+      isPrivate: isPrivate,
+      description: description,
     });
 
     Notify.create({
-      message : response.data.message,
-      color : "positive",
-      icon : "check_circle",
-      position : "top",
-      timeout : 2000,
+      message: response.data.message,
+      color: "positive",
+      icon: "check_circle",
+      position: "top",
+      timeout: 2000,
     });
 
     await loadUserGroups();
   } catch (err) {
-    const error = err as AxiosError<{message?: string}>;
+    const error = err as AxiosError<{ message?: string }>;
     Notify.create({
-      message : error.response?.data?.message || "Failed to join/create group",
-      color : "negative",
-      icon : "error",
-      position : "top",
-      timeout : 2000,
+      message: error.response?.data?.message || "Failed to join/create group",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
     });
   }
 }
 
-function checkMessageCommandParams(input: string[],
-                                   expectedCount: number): boolean {
+function checkMessageCommandParams(
+  input: string[],
+  expectedCount: number,
+): boolean {
   if (input.length < expectedCount) {
     console.log("too few parameters. User /help to show all commands");
     return false;
@@ -498,156 +523,157 @@ async function sendMessage() {
   if (inputText) {
     const firstArg: string = allArguments[0] as string;
     switch (firstArg) {
-    case "/test":
-      console.log(messages);
-      break;
-    case "/help":
-      messages.value.push(
+      case "/test":
+        console.log(messages);
+        break;
+      case "/help":
+        messages.value.push(
           {
-            content : `Available commads`,
-            groupId : currentGroupId.value,
-            id : 0,
-            author : "",
-            containsMention : false
+            content: `Available commads`,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
           },
           {
-            content :
-                `/cancel = leave group (also deletes group if you're the creator)`,
-            groupId : currentGroupId.value,
-            id : 0,
-            author : "",
-            containsMention : false
+            content:
+              `/cancel = leave group (also deletes group if you're the creator)`,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
           },
           {
-            content : `/list = lists all public groups`,
-            groupId : currentGroupId.value,
-            id : 0,
-            author : "",
-            containsMention : false
+            content: `/list = lists all public groups`,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
           },
           {
-            content :
-                `/join [groupName] "[private]" [group description] = join public group with this groupName, join private group with groupName or create group by groupName. if argument [private] is present the created group will be private. All text unrecognized text will be treated as group description`,
-            groupId : currentGroupId.value,
-            id : 0,
-            author : "",
-            containsMention : false
+            content:
+              `/join [groupName] "[private]" [group description] = join public group with this groupName, join private group with groupName or create group by groupName. if argument [private] is present the created group will be private. All text unrecognized text will be treated as group description`,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
           },
           {
-            content : `/delete = delete the current group if you are the owner`,
-            groupId : currentGroupId.value,
-            id : 0,
-            author : "",
-            containsMention : false
+            content: `/delete = delete the current group if you are the owner`,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
           },
           {
-            content :
-                `/revoke [userName] = group creator may use this to revoke ban of a user.`,
-            groupId : currentGroupId.value,
-            id : 0,
-            author : "",
-            containsMention : false
+            content:
+              `/revoke [userName] = group creator may use this to revoke ban of a user.`,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
           },
           {
-            content :
-                `/kick [userName] = casts a vote to kick user userName out of this group. If three people cast this vote the person will be kicked out.`,
-            groupId : currentGroupId.value,
-            id : 0,
-            author : "",
-            containsMention : false
+            content:
+              `/kick [userName] = casts a vote to kick user userName out of this group. If three people cast this vote the person will be kicked out.`,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
           },
           {
-            content : `/notifications on|off = enable or disable notifications`,
-            groupId : currentGroupId.value,
-            id : 0,
-            author : "",
-            containsMention : false
+            content: `/notifications on|off = enable or disable notifications`,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
           },
           {
-            content :
-                `/mentions on|off = receive notifications only for mentions`,
-            groupId : currentGroupId.value,
-            id : 0,
-            author : "",
-            containsMention : false
+            content:
+              `/mentions on|off = receive notifications only for mentions`,
+            groupId: currentGroupId.value,
+            id: 0,
+            author: "",
+            containsMention: false,
           },
-      );
-      break;
-    case "/quit": // to iste ako /cancel, ale bolo v zadani aj quit, cize dali
-      // sme sem obe funkcie
-      void cancelGroup(allArguments.slice(1));
-      break;
-    case "/cancel":
-      void cancelGroup(allArguments.slice(1));
-      break;
-    case "/invite":
-      if (checkMessageCommandParams(allArguments, 2)) {
-        void inviteToGroup(allArguments.slice(1));
+        );
+        break;
+      case "/quit": // to iste ako /cancel, ale bolo v zadani aj quit, cize dali
+        // sme sem obe funkcie
+        void cancelGroup(allArguments.slice(1));
+        break;
+      case "/cancel":
+        void cancelGroup(allArguments.slice(1));
+        break;
+      case "/invite":
+        if (checkMessageCommandParams(allArguments, 2)) {
+          void inviteToGroup(allArguments.slice(1));
+        }
+        break;
+      case "/list":
+        if (checkMessageCommandParams(allArguments, 1)) {
+          listGroupUsers();
+        }
+        break;
+      case "/join":
+        if (checkMessageCommandParams(allArguments, 2)) {
+          void joinGroup(allArguments.slice(1));
+        }
+        break;
+      case "/revoke":
+        if (checkMessageCommandParams(allArguments, 2)) {
+          targetUser.value = allArguments[1]!;
+          revokeUser();
+        }
+        break;
+      case "/kick":
+        if (checkMessageCommandParams(allArguments, 2)) {
+          targetUser.value = allArguments[1]!;
+          kickUser();
+        }
+        break;
+      case "/notifications":
+        if (allArguments[1] === "on") {
+          setNotificationsEnabled(true);
+          Notify.create({
+            message: "Notifications enabled",
+            color: "positive",
+            position: "top",
+            timeout: 2000,
+          });
+        } else if (allArguments[1] === "off") {
+          setNotificationsEnabled(false);
+          Notify.create({
+            message: "Notifications disabled",
+            color: "info",
+            position: "top",
+            timeout: 2000,
+          });
+        }
+        break;
+      case "/mentions":
+        if (allArguments[1] === "on") {
+          setMentionOnlyNotifications(true);
+          Notify.create({
+            message: "Mention-only notifications enabled",
+            color: "positive",
+            position: "top",
+            timeout: 2000,
+          });
+        } else if (allArguments[1] === "off") {
+          setMentionOnlyNotifications(false);
+          Notify.create({
+            message: "Mention-only notifications disabled",
+            color: "info",
+            position: "top",
+            timeout: 2000,
+          });
+        }
+        break;
+      default: {
+        await sendMessageUsingSocket(inputText);
+        break;
       }
-      break;
-    case "/list":
-      if (checkMessageCommandParams(allArguments, 1)) {
-        listGroupUsers();
-      }
-      break;
-    case "/join":
-      if (checkMessageCommandParams(allArguments, 2)) {
-        void joinGroup(allArguments.slice(1));
-      }
-      break;
-    case "/revoke":
-      if (checkMessageCommandParams(allArguments, 2)) {
-        revokeUser();
-      }
-      break;
-    case "/kick":
-      if (checkMessageCommandParams(allArguments, 2)) {
-        targetUser.value = allArguments[1]!;
-        kickUser();
-      }
-      break;
-    case "/notifications":
-      if (allArguments[1] === "on") {
-        setNotificationsEnabled(true);
-        Notify.create({
-          message : "Notifications enabled",
-          color : "positive",
-          position : "top",
-          timeout : 2000
-        });
-      } else if (allArguments[1] === "off") {
-        setNotificationsEnabled(false);
-        Notify.create({
-          message : "Notifications disabled",
-          color : "info",
-          position : "top",
-          timeout : 2000
-        });
-      }
-      break;
-    case "/mentions":
-      if (allArguments[1] === "on") {
-        setMentionOnlyNotifications(true);
-        Notify.create({
-          message : "Mention-only notifications enabled",
-          color : "positive",
-          position : "top",
-          timeout : 2000
-        });
-      } else if (allArguments[1] === "off") {
-        setMentionOnlyNotifications(false);
-        Notify.create({
-          message : "Mention-only notifications disabled",
-          color : "info",
-          position : "top",
-          timeout : 2000
-        });
-      }
-      break;
-    default: {
-      await sendMessageUsingSocket(inputText);
-      break;
-    }
     }
     text.value = "";
   }
@@ -666,21 +692,21 @@ async function sendMessageUsingSocket(inputText: string) {
 }
 
 async function register(
-    username: string,
-    first_name: string,
-    last_name: string,
-    email: string,
-    password: string,
-    passwordConfirmation: string,
+  username: string,
+  first_name: string,
+  last_name: string,
+  email: string,
+  password: string,
+  passwordConfirmation: string,
 ) {
   try {
     const response = await api.post<RegisterResponse>("/auth/register", {
-      username : username,
-      first_name : first_name,
-      last_name : last_name,
-      email : email,
+      username: username,
+      first_name: first_name,
+      last_name: last_name,
+      email: email,
       password,
-      password_confirmation : passwordConfirmation,
+      password_confirmation: passwordConfirmation,
     });
 
     return response.data;
@@ -699,11 +725,11 @@ async function register(
 async function login(username: string, password: string) {
   try {
     const response = await api.post<LoginResponse>("/auth/login", {
-      username : username,
-      password : password,
+      username: username,
+      password: password,
     });
 
-    const {token, ...user} = response.data;
+    const { token, ...user } = response.data;
     if (token == "[redacted]") {
       console.log("ten token je proste redacted");
     }
@@ -714,8 +740,8 @@ async function login(username: string, password: string) {
       await router.push("/login");
     }
     loggedUser.value = {
-      username : response.data.username,
-      status : response.data.status as UserStatus,
+      username: response.data.username,
+      status: response.data.status as UserStatus,
     };
 
     void requestNotificationPermission();
@@ -756,15 +782,15 @@ async function logout() {
 
 async function changeStatus(status: string) {
   try {
-    const result = await api.post("user/changeStatus", {status}, {
-      headers : {
-        Authorization : `Bearer ${localStorage.getItem("access_token")}`,
+    const result = await api.post("user/changeStatus", { status }, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
       },
     });
 
     loggedUser.value = {
-      username : loggedUser.value!.username,
-      status : result.data.status as UserStatus,
+      username: loggedUser.value!.username,
+      status: result.data.status as UserStatus,
     };
     const user = JSON.parse(localStorage.getItem("user")!);
     user!.status = result.data.status as UserStatus;
@@ -786,19 +812,27 @@ function listGroupUsers() {
   dialogs.groupUserList = true;
 }
 
-function listPublicGroups() { dialogs.groupListPublic = true; }
+function listPublicGroups() {
+  dialogs.groupListPublic = true;
+}
 
-function listGroups() { dialogs.groupList = true; }
+function listGroups() {
+  dialogs.groupList = true;
+}
 
-function openCreateGroupDialog() { dialogs.groupCreate = true; }
+function openCreateGroupDialog() {
+  dialogs.groupCreate = true;
+}
 
-function deleteGroup() { dialogs.groupDelete = true; }
+function deleteGroup() {
+  dialogs.groupDelete = true;
+}
 
 async function inviteToGroup(args: string[]) {
   if (args.length != 1) {
     Notify.create({
-      message : "Usage: /invite username ",
-      color : "warning",
+      message: "Usage: /invite username ",
+      color: "warning",
     });
     return;
   }
@@ -807,8 +841,8 @@ async function inviteToGroup(args: string[]) {
 
   if (!username || username == "") {
     Notify.create({
-      message : `No username specified`,
-      color : "negative",
+      message: `No username specified`,
+      color: "negative",
     });
     return;
   }
@@ -818,13 +852,13 @@ async function inviteToGroup(args: string[]) {
     const response = await channel.inviteUser(username);
 
     Notify.create({
-      message : response.message || `Invitation sent to ${username}`,
-      color : "positive",
+      message: response.message || `Invitation sent to ${username}`,
+      color: "positive",
     });
   } catch (err) {
     Notify.create({
-      message : (err as Error).message || "Failed to send invitation",
-      color : "negative",
+      message: (err as Error).message || "Failed to send invitation",
+      color: "negative",
     });
   }
 }
@@ -834,41 +868,45 @@ function openDialog(user: TypingUser) {
   dialogs.userMessagePeek = true;
 }
 
-function kickUser() { dialogs.userKick = true; }
+function kickUser() {
+  dialogs.userKick = true;
+}
 
-function revokeUser() { dialogs.userRevoke = true; }
+function revokeUser() {
+  dialogs.userRevoke = true;
+}
 
 function simulateIncomingInvite(userName: string, groupName: string) {
   Notify.create({
-    message : `${userName} has invited you to ${groupName}`,
-    color : "primary",
-    icon : "group_add",
-    position : "top-right",
-    timeout : 5000,
-    actions : [
+    message: `${userName} has invited you to ${groupName}`,
+    color: "primary",
+    icon: "group_add",
+    position: "top-right",
+    timeout: 5000,
+    actions: [
       {
-        label : "Accept",
-        color : "white",
-        handler : () => {
+        label: "Accept",
+        color: "white",
+        handler: () => {
           Notify.create({
-            message : `You joined ${groupName}!`,
-            color : "positive",
-            icon : "check_circle",
-            position : "top",
-            timeout : 2000,
+            message: `You joined ${groupName}!`,
+            color: "positive",
+            icon: "check_circle",
+            position: "top",
+            timeout: 2000,
           });
         },
       },
       {
-        label : "Decline",
-        color : "white",
-        handler : () => {
+        label: "Decline",
+        color: "white",
+        handler: () => {
           Notify.create({
-            message : "Invitation declined",
-            color : "red",
-            icon : "cancel",
-            position : "top",
-            timeout : 2000,
+            message: "Invitation declined",
+            color: "red",
+            icon: "cancel",
+            position: "top",
+            timeout: 2000,
           });
         },
       },
@@ -881,24 +919,24 @@ async function joinPublicGroup(groupId: string): Promise<void> {
     const response = await api.post(`/groups/${groupId}/join`);
 
     Notify.create({
-      message : response.data.message || "Successfully joined the group!",
-      color : "positive",
-      icon : "check_circle",
-      position : "top",
-      timeout : 2000,
+      message: response.data.message || "Successfully joined the group!",
+      color: "positive",
+      icon: "check_circle",
+      position: "top",
+      timeout: 2000,
     });
 
     await loadUserGroups();
   } catch (err) {
-    const error = err as AxiosError<{message?: string}>;
+    const error = err as AxiosError<{ message?: string }>;
     console.error("Error joining group:", error);
 
     Notify.create({
-      message : error.response?.data?.message || "Failed to join group",
-      color : "negative",
-      icon : "error",
-      position : "top",
-      timeout : 2000,
+      message: error.response?.data?.message || "Failed to join group",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
     });
   }
 }
@@ -908,24 +946,24 @@ async function leaveGroupAPI(groupId: string): Promise<void> {
     const response = await api.post(`/groups/${groupId}/leave`);
 
     Notify.create({
-      message : response.data.message || "Successfully left the group",
-      color : "positive",
-      icon : "check_circle",
-      position : "top",
-      timeout : 2000,
+      message: response.data.message || "Successfully left the group",
+      color: "positive",
+      icon: "check_circle",
+      position: "top",
+      timeout: 2000,
     });
 
     await loadUserGroups();
   } catch (err) {
-    const error = err as AxiosError<{message?: string}>;
+    const error = err as AxiosError<{ message?: string }>;
     console.error("Error leaving group:", error);
 
     Notify.create({
-      message : error.response?.data?.message || "Failed to leave group",
-      color : "negative",
-      icon : "error",
-      position : "top",
-      timeout : 2000,
+      message: error.response?.data?.message || "Failed to leave group",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
     });
   }
 }
@@ -933,33 +971,35 @@ async function leaveGroupAPI(groupId: string): Promise<void> {
 async function loadUserGroups(): Promise<void> {
   try {
     const response = await api.get("/auth/me", {
-      headers : {
-        Authorization : `Bearer ${localStorage.getItem("access_token")}`,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
       },
     });
     const user = response.data;
 
     if (user.groups) {
       groupLinks.value = user.groups.map(
-          (group: {
-            id: string; name : string; description : string | null;
-            isPrivate : boolean;
-            is_private : boolean;
-          }) => ({
-            id : group.id,
-            title : group.name,
-            caption : group.description || "",
-            link : "",
-            isPrivate : group.isPrivate || group.is_private,
-            isOwner : false,
-          }),
+        (group: {
+          id: string;
+          name: string;
+          description: string | null;
+          isPrivate: boolean;
+          is_private: boolean;
+        }) => ({
+          id: group.id,
+          title: group.name,
+          caption: group.description || "",
+          link: "",
+          isPrivate: group.isPrivate || group.is_private,
+          isOwner: false,
+        }),
       );
       if (groupLinks.value[0] && groupLinks.value[0].id) {
         await changeGroup(groupLinks.value[0].id);
       }
     }
   } catch (err) {
-    const error = err as AxiosError<{message?: string}>;
+    const error = err as AxiosError<{ message?: string }>;
     console.error("Error loading user groups:", error);
   }
 }
@@ -968,10 +1008,10 @@ async function cancelGroup(args: string[]) {
   if (args.length === 0) {
     if (!currentGroupId.value) {
       Notify.create({
-        message : "No group is currently selected",
-        color : "warning",
-        position : "top",
-        timeout : 2000,
+        message: "No group is currently selected",
+        color: "warning",
+        position: "top",
+        timeout: 2000,
       });
       return;
     }
@@ -980,22 +1020,22 @@ async function cancelGroup(args: string[]) {
       const response = await api.post(`/groups/${currentGroupId.value}/leave`);
 
       Notify.create({
-        message : response.data.message,
-        color : "positive",
-        icon : "check_circle",
-        position : "top",
-        timeout : 2000,
+        message: response.data.message,
+        color: "positive",
+        icon: "check_circle",
+        position: "top",
+        timeout: 2000,
       });
 
       await loadUserGroups();
     } catch (err) {
-      const error = err as AxiosError<{message?: string}>;
+      const error = err as AxiosError<{ message?: string }>;
       Notify.create({
-        message : error.response?.data?.message || "Failed to leave group",
-        color : "negative",
-        icon : "error",
-        position : "top",
-        timeout : 2000,
+        message: error.response?.data?.message || "Failed to leave group",
+        color: "negative",
+        icon: "error",
+        position: "top",
+        timeout: 2000,
       });
     }
     return;
@@ -1006,11 +1046,11 @@ async function cancelGroup(args: string[]) {
 
   if (!group || !group.id) {
     Notify.create({
-      message : `Group "${groupName}" not found`,
-      color : "negative",
-      icon : "error",
-      position : "top",
-      timeout : 2000,
+      message: `Group "${groupName}" not found`,
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
     });
     return;
   }
@@ -1019,27 +1059,27 @@ async function cancelGroup(args: string[]) {
     const response = await api.post(`/groups/${group.id}/leave`);
 
     Notify.create({
-      message : response.data.message,
-      color : "positive",
-      icon : "check_circle",
-      position : "top",
-      timeout : 2000,
+      message: response.data.message,
+      color: "positive",
+      icon: "check_circle",
+      position: "top",
+      timeout: 2000,
     });
 
     await loadUserGroups();
   } catch (err) {
-    const error = err as AxiosError<{message?: string}>;
+    const error = err as AxiosError<{ message?: string }>;
     Notify.create({
-      message : error.response?.data?.message || "Failed to leave group",
-      color : "negative",
-      icon : "error",
-      position : "top",
-      timeout : 2000,
+      message: error.response?.data?.message || "Failed to leave group",
+      color: "negative",
+      icon: "error",
+      position: "top",
+      timeout: 2000,
     });
   }
 }
 
-export type {Dialogs, GroupLinkProps, TypingUser, User};
+export type { Dialogs, GroupLinkProps, TypingUser, User };
 
 export {
   acceptInvitation,
