@@ -13,7 +13,7 @@
           <q-tooltip class="bg-white text-primary">Close</q-tooltip>
         </q-btn>
       </q-bar>
-      
+
       <q-card-section class="text-center">
         <div class="text-h5 text-white text-weight-bold">Your Invitations</div>
       </q-card-section>
@@ -36,19 +36,19 @@
 
               <q-item-section side>
                 <div class="row q-gutter-sm">
-                  <q-btn 
-                    dense 
-                    round 
-                    icon="check" 
-                    class="text-white bg-positive" 
+                  <q-btn
+                    dense
+                    round
+                    icon="check"
+                    class="text-white bg-positive"
                     aria-label="Accept invitation"
                     @click="handleAcceptInvitation(invitation.id)"
                   />
-                  <q-btn 
-                    dense 
-                    round 
-                    icon="close" 
-                    class="text-white bg-negative" 
+                  <q-btn
+                    dense
+                    round
+                    icon="close"
+                    class="text-white bg-negative"
                     aria-label="Decline invitation"
                     @click="handleDeclineInvitation(invitation.id)"
                   />
