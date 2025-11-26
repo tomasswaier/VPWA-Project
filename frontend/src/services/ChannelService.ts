@@ -6,7 +6,7 @@ import type { PaginatedMessages } from "../stores/interactions";
 import { SocketManager } from "./SocketManager";
 
 // import type { BootParams } from "./SocketManager";
-interface InviteResponse {
+interface Response {
   success: boolean;
   message?: string;
   error?: string;
@@ -24,7 +24,7 @@ export class ChannelSocketManager extends SocketManager {
     username: string,
   ): Promise<{ success: boolean; message?: string }> {
     return new Promise((resolve, reject) => {
-      this.socket.emit("inviteUser", { username }, (res: InviteResponse) => {
+      this.socket.emit("inviteUser", { username }, (res: Response) => {
         if (res.error) {
           return reject(new Error(res.error));
         }
@@ -33,12 +33,44 @@ export class ChannelSocketManager extends SocketManager {
     });
   }
 
+  public kickUser(username: string): Promise<Response> {
+    const groupId = this.namespace.split("/").pop();
+    if (!groupId) {
+      return Promise.reject(new Error("No groupId"));
+    }
+    if (!username) {
+      return Promise.reject(new Error("Missing username"));
+    }
+
+    return new Promise((resolve) => {
+      this.socket.emit(
+        "voteKick",
+        { username },
+        (res: { banned?: boolean; message?: string; error?: string }) => {
+          if (res.error) {
+            resolve({ success: false, error: res.error });
+          } else if (res.banned) {
+            resolve({
+              success: true,
+              message: res.message || "User has been banned",
+            });
+          } else {
+            resolve({
+              success: true,
+              message: res.message || "Vote recorded",
+            });
+          }
+        },
+      );
+    });
+  }
+
   public subscribe(): void {
-    this.socket.off("message"); // clear old listeners
+    this.socket.off("message");
     this.socket.on("message", (message: SerializedMessage) => {
       const channelsStore = useChannelsStore();
       channelsStore.receiveMessage({
-        channel: this.namespace, // keep track of which group
+        channel: this.namespace,
         message,
       });
     });

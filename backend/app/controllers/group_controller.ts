@@ -272,7 +272,6 @@ export default class GroupController {
   }): Promise<{ banned: boolean; message: string }> {
     const { groupId, userTargetId, userCasterId } = params;
 
-    // 1️⃣ Prevent duplicate votes
     const existingVote = await GroupUserKick.query()
       .where({ groupId, userCasterId, userTargetId })
       .first();
@@ -287,9 +286,11 @@ export default class GroupController {
       .where({ groupId, userTargetId })
       .count("* as count")
       .first();
+    console.log("votes total" + totalVotes);
 
     const voteCount = Number(totalVotes?.$extras.count || 0);
 
+    console.log("voteCoutn:" + voteCount);
     if (voteCount >= 3) {
       await GroupUserBan.create({ groupId, userId: userTargetId });
       await GroupUser.query().where({ groupId, userId: userTargetId }).delete();

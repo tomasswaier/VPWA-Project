@@ -11,6 +11,8 @@ const page = ref(1);
 const finished = ref(false);
 const messages = ref<SerializedMessage[]>([]);
 const currentGroupId = ref("");
+const targetUser = ref(""); // this is for target user to kick or do something
+// else like revoke ... I am so sorry
 
 const text = ref("");
 const currentlyPeekedMessage = ref("");
@@ -203,7 +205,9 @@ async function loadGroupMembers(index: number, done: () => void): Promise<void> 
     const response = await api.get(`/groups/${currentGroupId.value}/members`);
     const members = response.data;
 
-    displayedMembers.value = members.map((member: { username: string; status: UserStatus }) => ({
+    displayedMembers.value = members.map((
+      member: { username: string; status: UserStatus },
+    ) => ({
       username: member.username,
       status: member.status,
     }));
@@ -224,7 +228,10 @@ async function loadGroupMembers(index: number, done: () => void): Promise<void> 
   }
 }
 
-async function loadPublicGroups(index: number, done: () => void): Promise<void> {
+async function loadPublicGroups(
+  index: number,
+  done: () => void,
+): Promise<void> {
   try {
     const response = await api.get("/groups");
     const groups = response.data;
@@ -358,7 +365,7 @@ async function changeGroup(groupId: string) {
   messages.value = [];
   page.value = 1;
 
-  const group = groupLinks.value.find(g => g.id === groupId);
+  const group = groupLinks.value.find((g) => g.id === groupId);
   currentGroupName.value = group?.title || "";
 
   try {
@@ -495,7 +502,8 @@ async function sendMessage() {
           { content: `/mentions on|off = receive notifications only for mentions`, groupId: currentGroupId.value, id: 0, author: "", containsMention: false },
         );
         break;
-      case "/quit":
+      case "/quit": // to iste ako /cancel, ale bolo v zadani aj quit, cize dali
+        // sme sem obe funkcie
         void cancelGroup(allArguments.slice(1));
         break;
       case "/cancel":
@@ -516,11 +524,6 @@ async function sendMessage() {
           void joinGroup(allArguments.slice(1));
         }
         break;
-      case "/delete":
-        if (checkMessageCommandParams(allArguments, 1)) {
-          deleteGroup();
-        }
-        break;
       case "/revoke":
         if (checkMessageCommandParams(allArguments, 2)) {
           revokeUser();
@@ -528,6 +531,7 @@ async function sendMessage() {
         break;
       case "/kick":
         if (checkMessageCommandParams(allArguments, 2)) {
+          targetUser.value = allArguments[1]!;
           kickUser();
         }
         break;
@@ -1003,6 +1007,7 @@ export {
   setMentionOnlyNotifications,
   setNotificationsEnabled,
   simulateIncomingInvite,
+  targetUser,
   text,
   typingUsers,
 };
