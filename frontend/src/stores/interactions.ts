@@ -482,14 +482,23 @@ async function joinGroup(args: string[]) {
       isPrivate: isPrivate,
       description: description,
     });
-
-    Notify.create({
-      message: response.data.message,
-      color: "positive",
-      icon: "check_circle",
-      position: "top",
-      timeout: 2000,
-    });
+    if (response.data.error) {
+      Notify.create({
+        message: response.data.error,
+        color: "negative",
+        icon: "error",
+        position: "top",
+        timeout: 2000,
+      });
+    } else {
+      Notify.create({
+        message: response.data.message,
+        color: "positive",
+        icon: "check_circle",
+        position: "top",
+        timeout: 2000,
+      });
+    }
 
     await loadUserGroups();
   } catch (err) {

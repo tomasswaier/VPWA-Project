@@ -168,15 +168,15 @@ app.ready(() => {
                 userTargetId : targetUser.id.toString(),
                 userCasterId : userId.toString(),
               });
-              console.log(result);
 
-              console.log(result.banned);
               if (result.banned) {
                 console.log(targetUser.id);
                 io.of("/user").to(`user:${targetUser.id}`).emit("kicked", {
                   groupId,
                   message : `You have been banned from group "${groupId}"`,
                 });
+              } else {
+                callback({error : result.message});
               }
 
               callback(result);

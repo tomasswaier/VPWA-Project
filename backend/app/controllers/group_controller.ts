@@ -4,6 +4,7 @@ import GroupUserBan from "#models/group_user_ban";
 import GroupUserKick from "#models/group_user_kick";
 import User from "#models/user";
 import { HttpContext } from "@adonisjs/core/http";
+import { group } from "node:console";
 import { randomUUID } from "node:crypto";
 
 export default class GroupController {
@@ -120,7 +121,17 @@ export default class GroupController {
 
         if (isMember) {
           return response.ok(
-            { message: "Group already exists and you are already a member" },
+            { error: "Group already exists and you are already a member" },
+          );
+        }
+        if (
+          await GroupController.isBanned(
+            String(existingGroup.id),
+            String(user?.id),
+          )
+        ) {
+          return response.ok(
+            { error: "You are banned in this group" },
           );
         }
 
@@ -336,7 +347,6 @@ export default class GroupController {
 
     const voteCount = Number(totalVotes?.$extras.count || 0);
 
-    console.log("voteCoutn:" + voteCount);
     if ((isCasterOwner && voteCount >= 1) || voteCount >= 3) {
       await GroupUserBan.create({ groupId, userId: userTargetId });
       await GroupUser.query().where({ groupId, userId: userTargetId }).delete();
