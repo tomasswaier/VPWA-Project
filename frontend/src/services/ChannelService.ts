@@ -1,7 +1,8 @@
 import type { SerializedMessage } from "src/contracts";
 import { useChannelsStore } from "src/stores/channels";
 
-import type { PaginatedMessages } from "../stores/interactions";
+import type { PaginatedMessages, UserStatus} from "../stores/interactions";
+import { updateMemberStatus } from "../stores/interactions";
 
 import { SocketManager } from "./SocketManager";
 
@@ -74,7 +75,15 @@ export class ChannelSocketManager extends SocketManager {
         message,
       });
     });
+    
+    //sem som dal ten socket pre update-ovanie statusu v /list-e
+    this.socket.off("userStatusChanged");
+    this.socket.on("userStatusChanged", (data: { username: string; status: UserStatus }) => {
+      updateMemberStatus(data.username, data.status);
+    });
   }
+
+  
 
   public async joinGroup(): Promise<void> {
     const groupId = this.namespace.split("/").pop();

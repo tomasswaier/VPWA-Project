@@ -15,6 +15,9 @@ app.ready(() => {
     cors : {origin : "*"},
   });
 
+  (global as any).io = io;
+
+
   io.of(/^\/groups\/.+$/).on("connection", async (socket: Socket) => {
     const namespace = socket.nsp.name;
     const groupId = namespace.split("/").pop();

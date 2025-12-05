@@ -388,6 +388,13 @@ function resetGroupMembers(): void {
   displayedMembers.value = [];
 }
 
+function updateMemberStatus(username: string, status: UserStatus): void {
+  const member = displayedMembers.value.find(m => m.username === username);
+  if (member) {
+    member.status = status;
+  }
+}
+
 async function changeGroup(groupId: string) {
   currentGroupId.value = groupId;
   finished.value = false;
@@ -1127,4 +1134,5 @@ export {
   targetUser,
   text,
   typingUsers,
+  updateMemberStatus,
 };
