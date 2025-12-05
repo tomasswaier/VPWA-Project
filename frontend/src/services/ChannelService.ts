@@ -200,5 +200,21 @@ class ChannelService {
     }
     await channel.joinGroup();
   }
+
+  //dc a reconnect pre offline status
+  public disconnectAll(): void {
+    this.channels.forEach((channel) => {
+      channel.disconnect();
+    });
+  }
+
+  public clearAll(): void {
+    this.channels.forEach((channel) => {
+      channel.destroy();
+    });
+    this.channels.clear();
+  }
+
 }
+
 export default new ChannelService();

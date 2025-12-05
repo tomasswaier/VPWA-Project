@@ -55,6 +55,23 @@ app.ready(() => {
               if (!targetUser) {
                 return callback({error : `User "${username}" not found`});
               }
+              //kontrola, ci je user v skupine
+              const existingMember = await GroupUser.query()
+                                    .where("group_id", groupId!)
+                                    .andWhere("user_id", targetUser.id.toString())
+                                    .first();
+              if (existingMember) {
+                return callback({error : `${username} is already a member of this group`});
+              }
+              
+              // Skontroluj či user už nemá pending invitation
+              const existingInvite = await GroupUserInvitation.query()
+                                    .where("group_id", groupId!)
+                                    .andWhere("user_id", targetUser.id.toString())
+                                    .first();
+              if (existingInvite) {
+                return callback({error : `${username} already has a pending invitation`});
+              }
 
               await GroupUserInvitation.create({
                 userId : targetUser.id,

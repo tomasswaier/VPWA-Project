@@ -99,6 +99,7 @@ export abstract class SocketManager implements SocketManagerContract {
     return this.$socket;
   }
 
+
   constructor(public namespace: string) {
     (this.constructor as SocketManagerConstructorContract).addInstance(this);
   }
@@ -163,6 +164,20 @@ export abstract class SocketManager implements SocketManagerContract {
   public destroy(): void {
     (this.constructor as SocketManagerConstructorContract)
       .destroyInstance(this);
+  }
+
+
+  //dc a reconnect pre offline status
+  public disconnect(): void {
+    if (this.$socket) {
+      this.$socket.disconnect();
+    }
+  }
+
+  public reconnect(): void {
+    if (this.$socket) {
+      this.$socket.connect();
+    }
   }
 
   public abstract subscribe(): void;

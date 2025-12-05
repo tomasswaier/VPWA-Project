@@ -57,6 +57,22 @@ export default class GroupController {
         return response.notFound({ message: "Invitation not found" });
       }
 
+      //kontrola či user už nie je v skupine
+      const existingMembership = await GroupUser.query()
+        .where("user_id", user!.id)
+        .where("group_id", params.id)
+        .first();
+
+      if (existingMembership) {
+        //zmaz invite
+        await db.from("group_user_invitation")
+          .where("user_id", user!.id)
+          .where("group_id", params.id)
+          .delete();
+      
+        return response.badRequest({ message: "You are already a member of this group" });
+      }
+
       const group = await Group.findOrFail(params.id);
       await group.related("users").attach([user!.id]);
 

@@ -6,6 +6,7 @@ import { api } from "../boot/axios";
 import type { SerializedMessage } from "../contracts/Message";
 import router from "../router";
 import channelService from "../services/ChannelService";
+import privateService from "../services/PrivateService";
 
 const page = ref(1);
 const finished = ref(false);
@@ -31,13 +32,42 @@ export interface PaginatedMessages {
 }
 
 const loggedUser = ref<User | null>(null);
+
+/*
 function initLoggedUser() {
   if (localStorage.getItem("user") != "") {
     const user: User = JSON.parse(localStorage.getItem("user")!);
     loggedUser.value = { username: user?.username, status: user?.status };
   }
+}*/
+
+
+//updated init funkcia, ze ak mal cavo offline a da refresh, tak sa mu nastavi online
+function initLoggedUser() {
+  if (localStorage.getItem("user") != "") {
+    const user: User = JSON.parse(localStorage.getItem("user")!);
+    
+    //ak bol offline --> da sa online po refreshi
+    if (user?.status === 'offline') {
+      user.status = 'online';
+      localStorage.setItem("user", JSON.stringify(user));
+      
+      api.post("user/changeStatus", { status: 'online' }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      }).catch(err => console.error("Failed to update status on refresh:", err));
+    }
+    
+    loggedUser.value = { username: user?.username, status: user?.status };
+  }
 }
+
 initLoggedUser();
+
+//tiez sucast offline statusu
+const previousStatus = ref<UserStatus | null>(null);
+
 
 export type UserStatus = "online" | "do_not_disturb" | "offline" | "idle";
 interface User {
@@ -336,6 +366,9 @@ async function acceptInvitation(groupId: string): Promise<void> {
   try {
     const response = await api.post(`/groups/${groupId}/accept-invitation`);
 
+    await loadInvitations(0, () => {});
+    await loadUserGroups();
+
     Notify.create({
       message: response.data.message || "Invitation accepted!",
       color: "positive",
@@ -343,8 +376,6 @@ async function acceptInvitation(groupId: string): Promise<void> {
       position: "top",
       timeout: 2000,
     });
-
-    await loadUserGroups();
   } catch (err) {
     const error = err as AxiosError<{ message?: string }>;
     console.error("Error accepting invitation:", error);
@@ -356,6 +387,9 @@ async function acceptInvitation(groupId: string): Promise<void> {
       position: "top",
       timeout: 2000,
     });
+    
+    //refresh aj pri errore
+    await loadInvitations(0, () => {});
   }
 }
 
@@ -370,6 +404,7 @@ async function declineInvitation(groupId: string): Promise<void> {
       position: "top",
       timeout: 2000,
     });
+    await loadInvitations(0, () => {}); //refresh
   } catch (err) {
     const error = err as AxiosError<{ message?: string }>;
     console.error("Error declining invitation:", error);
@@ -403,6 +438,11 @@ async function changeGroup(groupId: string) {
 
   const group = groupLinks.value.find((g) => g.id === groupId);
   currentGroupName.value = group?.title || "";
+
+  if (loggedUser.value?.status === 'offline') {
+    console.log("User is offline, not connecting to group socket");
+    return;
+  }
 
   try {
     const channel = channelService.join(groupId);
@@ -794,15 +834,44 @@ async function changeStatus(status: string) {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
       },
     });
+    
+    const oldStatus = loggedUser.value?.status;
+    const newStatus = result.data.status as UserStatus;
 
     loggedUser.value = {
       username: loggedUser.value!.username,
-      status: result.data.status as UserStatus,
+      status: newStatus,
     };
     const user = JSON.parse(localStorage.getItem("user")!);
-    user!.status = result.data.status as UserStatus;
-
+    user!.status = newStatus;
     localStorage.setItem("user", JSON.stringify(user));
+
+    //iny status --> offline
+    if (newStatus === 'offline') {
+      //odpal vsetky sockety
+      channelService.disconnectAll();
+      privateService.disconnect();
+      console.log("Disconnected all sockets due to offline status");
+    }
+
+    //offline --> iny status
+    if(oldStatus === 'offline' && newStatus !== 'offline') {
+      const savedGroupId = currentGroupId.value;
+      //napojim vsetky sockety a reload
+      channelService.clearAll();
+
+      privateService.reconnect();
+      
+      await loadUserGroups();
+      
+      if (savedGroupId && groupLinks.value.find(g => g.id === savedGroupId)) {
+        await changeGroup(savedGroupId);
+      }
+
+      console.log("Reconnected all sockets");
+    }
+    previousStatus.value = newStatus;
+
   } catch (err) {
     const error = err as AxiosError;
     if (error.response) {
@@ -1123,6 +1192,7 @@ export {
   notificationsEnabled,
   openCreateGroupDialog,
   openDialog,
+  previousStatus,
   publicGroups,
   register,
   requestNotificationPermission,

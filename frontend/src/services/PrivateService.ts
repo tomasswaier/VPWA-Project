@@ -65,6 +65,15 @@ class PrivateService {
   public getSocket() {
     return this.socketManager.socket;
   }
+  
+  //dc a reconnect pre offline status
+  public disconnect() {
+    this.socketManager.disconnect();
+  }
+
+  public reconnect() {
+    this.socketManager.reconnect();
+  }
 }
 
 export default new PrivateService();
