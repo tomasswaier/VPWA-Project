@@ -3,7 +3,7 @@ import { defineStore } from "pinia";
 import type { RawMessage, SerializedMessage } from "../contracts/Message";
 import type { QVueGlobals } from "quasar";
 import channelService from "../services/ChannelService";
-import { messages, handleIncomingMessage } from "../stores/interactions";
+import { messages, handleIncomingMessage, currentGroupId } from "../stores/interactions";
 
 export interface ChannelsStateInterface {
   loading: boolean;
@@ -80,8 +80,13 @@ export const useChannelsStore = defineStore("channels", {
       if (!this.messages[channel]) {
         this.messages[channel] = [];
       }
+
       this.messages[channel]?.push(message);
-      messages.value.push(message);
+      
+      //fix pre - mali sme problem s tym, ze sa posielali spravy do skupin v ktorych dany ani nebol (realne tam neboli, len proste UIko ich zobrazilo)
+      if (message.groupId === currentGroupId.value) { 
+        messages.value.push(message);
+      }
 
       const appVisible = $q?.appVisible ?? true;
       handleIncomingMessage(message, appVisible);
