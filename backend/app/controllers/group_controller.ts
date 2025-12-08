@@ -4,6 +4,7 @@ import GroupUserBan from "#models/group_user_ban";
 import GroupUserKick from "#models/group_user_kick";
 import User from "#models/user";
 import { HttpContext } from "@adonisjs/core/http";
+import { group } from "node:console";
 import { randomUUID } from "node:crypto";
 
 export default class GroupController {
@@ -136,7 +137,17 @@ export default class GroupController {
 
         if (isMember) {
           return response.ok(
-            { message: "Group already exists and you are already a member" },
+            { error: "Group already exists and you are already a member" },
+          );
+        }
+        if (
+          await GroupController.isBanned(
+            String(existingGroup.id),
+            String(user?.id),
+          )
+        ) {
+          return response.ok(
+            { error: "You are banned in this group" },
           );
         }
 
@@ -242,108 +253,79 @@ export default class GroupController {
       .where("group_id", groupId)
       .andWhere("user_id", userId)
       .first();
-
     return !!bannedRecord; // true if record exists, false otherwise
   }
 
-  async invite({ params, request, response, auth }: HttpContext) {
-    const user = auth.use("access_tokens").user;
-    const { username } = request.body();
-
-    if (!username || username.trim() === "") {
-      return response.badRequest({ message: "Username is required" });
-    }
+  public static async invite(
+    inviterId: string,
+    target: User,
+    groupId: string,
+  ) {
+    // const inviter = User.find(inviterId);
 
     try {
-      const group = await Group.findOrFail(params.id);
+      const group = await Group.findOrFail(groupId);
       await group.load("users");
 
-      const isMember = group.users.some((u) => u.id === user!.id);
+      // inviter must be a member
+      const isMember = group.users.some((u) => u.id === inviterId);
       if (!isMember) {
-        return response.forbidden(
-          { message: "You are not a member of this group" },
-        );
+        return {
+          error: "You are not a member of this group",
+        };
       }
-
-      const invitedUser = await User.findBy("username", username);
-      if (!invitedUser) {
-        return response.notFound({ message: `User "${username}" not found` });
-      }
-      const isGroupOwner = await GroupController.isOwner(
+      const isInviterOwner = await GroupController.isOwner(
         group.id,
-        invitedUser.id,
+        inviterId,
       );
       const isUserBanned = await GroupController.isBanned(
         group.id,
-        invitedUser.id,
+        target.id,
       );
-      if (group.isPrivate && !isGroupOwner) {
-        return response.forbidden(
-          { message: "You are not owner of this group" },
-        );
-      } else if (group.isPrivate && isGroupOwner && isUserBanned) {
-        await GroupUserBan.query()
-          .where({ groupId: group.id, userId: invitedUser.id })
-          .delete();
-      } else if (isUserBanned) {
-        return response.forbidden(
-          { message: `${username} is banned from this group` },
-        );
+
+      // only owner may unban by invitation
+      if (isUserBanned && !isInviterOwner) {
+        return {
+          error: `${target.username} is banned from this group`,
+        };
       }
 
-      const isAlreadyMember = group.users.some((u) => u.id === invitedUser.id);
+      if (group.isPrivate && !isInviterOwner) {
+        return { error: "Only group owner can invite users" };
+      }
+
+      const isAlreadyMember = group.users.some((u) => u.id === target.id);
       if (isAlreadyMember) {
-        return response.badRequest(
-          { message: `${username} is already a member` },
-        );
+        return {
+          error: `${target.username} is already a member`,
+        };
       }
 
       const db = (await import("@adonisjs/lucid/services/db")).default;
 
-      const existingInvite = await db.from("group_user_invitation")
-        .where("user_id", invitedUser.id)
-        .where("group_id", group.id)
-        .first();
+      await db.transaction(async (trx) => {
+        if (isUserBanned && isInviterOwner) {
+          console.info("removing from bans");
+          await trx.from("group_user_ban")
+            .where("user_id", target.id)
+            .andWhere("group_id", group.id)
+            .delete();
+        }
 
-      if (existingInvite) {
-        return response.badRequest(
-          { message: `${username} already has a pending invitation` },
-        );
-      }
-
-      await db.table("group_user_invitation").insert({
-        user_id: invitedUser.id,
-        group_id: group.id,
+        await trx.table("group_user_invitation").insert({
+          user_id: target.id,
+          group_id: group.id,
+        });
       });
 
-      return response.ok({ message: `Invitation sent to ${username}` });
+      return {
+        success: true,
+        message: `Invitation sent to ${target.username}`,
+      };
     } catch (error) {
       console.error("Error inviting user:", error);
-      return response.internalServerError(
-        { message: "Failed to send invitation" },
-      );
+      return { error: "Failed to send invitation" };
     }
-  }
-  private static async confirmUserMembership(
-    groupId: string,
-    userId: string,
-    targetId: string,
-  ) {
-    const userIsMember = await GroupUser.query()
-      .where("group_id", groupId)
-      .andWhere("user_id", userId)
-      .first();
-    if (!userIsMember) {
-      return false;
-    }
-    const targetIsMember = await GroupUser.query()
-      .where("group_id", groupId)
-      .andWhere("user_id", userId)
-      .first();
-    if (!targetIsMember) {
-      return false;
-    }
-    return true;
   }
 
   public static async voteKick(params: {
@@ -363,18 +345,6 @@ export default class GroupController {
     const group: Group = await Group.findOrFail(groupId);
     const isCasterOwner: boolean = await this.isOwner(groupId, userCasterId);
     const isTargetOwner: boolean = await this.isOwner(groupId, userTargetId);
-    if (
-      await GroupController.confirmUserMembership(
-        groupId,
-        userCasterId,
-        userTargetId,
-      )
-    ) {
-      return {
-        banned: false,
-        message: "Not everyone is part of this channel",
-      };
-    }
 
     if ((group.isPrivate && !isCasterOwner) || isTargetOwner) {
       return {
@@ -393,7 +363,6 @@ export default class GroupController {
 
     const voteCount = Number(totalVotes?.$extras.count || 0);
 
-    console.log("voteCoutn:" + voteCount);
     if ((isCasterOwner && voteCount >= 1) || voteCount >= 3) {
       await GroupUserBan.create({ groupId, userId: userTargetId });
       await GroupUser.query().where({ groupId, userId: userTargetId }).delete();
