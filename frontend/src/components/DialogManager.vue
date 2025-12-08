@@ -42,7 +42,6 @@
 
   <UserMessagePeek
       :model-value="props.dialogs.userMessagePeek"
-      :model-message=currentlyPeekedMessage
       @update:model-value="$emit('update-dialog','userMessagePeek',$event)"
       />
 
@@ -59,7 +58,7 @@ import GroupCreate from "components/dialogs/GroupCreate.vue";
 import UserMessagePeek from "components/dialogs/UserMessagePeek.vue";
 
 // Stores
-import { currentlyPeekedMessage,targetUser,currentGroupId } from "src/stores/interactions";
+import { targetUser,currentGroupId } from "src/stores/interactions";
 import type { User } from "src/stores/interactions";
 
 // Services

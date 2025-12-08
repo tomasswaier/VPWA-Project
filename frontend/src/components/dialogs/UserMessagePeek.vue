@@ -9,7 +9,7 @@
         <span class="q-ml-sm">User is typing:</span>
       </q-card-section>
       <q-card-section class="row items-center">
-        <span class="q-ml-sm">{{modelMessage}}</span>
+        <span class="q-ml-sm">{{currentlyPeekedMessage}}</span>
       </q-card-section>
       <q-card-actions align="right">
         <q-btn flat label="close" color="primary" @click="closeDialog" />
@@ -19,9 +19,11 @@
 </template>
 
 <script setup lang="ts">
+
+import { currentlyPeekedMessage } from "../../stores/interactions";
+
 interface Props {
   modelValue: boolean
-  modelMessage: string
 }
 
 interface Emits {

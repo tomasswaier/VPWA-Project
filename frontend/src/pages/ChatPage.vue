@@ -34,7 +34,7 @@
 
     </div>
     <div class="col-auto q-pa-sm bg-white">
-      <div v-if="someoneTyping" >
+      <div v-if="typingUsers.length>0" >
           <q-btn-dropdown color="primary" cover label="someone is typing...">
             <q-list>
               <q-item v-for="(user,index) in typingUsers" :key="index"  clickable @click="openDialog(user)">
@@ -48,6 +48,7 @@
         outlined
         v-model="text"
         label="Napíš správu..."
+        @update:model-value="startTypingWatcher"
         @keyup.enter="sendMessage"
         dense
       >
@@ -55,6 +56,7 @@
           <q-btn flat round dense icon="send" @click="sendMessage" />
         </template>
       </q-input>
+
     </div>
   </q-page>
 </template>
@@ -71,7 +73,7 @@ import {
   currentGroupName,
   displayedMembers,
   loadGroupMembers,
-  typingUsers, openDialog,loggedUser
+  typingUsers, openDialog,loggedUser,startTypingWatcher
 } from '../stores/interactions';
 
 interface Props {
@@ -91,7 +93,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const someoneTyping = true;
 
 interface Emits {
   (e: 'update-dialog', dialogName: keyof Dialogs, value: boolean): void
@@ -119,6 +120,8 @@ watch(
     scrollToBottom();
   }
 );
+startTypingWatcher();
+
 </script>
 
 <style scoped>
