@@ -1,5 +1,5 @@
 import Group from "#models/group";
-// import Message from "#models/message";
+import db from "@adonisjs/lucid/services/db";
 import app from "@adonisjs/core/services/app";
 import { DateTime } from "luxon";
 
@@ -7,31 +7,43 @@ app.ready(async () => {
   console.log("[Scheduler] Group cleanup service started...");
 
   const MILLISECONDS_24_HOURS = 24 * 60 * 60 * 1000;
+  //const MILLISECONDS_24_HOURS = 20 * 1000;
 
   setInterval(async () => {
     try {
       console.log("[Scheduler] Running group cleanup job...");
 
       const threshold = DateTime.now().minus({ days: 30 });
+      //const threshold = DateTime.now().minus({ seconds: 30 });
 
-      const oldGroups = await Group.query().whereNotIn(
-        "id",
-        (q) =>
-          q.select("group_id")
-            .from("messages")
-            .where("created_at", ">", threshold.toSQL()),
+      // Nájdeme kanály, kde posledná správa je staršia ako 30 dní
+      // alebo kanály, ktoré nemajú žiadne správy a boli vytvorené pred viac ako 30 dňami
+      const inactiveGroups = await db.rawQuery(
+        `
+        SELECT g.id, g.name, MAX(m.created_at) as last_message_at
+        FROM groups g
+        LEFT JOIN messages m ON g.id = m.group_id
+        GROUP BY g.id, g.name
+        HAVING MAX(m.created_at) < ? OR (MAX(m.created_at) IS NULL AND g.created_at < ?)
+        `,
+        [threshold.toSQL(), threshold.toSQL()]
       );
 
-      if (oldGroups.length === 0) {
-        console.log("[Scheduler] No groups to clean.");
+      const groupsToDelete = inactiveGroups.rows || inactiveGroups;
+
+      if (groupsToDelete.length === 0) {
+        console.log("[Scheduler] No inactive groups to clean.");
         return;
       }
 
-      const ids = oldGroups.map((g) => g.id);
+      const ids = groupsToDelete.map((g: any) => g.id);
 
       await Group.query().whereIn("id", ids).delete();
 
-      console.log(`[Scheduler] Deleted ${ids.length} inactive groups.`);
+      console.log(`[Scheduler] Deleted ${ids.length} inactive groups:`);
+      groupsToDelete.forEach((g: any) => {
+        console.log(`  - ${g.name} (last activity: ${g.last_message_at || 'never'})`);
+      });
     } catch (error) {
       console.error("[Scheduler] Cleanup job failed", error);
     }

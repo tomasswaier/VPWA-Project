@@ -16,7 +16,6 @@ const targetUser = ref(""); // this is for target user to kick or do something
 // else like revoke ... I am so sorry
 
 const text = ref("");
-
 const currentlyPeekedUserIndex = ref(-1);
 
 const notificationsEnabled = ref(true);
@@ -34,14 +33,6 @@ export interface PaginatedMessages {
 }
 
 const loggedUser = ref<User | null>(null);
-
-/*
-function initLoggedUser() {
-  if (localStorage.getItem("user") != "") {
-    const user: User = JSON.parse(localStorage.getItem("user")!);
-    loggedUser.value = { username: user?.username, status: user?.status };
-  }
-}*/
 
 // updated init funkcia, ze ak mal cavo offline a da refresh, tak sa mu nastavi
 // online
@@ -104,16 +95,7 @@ interface LoginResponse {
   updatedAt: string;
 }
 
-const typingUsers = ref<TypingUser[]>([
-  /*{ name: "Johnka", message: "I have yet to introduce myself moew moew moe w"
-  },
-  {
-    name: "Emanuel",
-    message:
-      "Ja som Emanuel Emanuel som ja a ja ak budem Emanuel tak budem Emanuel",
-  },
-  */
-]);
+const typingUsers = ref<TypingUser[]>([]);
 
 const publicGroups = ref<GroupLinkProps[]>([]);
 const invitations = ref<GroupLinkProps[]>([]);
@@ -334,6 +316,7 @@ async function loadGroupMembers(
   }
 }
 
+
 async function loadPublicGroups(
   index: number,
   done: () => void,
@@ -373,6 +356,7 @@ async function loadPublicGroups(
   }
 }
 
+
 async function loadInvitations(index: number, done: () => void): Promise<void> {
   try {
     const response = await api.get("/groups/invitations");
@@ -409,6 +393,7 @@ async function loadInvitations(index: number, done: () => void): Promise<void> {
   }
 }
 
+
 async function acceptInvitation(groupId: string): Promise<void> {
   try {
     const response = await api.post(`/groups/${groupId}/accept-invitation`);
@@ -434,11 +419,10 @@ async function acceptInvitation(groupId: string): Promise<void> {
       position: "top",
       timeout: 2000,
     });
-
-    // refresh aj pri errore
     await loadInvitations(0, () => {});
   }
 }
+
 
 async function declineInvitation(groupId: string): Promise<void> {
   try {
@@ -466,9 +450,11 @@ async function declineInvitation(groupId: string): Promise<void> {
   }
 }
 
+
 function resetGroupMembers(): void {
   displayedMembers.value = [];
 }
+
 
 function updateMemberStatus(username: string, status: UserStatus): void {
   const member = displayedMembers.value.find((m) => m.username === username);
@@ -476,6 +462,7 @@ function updateMemberStatus(username: string, status: UserStatus): void {
     member.status = status;
   }
 }
+
 
 async function changeGroup(groupId: string) {
   currentGroupId.value = groupId;
@@ -505,6 +492,7 @@ async function changeGroup(groupId: string) {
     console.error("Failed to change group:", err);
   }
 }
+
 
 async function loadMessages(index: number, done: () => void) {
   if (finished.value || currentGroupId.value === "") {
@@ -540,9 +528,11 @@ async function loadMessages(index: number, done: () => void) {
   done();
 }
 
+
 function getUsernameAbbr(username: string) {
   return username[0] + username[1]!;
 }
+
 
 async function joinGroup(args: string[]) {
   if (args.length === 0) {
@@ -607,6 +597,7 @@ async function joinGroup(args: string[]) {
   }
 }
 
+
 function checkMessageCommandParams(
   input: string[],
   expectedCount: number,
@@ -620,6 +611,7 @@ function checkMessageCommandParams(
   return true;
 }
 
+
 async function sendMessage() {
   const inputText: string = text.value.trim();
   const allArguments: string[] = inputText.split(" ");
@@ -632,7 +624,7 @@ async function sendMessage() {
       case "/help":
         messages.value.push(
           {
-            content: `Available commads`,
+            content: `Available commands`,
             groupId: currentGroupId.value,
             id: 0,
             author: "",
@@ -640,7 +632,7 @@ async function sendMessage() {
           },
           {
             content:
-              `/cancel = leave group (also deletes group if you're the creator)`,
+              `/cancel = leave group (deletes group if you're the creator)`,
             groupId: currentGroupId.value,
             id: 0,
             author: "",
@@ -655,14 +647,14 @@ async function sendMessage() {
           },
           {
             content:
-              `/join [groupName] "[private]" [group description] = join public group with this groupName, join private group with groupName or create group by groupName. if argument [private] is present the created group will be private. All text unrecognized text will be treated as group description`,
+              `/join [groupName] "[private]" [group description] = join public group with this groupName, join private group with groupName or create group by groupName. if argument [private] the created group will be private. All text unrecognized text will be treated as group description`,
             groupId: currentGroupId.value,
             id: 0,
             author: "",
             containsMention: false,
           },
           {
-            content: `/delete = delete the current group if you are the owner`,
+            content: `/delete = delete the current group if owner`,
             groupId: currentGroupId.value,
             id: 0,
             author: "",
@@ -701,8 +693,7 @@ async function sendMessage() {
           },
         );
         break;
-      case "/quit": // to iste ako /cancel, ale bolo v zadani aj quit, cize dali
-        // sme sem obe funkcie
+      case "/quit":
         void cancelGroup(allArguments.slice(1));
         break;
       case "/cancel":
@@ -782,6 +773,7 @@ async function sendMessage() {
   }
 }
 
+
 async function sendMessageUsingSocket(inputText: string) {
   if (!currentGroupId.value) {
     console.error("No group selected");
@@ -793,6 +785,7 @@ async function sendMessageUsingSocket(inputText: string) {
     console.error("Failed to send message:", err);
   }
 }
+
 
 async function register(
   username: string,
@@ -824,6 +817,7 @@ async function register(
     }
   }
 }
+
 
 async function login(username: string, password: string) {
   try {
@@ -863,6 +857,7 @@ async function login(username: string, password: string) {
   }
 }
 
+
 async function logout() {
   try {
     await api.post("/auth/logout");
@@ -882,6 +877,7 @@ async function logout() {
     }
   }
 }
+
 
 async function changeStatus(status: string) {
   try {
@@ -938,6 +934,7 @@ async function changeStatus(status: string) {
   }
 }
 
+
 function listGroupUsers() {
   resetGroupMembers();
   dialogs.groupUserList = true;
@@ -958,6 +955,7 @@ function openCreateGroupDialog() {
 function deleteGroup() {
   dialogs.groupDelete = true;
 }
+
 
 async function inviteToGroup(args: string[]) {
   if (args.length != 1) {
@@ -994,6 +992,7 @@ async function inviteToGroup(args: string[]) {
   }
 }
 
+
 function openDialog(index: number) {
   currentlyPeekedUserIndex.value = index;
   dialogs.userMessagePeek = true;
@@ -1008,47 +1007,10 @@ function revokeUser() {
   dialogs.userRevoke = true;
 }
 
-function simulateIncomingInvite(userName: string, groupName: string) {
-  Notify.create({
-    message: `${userName} has invited you to ${groupName}`,
-    color: "primary",
-    icon: "group_add",
-    position: "top-right",
-    timeout: 5000,
-    actions: [
-      {
-        label: "Accept",
-        color: "white",
-        handler: () => {
-          Notify.create({
-            message: `You joined ${groupName}!`,
-            color: "positive",
-            icon: "check_circle",
-            position: "top",
-            timeout: 2000,
-          });
-        },
-      },
-      {
-        label: "Decline",
-        color: "white",
-        handler: () => {
-          Notify.create({
-            message: "Invitation declined",
-            color: "red",
-            icon: "cancel",
-            position: "top",
-            timeout: 2000,
-          });
-        },
-      },
-    ],
-  });
-}
 
 async function joinPublicGroup(groupId: string): Promise<void> {
   try {
-    const response = await api.post(`/groups/${groupId}/join`);
+    const response = await api.post(`/groups/${groupId}/join-or-create`);
 
     Notify.create({
       message: response.data.message || "Successfully joined the group!",
@@ -1072,6 +1034,7 @@ async function joinPublicGroup(groupId: string): Promise<void> {
     });
   }
 }
+
 
 async function leaveGroupAPI(groupId: string): Promise<void> {
   try {
@@ -1099,6 +1062,7 @@ async function leaveGroupAPI(groupId: string): Promise<void> {
     });
   }
 }
+
 
 async function loadUserGroups(): Promise<void> {
   try {
@@ -1135,6 +1099,7 @@ async function loadUserGroups(): Promise<void> {
     console.error("Error loading user groups:", error);
   }
 }
+
 
 async function cancelGroup(args: string[]) {
   if (args.length === 0) {
@@ -1211,6 +1176,7 @@ async function cancelGroup(args: string[]) {
   }
 }
 
+
 export type { Dialogs, GroupLinkProps, TypingUser, User };
 
 export {
@@ -1256,7 +1222,6 @@ export {
   sendMessage,
   setMentionOnlyNotifications,
   setNotificationsEnabled,
-  simulateIncomingInvite,
   someoneTyping,
   startTypingWatcher,
   targetUser,
