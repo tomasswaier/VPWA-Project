@@ -1,11 +1,12 @@
 import { BaseSchema } from "@adonisjs/lucid/schema";
 
 export default class GroupBans extends BaseSchema {
-  protected tableName = "group_ban";
+  protected tableName = "group_user_ban";
 
   public async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.uuid("id").primary().defaultTo(this.raw("gen_random_uuid()"));
+
       table.uuid("user_id").notNullable();
       table.uuid("group_id").notNullable();
 
@@ -13,7 +14,8 @@ export default class GroupBans extends BaseSchema {
 
       table.foreign("group_id").references("groups.id").onDelete("CASCADE");
 
-      table.primary(["user_id", "group_id"]);
+      // Prevent duplicate bans for same (user, group)
+      table.unique(["user_id", "group_id"]);
     });
   }
 

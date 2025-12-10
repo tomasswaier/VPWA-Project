@@ -1,7 +1,14 @@
 import type { SerializedMessage } from "src/contracts";
 import { useChannelsStore } from "src/stores/channels";
 
-import type { PaginatedMessages } from "../stores/interactions";
+import type { PaginatedMessages, UserStatus } from "../stores/interactions";
+import {
+  currentGroupId,
+  loggedUser,
+  someoneTyping,
+  typingUsers,
+  updateMemberStatus,
+} from "../stores/interactions";
 
 import { SocketManager } from "./SocketManager";
 
@@ -74,6 +81,54 @@ export class ChannelSocketManager extends SocketManager {
         message,
       });
     });
+
+    // sem som dal ten socket pre update-ovanie statusu v /list-e
+    this.socket.off("userStatusChanged");
+    this.socket.on("userStatusChanged", (data: {
+      username: string;
+      status: UserStatus;
+    }) => {
+      updateMemberStatus(data.username, data.status);
+    });
+
+    this.socket.off("typingUpdate");
+    this.socket.on(
+      "typingUpdate",
+      (data: {
+        groupId: string;
+        userId: string;
+        username: string;
+        isTyping: boolean;
+        preview: string;
+      }) => {
+        if (
+          data.groupId !== currentGroupId.value ||
+          data.username == loggedUser.value?.username
+        ) {
+          return;
+        }
+
+        const idx = typingUsers.value.findIndex((u) =>
+          u.name === data.username
+        );
+        if (data.isTyping) {
+          if (idx === -1) {
+            typingUsers.value.push({
+              name: data.username,
+              message: data.preview,
+            });
+          } else {
+            typingUsers.value[idx]!.message = data.preview;
+          }
+        } else {
+          if (idx !== -1) {
+            typingUsers.value.splice(idx, 1);
+          }
+        }
+
+        someoneTyping.value = typingUsers.value.length > 0;
+      },
+    );
   }
 
   public async joinGroup(): Promise<void> {
@@ -155,6 +210,9 @@ export class ChannelSocketManager extends SocketManager {
       );
     });
   }
+  public getSocket() {
+    return this.socket;
+  }
 }
 
 class ChannelService {
@@ -191,5 +249,27 @@ class ChannelService {
     }
     await channel.joinGroup();
   }
+
+  // dc a reconnect pre offline status
+  public disconnectAll(): void {
+    this.channels.forEach((channel) => {
+      channel.disconnect();
+    });
+  }
+
+  public clearAll(): void {
+    this.channels.forEach((channel) => {
+      channel.destroy();
+    });
+    this.channels.clear();
+  }
+  public socket(groupId: string) {
+    const channel = this.channels.get(groupId);
+    if (!channel) {
+      throw new Error("Channel not joined: " + groupId);
+    }
+    return channel.getSocket();
+  }
 }
+
 export default new ChannelService();

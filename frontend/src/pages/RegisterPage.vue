@@ -43,8 +43,8 @@
             hint="Smith von Gutenberg"
             lazy-rules
             :rules="[
-              (val:string) => val && val.length > 0 || 'Please enter your first name',
-              (val:string) => val && val.length >= 1 || 'First name must be at least 3 characters'
+              (val:string) => val && val.length > 0 || 'Please enter your last name ',
+              (val:string) => val && val.length >= 1 || 'last name must be at least 3 characters'
             ]"
           >
           </q-input>
@@ -54,10 +54,6 @@
             label="Email Address*"
             hint="example@yahoo.com"
             lazy-rules
-            :rules="[
-              (val:string) => val && val.length > 0 || 'Please enter your first name',
-              (val:string) => val && val.length >= 1 || 'First name must be at least 3 characters'
-            ]"
           >
             <template v-slot:prepend>
               <q-icon name="email" />

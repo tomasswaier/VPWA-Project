@@ -15,6 +15,8 @@ app.ready(() => {
     cors : {origin : "*"},
   });
 
+  (global as any).io = io;
+
   io.of(/^\/groups\/.+$/).on("connection", async (socket: Socket) => {
     const namespace = socket.nsp.name;
     const groupId = namespace.split("/").pop();
@@ -42,32 +44,90 @@ app.ready(() => {
       }
 
       socket.on(
+          "typing",
+          async (data: {
+            groupId: string; isTyping : boolean; preview : string;
+          }) => {
+            try {
+              const groupId = data.groupId;
+              console.log(data.isTyping);
+              console.log(data.preview);
+
+              const user = await User.find(userId);
+              const allSockets = await socket.nsp.fetchSockets();
+
+              if (!user) {
+                return;
+              }
+              for (const clientSocket of allSockets) {
+                const clientUserId = clientSocket.data.userId;
+                const clientUser = await User.find(clientUserId);
+
+                if (clientUser) {
+                  clientSocket.emit("typingUpdate", {
+                    groupId,
+                    userId,
+                    username : user.username,
+                    preview : data.preview,
+                    isTyping : data.isTyping,
+                  });
+                }
+              }
+            } catch (err) {
+              console.error("Typing broadcast failed:", err);
+            }
+          },
+      );
+
+      socket.on(
           "inviteUser",
           async (data: {username: string}, callback: (res: any) => void) => {
             try {
               const {username} = data;
-
-              const targetUser =
-                  await User.query().where("username", username).first();
-              if (!targetUser) {
-                return callback({error : `User "${username}" not found`});
+              const target = await User.findBy("username", username);
+              if (!target) {
+                return callback({error : "Bad userName"});
+              }
+              // kontrola, ci je user v skupine
+              const existingMember =
+                  await GroupUser.query()
+                      .where("group_id", groupId!)
+                      .andWhere("user_id", target.id.toString())
+                      .first();
+              if (existingMember) {
+                return callback(
+                    {error : `${username} is already a member of this group`},
+                );
               }
 
-              await GroupUserInvitation.create({
-                userId : targetUser.id,
-                groupId,
-              });
+              // Skontroluj či user už nemá pending invitation
+              const existingInvite =
+                  await GroupUserInvitation.query()
+                      .where("group_id", groupId!)
+                      .andWhere("user_id", target.id.toString())
+                      .first();
+              if (existingInvite) {
+                return callback(
+                    {error : `${username} already has a pending invitation`},
+                );
+              }
 
-              io.of("/user").to(`user:${targetUser.id}`).emit("invited", {
+              const response = await GroupController.invite(
+                  String(userId),
+                  target,
+                  String(groupId),
+              );
+              io.of("/user").to(`user:${target.id}`).emit("invited", {
                 groupId,
                 inviterId : userId,
               });
 
               callback(
-                  {success : true, message : `Invitation sent to ${username}`},
+                  response,
               );
             } catch (err) {
               console.error("Failed to invite user:", err);
+
               callback({error : "Failed to send invitation"});
             }
           },
@@ -169,15 +229,14 @@ app.ready(() => {
                 userTargetId : targetUser.id.toString(),
                 userCasterId : userId.toString(),
               });
-              console.log(result);
 
-              console.log(result.banned);
               if (result.banned) {
-                console.log(targetUser.id);
                 io.of("/user").to(`user:${targetUser.id}`).emit("kicked", {
                   groupId,
                   message : `You have been banned from group "${groupId}"`,
                 });
+              } else {
+                callback({error : result.message});
               }
 
               callback(result);
@@ -187,7 +246,6 @@ app.ready(() => {
             }
           },
       );
-
     } catch (err) {
       console.error("Socket auth error:", err);
       socket.disconnect(true);
