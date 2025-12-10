@@ -17,7 +17,7 @@ const targetUser = ref(""); // this is for target user to kick or do something
 
 const text = ref("");
 
-const currentlyPeekedMessage = ref<string>("");
+const currentlyPeekedUserIndex = ref(-1);
 
 const notificationsEnabled = ref(true);
 const mentionOnlyNotifications = ref(false);
@@ -994,9 +994,10 @@ async function inviteToGroup(args: string[]) {
   }
 }
 
-function openDialog(user: TypingUser) {
-  currentlyPeekedMessage.value = user.message;
+function openDialog(index: number) {
+  currentlyPeekedUserIndex.value = index;
   dialogs.userMessagePeek = true;
+  console.log(typingUsers.value[currentlyPeekedUserIndex.value]?.message);
 }
 
 function kickUser() {
@@ -1219,7 +1220,7 @@ export {
   changeStatus,
   currentGroupId,
   currentGroupName,
-  currentlyPeekedMessage,
+  currentlyPeekedUserIndex,
   declineInvitation,
   deleteGroup,
   dialogs,

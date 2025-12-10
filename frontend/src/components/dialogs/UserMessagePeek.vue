@@ -9,7 +9,7 @@
         <span class="q-ml-sm">User is typing:</span>
       </q-card-section>
       <q-card-section class="row items-center">
-        <span class="q-ml-sm">{{currentlyPeekedMessage}}</span>
+        <span class="q-ml-sm">{{peekedMessage}}</span>
       </q-card-section>
       <q-card-actions align="right">
         <q-btn flat label="close" color="primary" @click="closeDialog" />
@@ -20,15 +20,16 @@
 
 <script setup lang="ts">
 
-import { currentlyPeekedMessage } from "../../stores/interactions";
+import { computed } from "vue";
+import { currentlyPeekedUserIndex,typingUsers } from "../../stores/interactions";
 
-interface Props {
-  modelValue: boolean
-}
 
-interface Emits {
-  (e: 'update:modelValue', value: boolean): void
-}
+const peekedMessage = computed(() => {
+  return typingUsers.value[currentlyPeekedUserIndex.value]?.message || "";
+});
+
+interface Props { modelValue: boolean }
+interface Emits { (e: 'update:modelValue', value: boolean): void }
 
 defineProps<Props>()
 const emit = defineEmits<Emits>()
@@ -36,5 +37,5 @@ const emit = defineEmits<Emits>()
 function closeDialog() {
   emit('update:modelValue', false)
 }
-
 </script>
+

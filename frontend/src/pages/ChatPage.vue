@@ -37,7 +37,7 @@
       <div v-if="typingUsers.length>0" >
           <q-btn-dropdown color="primary" cover label="someone is typing...">
             <q-list>
-              <q-item v-for="(user,index) in typingUsers" :key="index"  clickable @click="openDialog(user)">
+              <q-item v-for="(user,index) in typingUsers" :key="index"  clickable @click="openDialog(index)">
                 <q-item-section :id="index.toString()" >{{user.name}}</q-item-section>
               </q-item>
             </q-list>
