@@ -16,10 +16,12 @@ const targetUser = ref(""); // this is for target user to kick or do something
 // else like revoke ... I am so sorry
 
 const text = ref("");
-const currentlyPeekedMessage = ref("");
+
+const currentlyPeekedUserIndex = ref(-1);
 
 const notificationsEnabled = ref(true);
 const mentionOnlyNotifications = ref(false);
+const someoneTyping = ref(true);
 
 export interface PaginatedMessages {
   data: SerializedMessage[];
@@ -41,33 +43,35 @@ function initLoggedUser() {
   }
 }*/
 
-
-//updated init funkcia, ze ak mal cavo offline a da refresh, tak sa mu nastavi online
+// updated init funkcia, ze ak mal cavo offline a da refresh, tak sa mu nastavi
+// online
 function initLoggedUser() {
   if (localStorage.getItem("user") != "") {
     const user: User = JSON.parse(localStorage.getItem("user")!);
-    
-    //ak bol offline --> da sa online po refreshi
-    if (user?.status === 'offline') {
-      user.status = 'online';
+
+    // ak bol offline --> da sa online po refreshi
+    if (user?.status === "offline") {
+      user.status = "online";
       localStorage.setItem("user", JSON.stringify(user));
-      
-      api.post("user/changeStatus", { status: 'online' }, {
+
+      api.post("user/changeStatus", { status: "online" }, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
-      }).catch(err => console.error("Failed to update status on refresh:", err));
+      })
+        .catch((err) =>
+          console.error("Failed to update status on refresh:", err)
+        );
     }
-    
+
     loggedUser.value = { username: user?.username, status: user?.status };
   }
 }
 
 initLoggedUser();
 
-//tiez sucast offline statusu
+// tiez sucast offline statusu
 const previousStatus = ref<UserStatus | null>(null);
-
 
 export type UserStatus = "online" | "do_not_disturb" | "offline" | "idle";
 interface User {
@@ -101,12 +105,14 @@ interface LoginResponse {
 }
 
 const typingUsers = ref<TypingUser[]>([
-  { name: "Johnka", message: "I have yet to introduce myself moew moew moe w" },
+  /*{ name: "Johnka", message: "I have yet to introduce myself moew moew moe w"
+  },
   {
     name: "Emanuel",
     message:
       "Ja som Emanuel Emanuel som ja a ja ak budem Emanuel tak budem Emanuel",
   },
+  */
 ]);
 
 const publicGroups = ref<GroupLinkProps[]>([]);
@@ -190,6 +196,47 @@ function showNativeNotification(
 
   setTimeout(() => notification.close(), 5000);
 }
+
+let typingTimeout: ReturnType<typeof setTimeout> | null = null;
+
+function startTypingWatcher() {
+  const content = text.value.trim();
+  const isTyping = content.length > 0;
+
+  // Immediate emit when typing
+  if (isTyping) {
+    channelService.socket(currentGroupId.value)?.emit("typing", {
+      groupId: currentGroupId.value,
+      isTyping: true,
+      preview: content,
+    });
+  }
+
+  // Clear previous timeout (reset timer)
+  if (typingTimeout) {
+    clearTimeout(typingTimeout);
+    typingTimeout = null;
+  }
+
+  // Only create timeout if user is typing
+  if (isTyping) {
+    setTimeout(() => {
+      const now = text.value.trim();
+      console.log("sprava " + now);
+
+      if (now.length === 0) {
+        typingTimeout = null;
+        channelService.socket(currentGroupId.value)?.emit("typing", {
+          groupId: currentGroupId.value,
+          isTyping: false,
+          preview: "",
+        });
+      }
+    }, 500);
+  }
+}
+
+// startTypingWatcher();
 
 function shouldShowNotification(
   message: SerializedMessage,
@@ -387,8 +434,8 @@ async function acceptInvitation(groupId: string): Promise<void> {
       position: "top",
       timeout: 2000,
     });
-    
-    //refresh aj pri errore
+
+    // refresh aj pri errore
     await loadInvitations(0, () => {});
   }
 }
@@ -404,7 +451,7 @@ async function declineInvitation(groupId: string): Promise<void> {
       position: "top",
       timeout: 2000,
     });
-    await loadInvitations(0, () => {}); //refresh
+    await loadInvitations(0, () => {}); // refresh
   } catch (err) {
     const error = err as AxiosError<{ message?: string }>;
     console.error("Error declining invitation:", error);
@@ -424,7 +471,7 @@ function resetGroupMembers(): void {
 }
 
 function updateMemberStatus(username: string, status: UserStatus): void {
-  const member = displayedMembers.value.find(m => m.username === username);
+  const member = displayedMembers.value.find((m) => m.username === username);
   if (member) {
     member.status = status;
   }
@@ -439,7 +486,7 @@ async function changeGroup(groupId: string) {
   const group = groupLinks.value.find((g) => g.id === groupId);
   currentGroupName.value = group?.title || "";
 
-  if (loggedUser.value?.status === 'offline') {
+  if (loggedUser.value?.status === "offline") {
     console.log("User is offline, not connecting to group socket");
     return;
   }
@@ -843,7 +890,7 @@ async function changeStatus(status: string) {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
       },
     });
-    
+
     const oldStatus = loggedUser.value?.status;
     const newStatus = result.data.status as UserStatus;
 
@@ -855,32 +902,31 @@ async function changeStatus(status: string) {
     user!.status = newStatus;
     localStorage.setItem("user", JSON.stringify(user));
 
-    //iny status --> offline
-    if (newStatus === 'offline') {
-      //odpal vsetky sockety
+    // iny status --> offline
+    if (newStatus === "offline") {
+      // odpal vsetky sockety
       channelService.disconnectAll();
       privateService.disconnect();
       console.log("Disconnected all sockets due to offline status");
     }
 
-    //offline --> iny status
-    if(oldStatus === 'offline' && newStatus !== 'offline') {
+    // offline --> iny status
+    if (oldStatus === "offline" && newStatus !== "offline") {
       const savedGroupId = currentGroupId.value;
-      //napojim vsetky sockety a reload
+      // napojim vsetky sockety a reload
       channelService.clearAll();
 
       privateService.reconnect();
-      
+
       await loadUserGroups();
-      
-      if (savedGroupId && groupLinks.value.find(g => g.id === savedGroupId)) {
+
+      if (savedGroupId && groupLinks.value.find((g) => g.id === savedGroupId)) {
         await changeGroup(savedGroupId);
       }
 
       console.log("Reconnected all sockets");
     }
     previousStatus.value = newStatus;
-
   } catch (err) {
     const error = err as AxiosError;
     if (error.response) {
@@ -948,9 +994,10 @@ async function inviteToGroup(args: string[]) {
   }
 }
 
-function openDialog(user: TypingUser) {
-  currentlyPeekedMessage.value = user.message;
+function openDialog(index: number) {
+  currentlyPeekedUserIndex.value = index;
   dialogs.userMessagePeek = true;
+  console.log(typingUsers.value[currentlyPeekedUserIndex.value]?.message);
 }
 
 function kickUser() {
@@ -1173,7 +1220,7 @@ export {
   changeStatus,
   currentGroupId,
   currentGroupName,
-  currentlyPeekedMessage,
+  currentlyPeekedUserIndex,
   declineInvitation,
   deleteGroup,
   dialogs,
@@ -1210,6 +1257,8 @@ export {
   setMentionOnlyNotifications,
   setNotificationsEnabled,
   simulateIncomingInvite,
+  someoneTyping,
+  startTypingWatcher,
   targetUser,
   text,
   typingUsers,

@@ -17,7 +17,6 @@ app.ready(() => {
 
   (global as any).io = io;
 
-
   io.of(/^\/groups\/.+$/).on("connection", async (socket: Socket) => {
     const namespace = socket.nsp.name;
     const groupId = namespace.split("/").pop();
@@ -45,6 +44,42 @@ app.ready(() => {
       }
 
       socket.on(
+          "typing",
+          async (data: {
+            groupId: string; isTyping : boolean; preview : string;
+          }) => {
+            try {
+              const groupId = data.groupId;
+              console.log(data.isTyping);
+              console.log(data.preview);
+
+              const user = await User.find(userId);
+              const allSockets = await socket.nsp.fetchSockets();
+
+              if (!user) {
+                return;
+              }
+              for (const clientSocket of allSockets) {
+                const clientUserId = clientSocket.data.userId;
+                const clientUser = await User.find(clientUserId);
+
+                if (clientUser) {
+                  clientSocket.emit("typingUpdate", {
+                    groupId,
+                    userId,
+                    username : user.username,
+                    preview : data.preview,
+                    isTyping : data.isTyping,
+                  });
+                }
+              }
+            } catch (err) {
+              console.error("Typing broadcast failed:", err);
+            }
+          },
+      );
+
+      socket.on(
           "inviteUser",
           async (data: {username: string}, callback: (res: any) => void) => {
             try {
@@ -53,22 +88,28 @@ app.ready(() => {
               if (!target) {
                 return callback({error : "Bad userName"});
               }
-              //kontrola, ci je user v skupine
-              const existingMember = await GroupUser.query()
-                                    .where("group_id", groupId!)
-                                    .andWhere("user_id", targetUser.id.toString())
-                                    .first();
+              // kontrola, ci je user v skupine
+              const existingMember =
+                  await GroupUser.query()
+                      .where("group_id", groupId!)
+                      .andWhere("user_id", target.id.toString())
+                      .first();
               if (existingMember) {
-                return callback({error : `${username} is already a member of this group`});
+                return callback(
+                    {error : `${username} is already a member of this group`},
+                );
               }
-              
+
               // Skontroluj či user už nemá pending invitation
-              const existingInvite = await GroupUserInvitation.query()
-                                    .where("group_id", groupId!)
-                                    .andWhere("user_id", targetUser.id.toString())
-                                    .first();
+              const existingInvite =
+                  await GroupUserInvitation.query()
+                      .where("group_id", groupId!)
+                      .andWhere("user_id", target.id.toString())
+                      .first();
               if (existingInvite) {
-                return callback({error : `${username} already has a pending invitation`});
+                return callback(
+                    {error : `${username} already has a pending invitation`},
+                );
               }
 
               const response = await GroupController.invite(
@@ -190,7 +231,6 @@ app.ready(() => {
               });
 
               if (result.banned) {
-                console.log(targetUser.id);
                 io.of("/user").to(`user:${targetUser.id}`).emit("kicked", {
                   groupId,
                   message : `You have been banned from group "${groupId}"`,
