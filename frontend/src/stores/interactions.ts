@@ -68,6 +68,7 @@ export type UserStatus = "online" | "do_not_disturb" | "offline" | "idle";
 interface User {
   username: string;
   status: UserStatus;
+  isOwner?: boolean;
 }
 const displayedMembers = ref<User[]>([]);
 const currentGroupName = ref("");
@@ -294,10 +295,11 @@ async function loadGroupMembers(
     const members = response.data;
 
     displayedMembers.value = members.map((
-      member: { username: string; status: UserStatus },
+      member: { username: string; status: UserStatus; isOwner?: boolean },
     ) => ({
       username: member.username,
       status: member.status,
+      isOwner: member.isOwner || false,
     }));
 
     done();
@@ -1010,17 +1012,53 @@ function revokeUser() {
 
 async function joinPublicGroup(groupId: string): Promise<void> {
   try {
-    const response = await api.post(`/groups/${groupId}/join-or-create`);
+    const group = publicGroups.value.find((g) => g.id === groupId);
+    if (!group) {
+      Notify.create({
+        message: "Group not found",
+        color: "negative",
+        icon: "error",
+        position: "top",
+        timeout: 2000,
+      });
+      return;
+    }
 
-    Notify.create({
-      message: response.data.message || "Successfully joined the group!",
-      color: "positive",
-      icon: "check_circle",
-      position: "top",
-      timeout: 2000,
-    });
+    //chekneme ci ma invite
+    const hasInvitation = invitations.value.some((inv) => inv.id === groupId);
 
-    await loadUserGroups();
+    if (hasInvitation) {
+      //ak ano, tak ho acceptneme rovno (miesto join-create...)
+      await acceptInvitation(groupId);
+    } else {
+      //inak sa pouzije default funkcia
+      const response = await api.post("/groups/join-or-create", {
+        name: group.title,
+        isPrivate: group.isPrivate || false,
+        description: group.caption || null,
+      });
+
+      if (response.data.error) {
+        Notify.create({
+          message: response.data.error,
+          color: "negative",
+          icon: "error",
+          position: "top",
+          timeout: 2000,
+        });
+      } else {
+        Notify.create({
+          message: response.data.message || "Successfully joined the group!",
+          color: "positive",
+          icon: "check_circle",
+          position: "top",
+          timeout: 2000,
+        });
+      }
+
+      await loadInvitations(0, () => {});
+      await loadUserGroups();
+    }
   } catch (err) {
     const error = err as AxiosError<{ message?: string }>;
     console.error("Error joining group:", error);

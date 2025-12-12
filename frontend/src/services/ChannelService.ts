@@ -24,6 +24,8 @@ type JoinGroupResponse = {
 } | { error: string };
 
 export class ChannelSocketManager extends SocketManager {
+  private typingTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map();
+
   constructor(groupId: string) {
     super(`/groups/${groupId}`); // namespace per groupId
   }
@@ -111,6 +113,14 @@ export class ChannelSocketManager extends SocketManager {
         const idx = typingUsers.value.findIndex((u) =>
           u.name === data.username
         );
+
+        // Clear existing timeout for this user
+        const existingTimeout = this.typingTimeouts.get(data.username);
+        if (existingTimeout) {
+          clearTimeout(existingTimeout);
+          this.typingTimeouts.delete(data.username);
+        }
+
         if (data.isTyping) {
           if (idx === -1) {
             typingUsers.value.push({
@@ -120,6 +130,18 @@ export class ChannelSocketManager extends SocketManager {
           } else {
             typingUsers.value[idx]!.message = data.preview;
           }
+
+          //odstrani ten indikator pisania po 5 sekundach (prisiel mi to ako adekvatny casovy usek)
+          const timeout = setTimeout(() => {
+            const userIdx = typingUsers.value.findIndex((u) => u.name === data.username);
+            if (userIdx !== -1) {
+              typingUsers.value.splice(userIdx, 1);
+              someoneTyping.value = typingUsers.value.length > 0;
+            }
+            this.typingTimeouts.delete(data.username);
+          }, 5000);
+
+          this.typingTimeouts.set(data.username, timeout);
         } else {
           if (idx !== -1) {
             typingUsers.value.splice(idx, 1);

@@ -35,7 +35,15 @@
     </div>
     <div class="col-auto q-pa-sm bg-white">
       <div v-if="typingUsers.length>0" >
-          <q-btn-dropdown color="primary" cover label="someone is typing...">
+          <q-btn-dropdown color="primary" cover>
+            <template v-slot:label>
+              <span>someone is typing</span>
+              <span class="typing-dots">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+              </span>
+            </template>
             <q-list>
               <q-item v-for="(user,index) in typingUsers" :key="index"  clickable @click="openDialog(index)">
                 <q-item-section :id="index.toString()" >{{user.name}}</q-item-section>
@@ -125,4 +133,41 @@ startTypingWatcher();
 </script>
 
 <style scoped>
+.typing-dots {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.typing-dots .dot {
+  width: 4px;
+  height: 4px;
+  margin: 0 2px;
+  background-color: currentColor;
+  border-radius: 50%;
+  animation: typing-bounce 1.4s infinite;
+}
+
+.typing-dots .dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.typing-dots .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dots .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing-bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+  30% {
+    transform: translateY(-8px);
+    opacity: 1;
+  }
+}
 </style>

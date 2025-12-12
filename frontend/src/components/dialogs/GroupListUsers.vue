@@ -42,10 +42,13 @@
               </q-item-section>
 
               <q-item-section>
-                <q-item-label class="text-white text-weight-medium">{{ member.username }}</q-item-label>
+                <q-item-label class="text-white text-weight-medium">
+                  {{ member.username }}
+                  <span v-if="member.isOwner" class="text-yellow-6"> (Owner)</span>
+                </q-item-label>
                 <q-item-label caption class="text-white">
-                  {{ member.status === 'online' ? 'Online' : 
-                     member.status === 'do_not_disturb' ? 'Do Not Disturb' : 
+                  {{ member.status === 'online' ? 'Online' :
+                     member.status === 'do_not_disturb' ? 'Do Not Disturb' :
                      member.status === 'idle' ? 'Idle' : 'Offline' }}
                 </q-item-label>
               </q-item-section>
