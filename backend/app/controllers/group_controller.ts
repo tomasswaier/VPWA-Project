@@ -225,7 +225,22 @@ export default class GroupController {
       const group = await Group.findOrFail(params.id);
       await group.load("users");
 
-      return response.ok(group.users);
+      const membersWithOwnership = await Promise.all(
+        group.users.map(async (user) => {
+          const pivotData = await GroupUser.query()
+            .where("user_id", user.id)
+            .where("group_id", params.id)
+            .first();
+
+          return {
+            username: user.username,
+            status: user.status,
+            isOwner: pivotData?.isOwner || false,
+          };
+        })
+      );
+
+      return response.ok(membersWithOwnership);
     } catch (error) {
       console.error("Error loading members:", error);
       return response.internalServerError(
