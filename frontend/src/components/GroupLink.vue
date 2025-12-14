@@ -21,7 +21,7 @@
                 <q-item-label>Leave Group</q-item-label>
               </q-item-section>
             </q-item>
-            <q-item v-if="isOwner" clickable @click="deleteGroup" v-close-popup>
+            <q-item clickable @click="handleLeaveGroup" v-close-popup>
               <q-item-section>
                 <q-item-label>Delete Group</q-item-label>
               </q-item-section>
@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { changeGroup ,deleteGroup, leaveGroupAPI } from '../stores/interactions';
+import { changeGroup, leaveGroupAPI } from '../stores/interactions';
 import type { GroupLinkProps } from '../stores/interactions';
 
 export interface FullProps extends GroupLinkProps {
