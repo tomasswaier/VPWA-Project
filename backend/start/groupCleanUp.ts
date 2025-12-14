@@ -16,8 +16,7 @@ app.ready(async () => {
       const threshold = DateTime.now().minus({ days: 30 });
       //const threshold = DateTime.now().minus({ seconds: 30 });
 
-      // Nájdeme kanály, kde posledná správa je staršia ako 30 dní
-      // alebo kanály, ktoré nemajú žiadne správy a boli vytvorené pred viac ako 30 dňami
+      //nájdeme kanály, kde posledná správa je staršia ako 30 dní
       const inactiveGroups = await db.rawQuery(
         `
         SELECT g.id, g.name, MAX(m.created_at) as last_message_at
